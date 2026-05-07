@@ -164,10 +164,10 @@ python3 ~/.claude/skills/staff/scripts/status.py --stale-overlay-days 30
 | Code | Meaning |
 |---|---|
 | 0 | Everything clean — no drift, no orphans, no stale overlays |
-| 1 | Drift / warnings detected (informational; not an error) |
-| 2 | Could not run (missing lockfile, malformed manifest, etc.) |
+| 1 | Drift detected (HR-DRIFT, MANUAL-EDIT, OVERLAY-EDITED, OVERLAY-STALE, MISSING, ALIAS-RENAMED, ORPHAN-FILE) |
+| 2 | Invalid state or could not run — `ERROR` flag on any agent (malformed lockfile, missing required overlay frontmatter, alias collision, etc.) or missing lockfile/manifest |
 
-Hooks can react to exit 1 to flag the project as needing `/staff sync` (when MIT-290 lands).
+Hooks should treat exit 1 as "syncable" (run `/staff sync` once MIT-290 lands) and exit 2 as "needs human repair." Don't conflate them.
 
 ### HR repo discovery
 

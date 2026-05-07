@@ -8,6 +8,7 @@ Exits 0 on success, 1 on any failure.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -230,6 +231,28 @@ def test_malformed_project_config(tmp: Path) -> None:
     print("test_malformed_project_config")
     (tmp / ".claude" / "staff").mkdir(parents=True)
     (tmp / ".claude/staff/config.yaml").write_text(": not valid yaml :::\n")
+    # Don't pass --hr-repo here: config is consulted only when there's no override,
+    # so this is the path where the malformed config actually matters.
+    cmd = [
+        sys.executable, str(SCRIPT),
+        "--project-root", str(tmp),
+        "--json",
+    ]
+    env = {**os.environ}
+    env.pop("STAFF_HR_REPO", None)  # ensure we hit the config path, not env
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+    expect(result.returncode == 2, "malformed project config exits 2 when consulted")
+    expect("config" in result.stderr.lower() or "yaml" in result.stderr.lower(),
+           "stderr mentions config/yaml")
+    expect("Traceback" not in result.stderr, "no python traceback leaks")
+
+
+def test_malformed_config_ignored_when_overridden(tmp: Path) -> None:
+    """If --hr-repo is passed, a malformed config is NOT consulted, so it
+    should be silently bypassed. Override wins."""
+    print("test_malformed_config_ignored_when_overridden")
+    (tmp / ".claude" / "staff").mkdir(parents=True)
+    (tmp / ".claude/staff/config.yaml").write_text(": not valid yaml :::\n")
     cmd = [
         sys.executable, str(SCRIPT),
         "--project-root", str(tmp),
@@ -237,11 +260,7 @@ def test_malformed_project_config(tmp: Path) -> None:
         "--json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    expect(result.returncode == 2, "malformed project config exits 2")
-    expect("config" in result.stderr.lower() or "yaml" in result.stderr.lower(),
-           "stderr mentions config/yaml")
-    # No traceback to stderr
-    expect("Traceback" not in result.stderr, "no python traceback leaks")
+    expect(result.returncode == 0, "override bypasses config validation")
 
 
 def test_malformed_manifest_shape(tmp: Path) -> None:
@@ -334,6 +353,7 @@ def main() -> int:
         test_directory_hint_with_slash_path,
         test_match_json_field_structure,
         test_malformed_project_config,
+        test_malformed_config_ignored_when_overridden,
         test_malformed_manifest_shape,
         test_missing_manifest,
         test_invalid_regex_in_manifest_does_not_crash,

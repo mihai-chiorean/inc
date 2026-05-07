@@ -292,6 +292,88 @@ def test_no_lockfile_exits_2(root: Path) -> None:
     expect("lockfile" in res["_stderr"].lower(), "stderr mentions missing lockfile")
 
 
+def test_lockfile_missing_required_field_is_error(root: Path) -> None:
+    print("test_lockfile_missing_required_field_is_error")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    apply_agents(project, hr, ["alpha"])
+    # Hand-edit the lockfile to remove generated_hash_at_apply
+    lock_path = project / ".claude/staff/lock.yaml"
+    lock = yaml.safe_load(lock_path.read_text())
+    del lock["staffed"]["alpha"]["generated_hash_at_apply"]
+    lock_path.write_text(yaml.safe_dump(lock))
+    s = run_status(project, hr=hr, expect_exit=2)
+    a = find_status(s, "alpha")
+    expect("ERROR" in a["flags"], "missing generated_hash_at_apply triggers ERROR")
+    expect(s["_returncode"] == 2, "ERROR conditions exit 2 (not 1)")
+
+
+def test_overlay_missing_last_reviewed_is_error(root: Path) -> None:
+    print("test_overlay_missing_last_reviewed_is_error")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    overlays = project / ".claude/staff/overlays"
+    overlays.mkdir(parents=True)
+    overlay_path = overlays / "alpha.md"
+    overlay_path.write_text(
+        "---\nagent_id: alpha\nlast_reviewed: 2026-05-07\n---\n\n## Project\n\nNote.\n",
+    )
+    apply_agents(project, hr, ["alpha"])
+    # Strip last_reviewed after apply
+    overlay_path.write_text(
+        "---\nagent_id: alpha\n---\n\n## Project\n\nNote.\n",
+    )
+    s = run_status(project, hr=hr, expect_exit=2)
+    a = find_status(s, "alpha")
+    expect("ERROR" in a["flags"], "missing last_reviewed triggers ERROR")
+
+
+def test_malformed_alias_in_manifest_blocks_status(root: Path) -> None:
+    print("test_malformed_alias_in_manifest_blocks_status")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    apply_agents(project, hr, ["alpha"])
+    # Now break the manifest: alias collision with canonical id
+    m = yaml.safe_load((hr / "agent.manifest.yaml").read_text())
+    m["agents"]["beta"]["aliases"] = ["alpha"]
+    (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(m))
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "broken alias"], cwd=hr)
+    s = run_status(project, hr=hr, expect_exit=2)
+    expect("alias" in s["_stderr"].lower(), "stderr names the alias collision")
+
+
+def test_malformed_config_with_override_does_not_block(root: Path) -> None:
+    print("test_malformed_config_with_override_does_not_block")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    apply_agents(project, hr, ["alpha"])
+    # Break the config; override should bypass it
+    (project / ".claude/staff/config.yaml").write_text(": not yaml :::\n")
+    s = run_status(project, hr=hr, expect_exit=0)
+    expect(len(s["staffed"]) == 1, "status runs cleanly despite malformed config when --hr-repo is set")
+
+
+def test_drift_only_exits_1_not_2(root: Path) -> None:
+    """Confirm pure drift (no ERROR flags) exits 1, distinct from ERROR (exit 2)."""
+    print("test_drift_only_exits_1_not_2")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    apply_agents(project, hr, ["alpha"])
+    # Manual edit produces drift but no ERROR
+    p = project / ".claude/agents/alpha.md"
+    p.write_text(p.read_text() + "\nmanual edit\n")
+    s = run_status(project, hr=hr, expect_exit=1)
+    a = find_status(s, "alpha")
+    expect("MANUAL-EDIT" in a["flags"], "MANUAL-EDIT detected")
+    expect("ERROR" not in a["flags"], "no ERROR for plain drift")
+
+
 def test_text_output_lists_clean_and_dirty(root: Path) -> None:
     print("test_text_output_lists_clean_and_dirty")
     hr = make_fake_hr(root)
@@ -323,6 +405,11 @@ def main() -> int:
         test_overlay_stale_detected,
         test_alias_renamed_detected,
         test_no_lockfile_exits_2,
+        test_lockfile_missing_required_field_is_error,
+        test_overlay_missing_last_reviewed_is_error,
+        test_malformed_alias_in_manifest_blocks_status,
+        test_malformed_config_with_override_does_not_block,
+        test_drift_only_exits_1_not_2,
         test_text_output_lists_clean_and_dirty,
     ]
     for fn in tests:

@@ -110,9 +110,11 @@ def load_project_config(project_root: Path) -> dict:
 
 
 def resolve_hr_repo(project_root: Path, override: str | None, lock_hr_repo: str | None) -> Path:
-    cfg = load_project_config(project_root)
+    """Priority: --hr-repo flag > project config > lockfile hr_repo > env.
+    Config is only loaded if it's actually going to be consulted (i.e., no override)."""
     if override:
         return parse_hr_repo_path(override)
+    cfg = load_project_config(project_root)
     if cfg.get("hr_repo"):
         return parse_hr_repo_path(str(cfg["hr_repo"]))
     if lock_hr_repo:
@@ -135,6 +137,20 @@ def load_manifest(hr_repo: Path) -> dict:
         raise ValueError(f"manifest at {p} is not valid YAML: {exc}") from exc
     if not isinstance(m, dict) or not isinstance(m.get("agents"), dict):
         raise ValueError(f"manifest at {p} missing 'agents'")
+    # Alias uniqueness — same check apply.py performs
+    alias_owners: dict[str, str] = {}
+    for canonical_id, entry in m["agents"].items():
+        for alias in entry.get("aliases") or []:
+            if alias in m["agents"]:
+                raise ValueError(
+                    f"manifest invalid: alias {alias!r} of {canonical_id!r} collides with a canonical agent id"
+                )
+            prior = alias_owners.get(alias)
+            if prior is not None:
+                raise ValueError(
+                    f"manifest invalid: alias {alias!r} is claimed by both {prior!r} and {canonical_id!r}"
+                )
+            alias_owners[alias] = canonical_id
     return m
 
 
@@ -177,6 +193,9 @@ class AgentStatus:
             self.detail.append(detail)
 
 
+REQUIRED_LOCK_FIELDS = ("pinned_at", "file", "description_hash_at_pin", "body_hash_at_pin", "generated_hash_at_apply")
+
+
 def evaluate_staffed_entry(
     agent_id: str,
     lock_entry: dict,
@@ -188,6 +207,17 @@ def evaluate_staffed_entry(
     today: date,
 ) -> AgentStatus:
     status = AgentStatus(id=agent_id, canonical_id=None)
+
+    # 0. Validate required lockfile fields up front. Missing hashes silently
+    # disable detection logic, so they need to surface as ERROR not as drift.
+    missing = [f for f in REQUIRED_LOCK_FIELDS if not lock_entry.get(f)]
+    if missing:
+        status.add("ERROR", f"lockfile entry missing required fields: {', '.join(missing)}")
+        return status
+    if lock_entry.get("overlay"):
+        if not lock_entry.get("overlay_hash_at_apply"):
+            status.add("ERROR", "lockfile says overlay=true but overlay_hash_at_apply is missing")
+            return status
 
     # 1. Resolve in manifest (may have been renamed via aliases)
     agents = manifest["agents"]
@@ -205,16 +235,16 @@ def evaluate_staffed_entry(
     manifest_entry = agents[canonical_id]
 
     # 2. HR drift: compare body and description hashes
-    if manifest_entry.get("body_hash") != lock_entry.get("body_hash_at_pin"):
+    if manifest_entry.get("body_hash") != lock_entry["body_hash_at_pin"]:
         status.add(
             "HR-DRIFT",
-            f"body_hash diverged: pin={short(lock_entry.get('body_hash_at_pin'))}, "
+            f"body_hash diverged: pin={short(lock_entry['body_hash_at_pin'])}, "
             f"HR HEAD={short(manifest_entry.get('body_hash'))}",
         )
-    if manifest_entry.get("description_hash") != lock_entry.get("description_hash_at_pin"):
+    if manifest_entry.get("description_hash") != lock_entry["description_hash_at_pin"]:
         status.add(
             "HR-DRIFT",
-            f"description_hash diverged: pin={short(lock_entry.get('description_hash_at_pin'))}, "
+            f"description_hash diverged: pin={short(lock_entry['description_hash_at_pin'])}, "
             f"HR HEAD={short(manifest_entry.get('description_hash'))}",
         )
 
@@ -224,15 +254,15 @@ def evaluate_staffed_entry(
         status.add("MISSING", f"{generated_path.relative_to(project_root)} not on disk")
     else:
         actual_gen_hash = sha256(generated_path.read_text(encoding="utf-8"))
-        expected_gen_hash = lock_entry.get("generated_hash_at_apply")
-        if expected_gen_hash and actual_gen_hash != expected_gen_hash:
+        expected_gen_hash = lock_entry["generated_hash_at_apply"]
+        if actual_gen_hash != expected_gen_hash:
             status.add(
                 "MANUAL-EDIT",
                 f"{generated_path.relative_to(project_root)} hash {short(actual_gen_hash)} "
                 f"!= apply-time {short(expected_gen_hash)}",
             )
 
-    # 4. Overlay: edited or stale?
+    # 4. Overlay: edited, stale, or malformed?
     if lock_entry.get("overlay"):
         overlay_path = overlays_dir / f"{agent_id}.md"
         if not overlay_path.is_file():
@@ -244,15 +274,18 @@ def evaluate_staffed_entry(
                 status.add("ERROR", f"overlay parse failed: {exc}")
             else:
                 actual_overlay_hash = sha256(body)
-                expected_overlay_hash = lock_entry.get("overlay_hash_at_apply")
-                if expected_overlay_hash and actual_overlay_hash != expected_overlay_hash:
+                expected_overlay_hash = lock_entry["overlay_hash_at_apply"]
+                if actual_overlay_hash != expected_overlay_hash:
                     status.add(
                         "OVERLAY-EDITED",
                         f"overlay body hash {short(actual_overlay_hash)} != apply-time "
                         f"{short(expected_overlay_hash)}",
                     )
                 last_reviewed = fm.get("last_reviewed")
-                if last_reviewed:
+                if not last_reviewed:
+                    status.add("ERROR",
+                               f"overlay {overlay_path.relative_to(project_root)} missing required 'last_reviewed' frontmatter")
+                else:
                     try:
                         lr_date = (
                             last_reviewed
@@ -405,7 +438,6 @@ def main() -> int:
         return 2
 
     try:
-        cfg = load_project_config(project_root)
         hr_repo = resolve_hr_repo(project_root, args.hr_repo, lock.get("hr_repo"))
         if not (hr_repo / "agent.manifest.yaml").is_file():
             raise ValueError(f"not an HR repo (missing agent.manifest.yaml): {hr_repo}")
@@ -413,6 +445,18 @@ def main() -> int:
     except (ValueError, yaml.YAMLError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+    # Load config for ancillary settings (stale_overlay_days). If --hr-repo
+    # was used, a malformed config falls back to defaults silently — the
+    # user explicitly bypassed config-based resolution.
+    cfg: dict = {}
+    try:
+        cfg = load_project_config(project_root)
+    except ValueError as exc:
+        if not args.hr_repo:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        # else: silent — using --hr-repo override, defaults are fine
 
     stale_days = (
         args.stale_overlay_days
@@ -442,6 +486,15 @@ def main() -> int:
     else:
         emit_text(project_root, hr_repo, lock, statuses, orphans)
 
+    # Exit-code semantics for hooks:
+    #   2 = invalid state (ERROR flag on any agent, e.g., malformed lockfile,
+    #       missing required overlay frontmatter, alias collision, etc.)
+    #   1 = drift detected but state is valid (HR-DRIFT, MANUAL-EDIT,
+    #       OVERLAY-EDITED, OVERLAY-STALE, MISSING, ALIAS-RENAMED, ORPHAN-FILE)
+    #   0 = everything clean
+    has_error = any("ERROR" in s.flags for s in statuses)
+    if has_error:
+        return 2
     has_drift = any(not s.ok for s in statuses) or bool(orphans)
     return 1 if has_drift else 0
 
