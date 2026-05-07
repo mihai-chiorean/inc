@@ -1,5 +1,4 @@
 schema_version: 1
-generated_at: '2026-05-07T23:17:37+00:00'
 generated_by: scripts/generate-manifest.py
 source_repo: claude-agents
 agents:
@@ -456,8 +455,10 @@ agents:
   content-creator:
     file: marketing/content-creator.md
     category: marketing
-    description: ''
-    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
+      copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
+      unique requirements.
+    description_hash: sha256:7bccb0c446911812108bdb4a27effe59730af9f65fa7f4eab43eb0b5db6294fb
     body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
     tags:
     - content
@@ -850,8 +851,10 @@ agents:
   growth-hacker:
     file: marketing/growth-hacker.md
     category: marketing
-    description: ''
-    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines
+      marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive
+      exponential user growth.
+    description_hash: sha256:4ebbf6891930826ca69b97cea54fce1f96056c7d5256af40a20b73b6f6207dd3
     body_hash: sha256:bd7887081e9159ed64b2803033114471f84269f3205b22e513526cd840b8225a
     tags:
     - growth
@@ -1062,8 +1065,10 @@ agents:
   instagram-curator:
     file: marketing/instagram-curator.md
     category: marketing
-    description: ''
-    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    description: Use this agent for Instagram visual content strategy, Stories and Reels production, and platform-native growth
+      tactics. Understands Instagram's algorithm, visual aesthetics, and engagement patterns to drive followers, engagement,
+      and conversions.
+    description_hash: sha256:172d51cb373d623ba76623008bcf3ae136046601dc3e879e1e687edb762318f1
     body_hash: sha256:7ab9a71d39e42c44af5832de6e20bef124d6caa61275ad5471a9254228483cd5
     tags:
     - curator
@@ -1365,8 +1370,10 @@ agents:
   reddit-community-builder:
     file: marketing/reddit-community-builder.md
     category: marketing
-    description: ''
-    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
+      and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while
+      strategically growing brand presence.
+    description_hash: sha256:7e3f68fe81b1850f7bb73d214afab13464b31687d58b1eef83225340133f86aa
     body_hash: sha256:b13ad116fbc9330e08055d7c69e0a79af82311c38653cbeee0342a540aa17db7
     tags:
     - builder
@@ -1800,8 +1807,9 @@ agents:
   twitter-engager:
     file: marketing/twitter-engager.md
     category: marketing
-    description: ''
-    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    description: Use this agent for real-time Twitter/X engagement, trending-topic leverage, and viral tweet creation. Specializes
+      in concise communication, thread storytelling, and community building through strategic engagement on the platform.
+    description_hash: sha256:4a710f8b1b34a837a318fd4b6a00cb593bc995f4e96d884fc08ab4e62220b089
     body_hash: sha256:37a3261785d7f7c91c79a4e632a1c26d2045dc1251b4432104c39ec0fc28de08
     tags:
     - engager

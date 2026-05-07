@@ -1,6 +1,7 @@
 ---
 name: content-creator
 model: haiku
+description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's unique requirements.
 ---
 
 # Content Creator

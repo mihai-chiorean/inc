@@ -13,8 +13,8 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
+from datetime import datetime, timezone  # used only by git_first_commit_date
 
 import yaml
 
@@ -40,7 +40,9 @@ KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
 
 def parse_frontmatter_permissive(raw: str) -> dict:
     """Parse the agent frontmatter without choking on unquoted descriptions
-    that contain embedded ': ' sequences (e.g., 'Examples:\\n<example>\\nContext: foo')."""
+    that contain embedded ': ' sequences (e.g., 'Examples:\\n<example>\\nContext: foo').
+
+    Returns dict with at least 'name' and 'description'; fails loudly otherwise."""
     out: dict[str, str] = {}
     current_key: str | None = None
     for line in raw.splitlines():
@@ -50,7 +52,17 @@ def parse_frontmatter_permissive(raw: str) -> dict:
             out[current_key] = m.group(2)
         elif current_key is not None:
             out[current_key] += "\n" + line
+    if "name" not in out or not out["name"].strip():
+        raise ValueError("frontmatter missing required 'name' field")
+    if "description" not in out or not out["description"].strip():
+        raise ValueError("frontmatter missing required 'description' field")
     return out
+
+
+def canonicalize_for_hash(s: str) -> str:
+    """Single canonical form for hashing description and body strings: strip
+    leading and trailing whitespace, leave internal content unchanged."""
+    return s.strip()
 
 
 def parse_agent_file(path: Path) -> tuple[dict, str]:
@@ -64,7 +76,8 @@ def parse_agent_file(path: Path) -> tuple[dict, str]:
 
 
 def sha256(s: str) -> str:
-    return "sha256:" + hashlib.sha256(s.encode("utf-8")).hexdigest()
+    """Hash a string after canonicalization (strip leading + trailing whitespace)."""
+    return "sha256:" + hashlib.sha256(canonicalize_for_hash(s).encode("utf-8")).hexdigest()
 
 
 def derive_tags(name: str, category: str) -> list[str]:
@@ -112,11 +125,8 @@ def collect_agent_files() -> list[Path]:
 
 def build_entry(path: Path, existing: dict) -> tuple[str, dict]:
     frontmatter, body = parse_agent_file(path)
-    name = frontmatter.get("name")
-    if not name:
-        raise ValueError(f"{path}: missing name in frontmatter")
-    description = (frontmatter.get("description") or "").strip()
-    body_stripped = body.strip("\n").rstrip()
+    name = frontmatter["name"].strip()
+    description = frontmatter["description"]
     rel = path.relative_to(REPO_ROOT).as_posix()
     category = path.parent.name
 
@@ -127,7 +137,7 @@ def build_entry(path: Path, existing: dict) -> tuple[str, dict]:
         "category": category,
         "description": description,
         "description_hash": sha256(description),
-        "body_hash": sha256(body_stripped),
+        "body_hash": sha256(body),
         "tags": prev.get("tags") or derive_tags(name, category),
         "project_hints": prev.get("project_hints") or {"files": [], "regex": []},
         "conflicts": prev.get("conflicts") or [],
@@ -144,17 +154,25 @@ def main() -> int:
         print("no agent files found", file=sys.stderr)
         return 1
 
-    agents = {}
+    agents: dict[str, dict] = {}
+    failures: list[str] = []
     for path in files:
         try:
             name, entry = build_entry(path, existing)
         except ValueError as exc:
-            print(f"skip: {exc}", file=sys.stderr)
+            failures.append(f"{path}: {exc}")
             continue
         if name in agents:
-            print(f"duplicate stable id: {name} ({path})", file=sys.stderr)
-            return 2
+            failures.append(f"{path}: duplicate stable id '{name}'")
+            continue
         agents[name] = entry
+
+    if failures:
+        for f in failures:
+            print(f"error: {f}", file=sys.stderr)
+        print(f"\n{len(failures)} agent file(s) failed to parse — refusing to write a partial manifest.",
+              file=sys.stderr)
+        return 2
 
     seen_ids = set(agents.keys())
     for old_id, old_entry in existing.items():
@@ -169,13 +187,15 @@ def main() -> int:
 
     manifest = {
         "schema_version": 1,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "generated_by": "scripts/generate-manifest.py",
         "source_repo": "claude-agents",
         "agents": dict(sorted(agents.items())),
     }
 
     out = yaml.safe_dump(manifest, sort_keys=False, width=120, allow_unicode=True)
+    if MANIFEST_PATH.exists() and MANIFEST_PATH.read_text(encoding="utf-8") == out:
+        print(f"{MANIFEST_PATH} unchanged ({len(agents)} agents)")
+        return 0
     MANIFEST_PATH.write_text(out, encoding="utf-8")
     print(f"wrote {MANIFEST_PATH} ({len(agents)} agents)")
     return 0
