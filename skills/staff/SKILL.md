@@ -14,8 +14,8 @@ Selects which agents from the canonical HR repo (`claude-agents`) are staffed in
 | `/staff suggest` | **MIT-281 — implemented** | Propose a roster based on project hints. Read-only |
 | `/staff apply` | **MIT-282 — implemented** | Copy chosen agents from HR into `.claude/agents/`, write lockfile |
 | `/staff status` | **MIT-283 — implemented** | Show staffed/diff/overlay state vs HR HEAD |
-| `/staff add <id>` | MIT-284 (pending) | Add an agent to the staffed set |
-| `/staff remove <id>` | MIT-284 (pending) | Drop an agent |
+| `/staff add <id>` | **MIT-284 — implemented** | Add an agent to the staffed set |
+| `/staff remove <id>` | **MIT-284 — implemented** | Drop an agent |
 | `/staff sync` | MIT-290 (pending, v2) | Regenerate from HR HEAD; preserve overlays |
 
 ## /staff suggest
@@ -172,6 +172,44 @@ Hooks should treat exit 1 as "syncable" (run `/staff sync` once MIT-290 lands) a
 ### HR repo discovery
 
 In priority order: `--hr-repo` flag → `.claude/staff/config.yaml` → lockfile's `hr_repo:` → `STAFF_HR_REPO`. Status falls back to the lockfile's recorded HR repo as a convenience — it's the only operation that can do so without staffing decisions.
+
+## /staff add and /staff remove
+
+Thin operations on the lockfile + `.claude/agents/`.
+
+```bash
+# Add one or more agents (idempotent for new IDs; rejects already-staffed)
+python3 ~/.claude/skills/staff/scripts/add.py go-engineer swift-backend
+
+# Remove (deletes the generated file; preserves overlays under .claude/staff/overlays/)
+python3 ~/.claude/skills/staff/scripts/remove.py swift-backend
+
+# Dry runs
+python3 ~/.claude/skills/staff/scripts/add.py go-engineer --dry-run
+python3 ~/.claude/skills/staff/scripts/remove.py go-engineer --dry-run
+```
+
+### add — exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Added |
+| 2 | `agent-not-in-manifest` (unknown ID), no project, malformed config, etc. |
+| 4 | Dirty HR (`--allow-dirty-hr` overrides) |
+| 5 | One or more agents failed to compute (no files written) |
+| 6 | `agent-already-staffed` — use `/staff sync` (when MIT-290 lands) to refresh |
+
+### remove — exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Removed |
+| 2 | No lockfile, malformed lockfile, etc. |
+| 7 | `agent-not-currently-staffed` (typo guard) |
+
+### Overlay handling on remove
+
+`.claude/staff/overlays/<id>.md` is **never auto-deleted**. The overlay is project-owned content; if you genuinely don't want it anymore, delete it by hand. Remove warns when an overlay is being preserved so you don't forget.
 
 ## How matching works
 
