@@ -1,0 +1,19 @@
+# .claude/staff/config.yaml — project-local configuration for /staff.
+# Hand-written (not generated). Committed alongside lock.yaml.
+schema_version: 1
+
+# Path to the canonical HR repo. Local file URL today; could be a git remote
+# in the future. Only one HR source per project.
+hr_repo: file:///home/mihai/workspace/claude-agents
+
+# How many days before /staff status warns about a stale overlay.
+# Default 90.
+stale_overlay_days: 90
+
+# Whether `.claude/agents/` is committed in this project.
+# - false (default): generated agent .md files are gitignored; treat them as build artifacts.
+#   The lockfile and overlay sources are still committed (they're the source of truth for what's staffed).
+# - true: generated agent .md files are committed. Useful when you want the project repo to be
+#   reproducible without running /staff apply (e.g., shared with collaborators who don't have
+#   the HR repo locally).
+commit_generated_agents: false

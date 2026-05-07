@@ -1,0 +1,2190 @@
+schema_version: 1
+generated_at: '2026-05-07T23:17:37+00:00'
+generated_by: scripts/generate-manifest.py
+source_repo: claude-agents
+agents:
+  agent-eval-engineer:
+    file: testing/agent-eval-engineer.md
+    category: testing
+    description: 'Use this agent when designing, building, or operating evaluation harnesses for LLM-based agent systems —
+      particularly autonomous coding/research agents where the question is "is it still good?" rather than "does the unit
+      test pass?". This agent specializes in judge-model rubrics, deterministic eval runs, cost/latency regression tracking
+      tied to behavioral quality, tool-call accuracy scoring, and operationalizing security-policy test matrices. It is explicitly
+      NOT for per-PR unit tests (test-writer-fixer), A/B feature flag rollout tracking (experiment-tracker), shipping AI features
+      (ai-engineer), defining threat models (security-auditor), or general production observability (infrastructure-maintainer).
+      Examples:\n\n<example>\nContext: Long-running autonomous agent with no quality baseline\nuser: "Ziggy has been shipping
+      PRs for two weeks. How do I know the security hardening I added didn''t make it worse at its actual job?"\nassistant:
+      "You need a PR-to-PR regression track with a fixed task battery. Let me use the agent-eval-engineer agent to design
+      evals/tasks/ziggy_v1.yaml (10 pinned tasks, seed-frozen), judges/task_completion.yaml (pairwise blind, Opus 4.7 pinned),
+      and a reports/pr_diff.json that fails CI on a >2σ drop in completion rate."\n<commentary>\nDelivers a grader and a threshold,
+      not a product change. This is not ai-engineer (no feature shipped) and not experiment-tracker (no users, no flags).\n</commentary>\n</example>\n\n<example>\nContext:
+      Security policy tuning without a false-positive floor\nuser: "is_sensitive_path blocks *.pem and id_*.pub. Defensible
+      but might be overblocking. How do I know?"\nassistant: "Security-auditor defines what must be caught; this agent operationalizes
+      the matrix. Let me use the agent-eval-engineer agent to stand up evals/policy/sensitive_paths.csv with labeled positives
+      (private keys, tokens) and negatives (public keys, *.pem test fixtures, docs), wire it into CI, and publish fp_rate
+      and fn_rate as tracked metrics per PR."\n<commentary>\nThis is not security-auditor (which owns the threat model and
+      labels). This agent owns the matrix, the CI wiring, and the drift-tracking. A per-PR unit test from test-writer-fixer
+      would not surface cumulative overblocking.\n</commentary>\n</example>\n\n<example>\nContext: Silent metric regression
+      caught by accident\nuser: "ttft_ms was null in audit.jsonl for a week and I only noticed because I was watching a DM.
+      What do I put in place so this never happens again?"\nassistant: "An eval-signal smoke battery. Let me use the agent-eval-engineer
+      agent to add evals/smoke/audit_shape.py (schema assert on audit.jsonl) plus evals/smoke/ttft_probe.py (5 fixed prompts,
+      measures real TTFT against the streaming provider) with a CI gate that blocks merge on null/zero/NaN."\n<commentary>\nThis
+      is not infrastructure-maintainer or api-tester — the probe exists to protect eval signal integrity, not to monitor production
+      uptime or API contracts. Narrow scope on purpose.\n</commentary>\n</example>\n\n<example>\nContext: Choosing and calibrating
+      the judge\nuser: "I want to grade Ziggy''s output with Opus 4.7. Is that sound or is it cheating?"\nassistant: "Real
+      pitfalls: self-preference bias (Claude-family grading Claude-family), rubric leakage, judge drift across model versions.
+      Let me use the agent-eval-engineer agent to set up judges/task_completion.yaml with a pinned judge version, blind pairwise
+      ordering, a 50-item human-labeled gold set for calibration, and a quarterly drift check that re-scores the gold set."\n<commentary>\nThe
+      deliverable is the judge config and calibration data, not a feature. ai-engineer would use the grader; this agent builds
+      and validates it.\n</commentary>\n</example>\n\n<example>\nContext: Tool-use accuracy regression on a specific PR\nuser:
+      "PR #141 passed all unit tests but Ziggy feels off — it keeps running `ls` before every Read."\nassistant: "That''s
+      a trajectory regression, invisible to pass/fail tests. Let me use the agent-eval-engineer agent to run evals/trajectory/tool_selection.yaml
+      (50 NL intents with expected tool + arg schemas), produce reports/pr_141_trajectory.json showing tools-per-task delta
+      and redundant-call rate, and flag the specific intents where tool choice changed."\n<commentary>\nTool-call accuracy
+      and trajectory shape are behavior metrics, not correctness. test-writer-fixer would not have caught this. performance-benchmarker
+      would only see the latency side; this agent couples behavior + cost in one report.\n</commentary>\n</example>'
+    description_hash: sha256:92ba5b982405dcdf945444bafd022e3819272324bf3ed5e6b31bd2fd335fedbc
+    body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
+    tags:
+    - agent
+    - engineer
+    - eval
+    - testing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-04-21'
+    aliases: []
+  ai-engineer:
+    file: engineering/ai-engineer.md
+    category: engineering
+    description: 'Use this agent when implementing AI/ML features, integrating language models, building recommendation systems,
+      or adding intelligent automation to applications. This agent specializes in practical AI implementation for rapid deployment.
+      Examples:\n\n<example>\nContext: Adding AI features to an app\nuser: "We need AI-powered content recommendations"\nassistant:
+      "I''ll implement a smart recommendation engine. Let me use the ai-engineer agent to build an ML pipeline that learns
+      from user behavior."\n<commentary>\nRecommendation systems require careful ML implementation and continuous learning
+      capabilities.\n</commentary>\n</example>\n\n<example>\nContext: Integrating language models\nuser: "Add an AI chatbot
+      to help users navigate our app"\nassistant: "I''ll integrate a conversational AI assistant. Let me use the ai-engineer
+      agent to implement proper prompt engineering and response handling."\n<commentary>\nLLM integration requires expertise
+      in prompt design, token management, and response streaming.\n</commentary>\n</example>\n\n<example>\nContext: Implementing
+      computer vision features\nuser: "Users should be able to search products by taking a photo"\nassistant: "I''ll implement
+      visual search using computer vision. Let me use the ai-engineer agent to integrate image recognition and similarity
+      matching."\n<commentary>\nComputer vision features require efficient processing and accurate model selection.\n</commentary>\n</example>'
+    description_hash: sha256:c0a2acc67126f6bb7d7b3514b956e0f1b7d2f8e4a9436fe6e4ac59aed6a223c5
+    body_hash: sha256:db791bde5f3dd5f9c0c3d0c0ef645834d85f84370463d325942d5a0544309c1a
+    tags:
+    - ai
+    - engineer
+    - engineering
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  analytics-reporter:
+    file: studio-operations/analytics-reporter.md
+    category: studio-operations
+    description: 'Use this agent when analyzing metrics, generating insights from data, creating performance reports, or making
+      data-driven recommendations. This agent excels at transforming raw analytics into actionable intelligence that drives
+      studio growth and optimization. Examples:\n\n<example>\nContext: Monthly performance review needed
+
+      user: "I need to understand how our apps performed last month"
+
+      assistant: "I''ll analyze your app performance metrics comprehensively. Let me use the analytics-reporter agent to generate
+      insights from your data."
+
+      <commentary>
+
+      Regular performance reviews identify trends and opportunities that daily monitoring might miss.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: User behavior analysis for feature decisions
+
+      user: "Which features are users actually using in our fitness app?"
+
+      assistant: "Feature usage data is crucial for prioritization. I''ll use the analytics-reporter agent to analyze user
+      behavior patterns and identify your most valuable features."
+
+      <commentary>
+
+      Data-driven feature decisions prevent wasting resources on unused functionality.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Revenue optimization analysis
+
+      user: "Our revenue is plateauing, need to find growth opportunities"
+
+      assistant: "Let''s dive deep into your revenue metrics. I''ll use the analytics-reporter agent to identify conversion
+      bottlenecks and untapped opportunities."
+
+      <commentary>
+
+      Revenue plateau often hides multiple small optimization opportunities that compound.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: A/B test results interpretation
+
+      user: "We ran three different onboarding flows, which performed best?"
+
+      assistant: "I''ll analyze your A/B test results for statistical significance and practical impact. Let me use the analytics-reporter
+      agent to interpret the data."
+
+      <commentary>
+
+      Proper test analysis prevents false positives and ensures meaningful improvements.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
+    body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
+    tags:
+    - analytics
+    - reporter
+    - studio-operations
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  api-tester:
+    file: testing/api-tester.md
+    category: testing
+    description: 'Use this agent for comprehensive API testing including performance testing, load testing, and contract testing.
+      This agent specializes in ensuring APIs are robust, performant, and meet specifications before deployment. Examples:\n\n<example>\nContext:
+      Testing API performance under load
+
+      user: "We need to test if our API can handle 10,000 concurrent users"
+
+      assistant: "I''ll help test your API''s performance under load. Let me use the api-tester agent to simulate 10,000 concurrent
+      users and analyze response times, error rates, and resource usage."
+
+      <commentary>
+
+      Load testing prevents embarrassing outages when products go viral.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Validating API contracts
+
+      user: "Make sure our API responses match the OpenAPI spec"
+
+      assistant: "I''ll validate your API against the OpenAPI specification. Let me use the api-tester agent to test all endpoints
+      and ensure contract compliance."
+
+      <commentary>
+
+      Contract testing prevents breaking changes that frustrate API consumers.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: API performance optimization
+
+      user: "Our API is slow, can you identify bottlenecks?"
+
+      assistant: "I''ll analyze your API performance and identify bottlenecks. Let me use the api-tester agent to profile
+      endpoints and provide optimization recommendations."
+
+      <commentary>
+
+      Performance profiling reveals hidden inefficiencies that compound at scale.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Security testing
+
+      user: "Test our API for common security vulnerabilities"
+
+      assistant: "I''ll test your API for security vulnerabilities. Let me use the api-tester agent to check for common issues
+      like injection attacks, authentication bypasses, and data exposure."
+
+      <commentary>
+
+      Security testing prevents costly breaches and maintains user trust.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:42930722e2291ac387e823e8d83aa8fa4086d914c48be37fa9602396526c77d2
+    body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
+    tags:
+    - api
+    - tester
+    - testing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  app-store-optimizer:
+    file: marketing/app-store-optimizer.md
+    category: marketing
+    description: 'Use this agent when preparing app store listings, researching keywords, optimizing app metadata, improving
+      conversion rates, or analyzing app store performance. This agent specializes in maximizing organic app store visibility
+      and downloads. Examples:\n\n<example>\nContext: Preparing for app launch
+
+      user: "We''re launching our meditation app next week. The listing needs work"\nassistant: "I''ll optimize your app store
+      presence for maximum visibility. Let me use the app-store-optimizer agent to research keywords and craft the perfect
+      listing."\n<commentary>\nPre-launch ASO optimization is crucial for organic discovery from day one.\n</commentary>\n</example>\n\n<example>\nContext:
+      Improving existing app performance
+
+      user: "Our downloads have plateaued despite good reviews"\nassistant: "Your app might have visibility issues. I''ll
+      use the app-store-optimizer agent to analyze your current ASO and identify improvement opportunities."\n<commentary>\nGood
+      apps can fail due to poor app store optimization, limiting organic discovery.\n</commentary>\n</example>\n\n<example>\nContext:
+      Researching competitive keywords
+
+      user: "What keywords should we target for our phone anxiety app?"\nassistant: "Keyword research is crucial for ASO.
+      Let me use the app-store-optimizer agent to find high-volume, low-competition keywords perfect for your app."\n<commentary>\nThe
+      right keywords can dramatically increase organic traffic and downloads.\n</commentary>\n</example>\n\n<example>\nContext:
+      A/B testing app store elements
+
+      user: "Should we change our app icon? Users say it''s boring"\nassistant: "Let''s test that systematically. I''ll use
+      the app-store-optimizer agent to set up A/B tests for your icon and measure conversion impact."\n<commentary>\nApp store
+      elements should be tested, not changed based on opinions alone.\n</commentary>\n</example>'
+    description_hash: sha256:fddb282f8ab22cf2ba6beea5024bea12d8bdbc9ef38bb9323a27265883e78d2a
+    body_hash: sha256:da74e59dd6809cc0d3eddae113819aa56f743983171d190370fc36605629d9cf
+    tags:
+    - app
+    - marketing
+    - optimizer
+    - store
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  backend-architect:
+    file: engineering/backend-architect.md
+    category: engineering
+    description: 'Use this agent when designing APIs, building server-side logic, implementing databases, or architecting
+      scalable backend systems. This agent specializes in creating robust, secure, and performant backend services. Examples:\n\n<example>\nContext:
+      Designing a new API\nuser: "We need an API for our social sharing feature"\nassistant: "I''ll design a RESTful API with
+      proper authentication and rate limiting. Let me use the backend-architect agent to create a scalable backend architecture."\n<commentary>\nAPI
+      design requires careful consideration of security, scalability, and maintainability.\n</commentary>\n</example>\n\n<example>\nContext:
+      Database design and optimization\nuser: "Our queries are getting slow as we scale"\nassistant: "Database performance
+      is critical at scale. I''ll use the backend-architect agent to optimize queries and implement proper indexing strategies."\n<commentary>\nDatabase
+      optimization requires deep understanding of query patterns and indexing strategies.\n</commentary>\n</example>\n\n<example>\nContext:
+      Implementing authentication system\nuser: "Add OAuth2 login with Google and GitHub"\nassistant: "I''ll implement secure
+      OAuth2 authentication. Let me use the backend-architect agent to ensure proper token handling and security measures."\n<commentary>\nAuthentication
+      systems require careful security considerations and proper implementation.\n</commentary>\n</example>'
+    description_hash: sha256:c4420bdc7ddddba5ba5963b7d4d8c6a2434cd0c3f387777bfd0ac7b7e4bbb4a3
+    body_hash: sha256:cd1b035250e5c927fa51a2b116dcd139d1f374ae3aa2adb41abed9f01ee550c9
+    tags:
+    - architect
+    - backend
+    - engineering
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  bay-value-hunter:
+    file: bonus/bay-value-hunter.md
+    category: bonus
+    description: 'Use this agent when evaluating Bay Area residential real estate as a disciplined owner-occupant/investor.
+      Covers San Francisco, Berkeley, and Albany with per-city profiles (neighborhoods, permit sources, hazard patterns, rent
+      control). Finds mispriced homes, fixer-uppers, stale listings, estate/probate sales, and other value situations. Produces
+      buy targets, rehab estimates, ARV ranges, and pursue/monitor/pass verdicts — not pretty-home shopping. User is based
+      near Berkeley/Albany. Pairs with the bay-value-hunter skill for the full workflow and tool spec. Examples:\n\n<example>\nContext:
+      Evaluating a specific listing in Berkeley\nuser: "There''s a 1920s bungalow in Westbrae listed at $1.2M, sat 45 days,
+      one price cut. Worth a look?"\nassistant: "Stale DOM + price cut + Westbrae. I''ll use the bay-value-hunter agent to
+      check permit history (Berkeley uses Accela), Hayward Fault distance, rent-control implications for the hold case, and
+      produce a buy target with rehab range."\n<commentary>\nBerkeley listings need local data sources and local policy context
+      (rent control, BUSD zones, SB-9/ADU optionality), not generic MLS analysis.\n</commentary>\n</example>\n\n<example>\nContext:
+      Hunting value in Albany\nuser: "Find me fixer SFHs in Albany under $1.1M"\nassistant: "Albany''s tight — small inventory,
+      AUSD school premium baked in. I''ll use the bay-value-hunter agent to scan for stale listings and estate sales in the
+      flats vs the hill above Marin Ave, and flag I-80 noise and liquefaction exposure on anything west of San Pablo."\n<commentary>\nAlbany
+      is small and uniform on the surface but has real sub-market variation that mainstream search ignores.\n</commentary>\n</example>\n\n<example>\nContext:
+      Cross-market comparison\nuser: "I have three candidates: one in Outer Sunset, one in South Berkeley, one in Albany.
+      Rank them."\nassistant: "Cross-market ranking needs consistent underwriting plus per-city context (SF soft-story liability,
+      Berkeley rent control, Albany school premium). I''ll use the bay-value-hunter agent to score each and produce a ranked
+      shortlist with explicit tradeoffs."\n<commentary>\nApples-to-apples requires normalizing for very different rent-control
+      regimes, permit processes, and hazard profiles.\n</commentary>\n</example>\n\n<example>\nContext: Killing a deal\nuser:
+      "This Elmwood listing looks amazing — under comps, nice photos, tree-lined street"\nassistant: "Amazing-looking deals
+      deserve the most skepticism. I''ll use the bay-value-hunter agent to find what the listing isn''t telling you — permit
+      gaps, foundation concerns, tenant-in-place wrinkles, or Hayward Fault proximity — before you tour."\n<commentary>\nA
+      disciplined investor kills most deals. Great-looking deals usually have a catch.\n</commentary>\n</example>'
+    description_hash: sha256:bea5f5c237d012ae5145407edbe7bfb7c83abc51d49a7e6c0fab87b9f9199fdf
+    body_hash: sha256:86a9c3ac3b46a5f6d538199a38131b5f5e710fdfc13208f40eca86dbb1e7cbdc
+    tags:
+    - bay
+    - bonus
+    - hunter
+    - value
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-04-20'
+    aliases: []
+  blog-writer:
+    file: writing/blog-writer.md
+    category: writing
+    description: 'Use this agent to develop, draft, and refine blog posts for Mihai''s personal blog. Runs an interactive
+      clarification workflow, drafts in his voice, then iterates with codex CLI feedback rounds. Also handles reviewing/refining
+      drafts he already has. Use when Mihai mentions writing a blog post, capturing a lesson, developing a founder thesis,
+      working out an observation, or improving an existing draft.\n\n<example>\nContext: Debugging session\nuser: "I spent
+      3 days chasing an SM121 PTX issue in Triton — worth a blog post?"\nassistant: "Generous-teacher engineer post. Let me
+      use the blog-writer agent."\n</example>\n\n<example>\nContext: Half-formed observation\nuser: "Something''s bugging
+      me about how edge deployment tools assume datacenter mental models — not sure what the post is yet"\nassistant: "Sounds
+      like observer-making-sense. I''ll use the blog-writer agent — the drafting will help find the thesis."\n</example>\n\n<example>\nContext:
+      Existing draft\nuser: "I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me sharpen it?"\nassistant:
+      "Existing-draft branch. I''ll use the blog-writer agent to review and run the codex loop."\n</example>'
+    description_hash: sha256:0dcb34d683192fa045b0d78015c28918a557aec21132b2ec9c7119cb1b46ba33
+    body_hash: sha256:670f5a5acffa9f42737319ca2aaf2cc2ec73126821aadbedebf4eefc502f2acc
+    tags:
+    - blog
+    - writer
+    - writing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-04-20'
+    aliases: []
+  brand-guardian:
+    file: design/brand-guardian.md
+    category: design
+    description: 'Use this agent when establishing brand guidelines, ensuring visual consistency, managing brand assets, or
+      evolving brand identity. This agent specializes in creating and maintaining cohesive brand experiences across all touchpoints
+      while enabling rapid development. Examples:\n\n<example>\nContext: Creating brand guidelines for a new app
+
+      user: "We need to establish a visual identity for our meditation app"
+
+      assistant: "I''ll help create a calming yet distinctive brand identity. Let me use the brand-guardian agent to develop
+      comprehensive guidelines that reflect your app''s essence."
+
+      <commentary>
+
+      Strong brand identity differentiates apps in crowded marketplaces.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Ensuring consistency across platforms
+
+      user: "Our app looks different on iOS, Android, and web"
+
+      assistant: "Brand consistency builds trust and recognition. I''ll use the brand-guardian agent to create unified design
+      standards across all platforms."
+
+      <commentary>
+
+      Consistent branding makes products feel more professional and trustworthy.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Evolving existing brand
+
+      user: "Our brand feels outdated compared to competitors like Headspace"
+
+      assistant: "Brand evolution can revitalize user perception. Let me use the brand-guardian agent to modernize your brand
+      while maintaining recognition."
+
+      <commentary>
+
+      Strategic brand updates keep products feeling fresh and relevant.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Managing brand assets
+
+      user: "Developers keep using different shades of our brand colors"
+
+      assistant: "Clear asset management prevents brand dilution. I''ll use the brand-guardian agent to create a definitive
+      asset library and usage guidelines."
+
+      <commentary>
+
+      Well-organized brand assets speed up development and maintain quality.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:566ed0d7859e64886f9e10f95038220dc51ee20d472461a382a8cf1972e20677
+    body_hash: sha256:c021eb05dcd6b2e643b3510d685bd8e85e0bd0292098b8c24df2d3717260da3b
+    tags:
+    - brand
+    - design
+    - guardian
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  competitive-intel:
+    file: product/competitive-intel.md
+    category: product
+    description: 'Use this agent when you need deep competitive analysis — reverse-engineering competitor business models,
+      tracking their strategic moves, finding whitespace in crowded markets, or understanding why certain players dominate.
+      Goes beyond surface-level feature comparison to understand competitive dynamics. Examples:\n\n<example>\nContext: Entering
+      a market with established players\nuser: "Notion, Obsidian, and Roam all exist. Is there still room for a new note-taking
+      app?"\nassistant: "Crowded markets often have hidden gaps. Let me use the competitive-intel agent to map the competitive
+      landscape and find underserved segments."\n<commentary>\nCrowded markets usually mean strong demand. The question is
+      whether there''s an unserved niche.\n</commentary>\n</example>\n\n<example>\nContext: Understanding a competitor''s
+      strategy\nuser: "Our competitor just raised $50M and launched 3 new features. What are they doing?"\nassistant: "Funding
+      rounds and feature launches reveal strategic direction. I''ll use the competitive-intel agent to decode their strategy
+      and find our opportunities."\n<commentary>\nCompetitor moves tell you where the market is going — and where they''re
+      leaving gaps.\n</commentary>\n</example>\n\n<example>\nContext: Finding differentiation in a saturated space\nuser:
+      "Every meditation app looks the same. How do we stand out?"\nassistant: "When products converge, differentiation comes
+      from positioning and underserved segments. Let me use the competitive-intel agent to find angles others are missing."\n<commentary>\nIn
+      saturated markets, winning often means redefining the category rather than competing on features.\n</commentary>\n</example>\n\n<example>\nContext:
+      Assessing competitive threat\nuser: "Could Spotify just build what we''re building?"\nassistant: "Platform risk is real.
+      I''ll use the competitive-intel agent to assess the likelihood and timeline of incumbents entering your space."\n<commentary>\nUnderstanding
+      whether a big player will copy you is critical for strategy.\n</commentary>\n</example>'
+    description_hash: sha256:36865a28cdb1e3968c392a819f372e916007ed1f751f363e7c2fee57cae468fb
+    body_hash: sha256:9dcbd738a00617921194b7e5c10916726e6b2f959e8d8b8192215b561ac9a33c
+    tags:
+    - competitive
+    - intel
+    - product
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  content-creator:
+    file: marketing/content-creator.md
+    category: marketing
+    description: ''
+    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
+    tags:
+    - content
+    - creator
+    - marketing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  customer-interviewer:
+    file: product/customer-interviewer.md
+    category: product
+    description: 'Use this agent when preparing for customer discovery interviews, generating interview questions, debriefing
+      after conversations, or validating problem hypotheses through user conversations. This agent is deeply grounded in "The
+      Mom Test" methodology — it ensures you learn from customers without leading them or fishing for compliments. Examples:\n\n<example>\nContext:
+      Preparing for customer discovery interviews\nuser: "I think there''s an opportunity in helping freelancers manage their
+      taxes. I have 5 interviews lined up this week."\nassistant: "Great — let me use the customer-interviewer agent to prepare
+      a Mom Test-compliant interview script that uncovers real tax pain points without leading your interviewees."\n<commentary>\nInterview
+      prep is the highest-leverage moment. Bad questions waste everyone''s time and produce false validation.\n</commentary>\n</example>\n\n<example>\nContext:
+      Debriefing after customer conversations\nuser: "I just talked to 3 potential users. They all said they loved the idea!"\nassistant:
+      "Let''s check if that''s real signal or just politeness. I''ll use the customer-interviewer agent to debrief those conversations
+      and separate facts from compliments."\n<commentary>\nPeople are polite. The Mom Test teaches us to look past enthusiasm
+      and find commitments and concrete behaviors.\n</commentary>\n</example>\n\n<example>\nContext: Figuring out who to talk
+      to\nuser: "I want to validate a meal planning app idea but don''t know where to start"\nassistant: "Before building
+      anything, let''s figure out who to talk to and what to ask. I''ll use the customer-interviewer agent to design your
+      customer discovery plan."\n<commentary>\nWho you talk to matters as much as what you ask. The agent helps identify the
+      right customer segments.\n</commentary>\n</example>\n\n<example>\nContext: Extracting signal from noisy conversations\nuser:
+      "I''ve done 10 interviews and I''m getting mixed signals. Some people care about the problem, others don''t."\nassistant:
+      "Mixed signals usually mean you''re talking to different segments or asking the wrong questions. Let me use the customer-interviewer
+      agent to analyze your interview notes and find the real patterns."\n<commentary>\nPattern recognition across interviews
+      is where the gold is — but only if the data is clean.\n</commentary>\n</example>'
+    description_hash: sha256:822b1bdaecdefdba95bfb6dabee5a9bd8cd3e8827256d8f6c119ec0bf937cacd
+    body_hash: sha256:6499b9c49dc39d0ec322832c42a3d5eb7f3a55e4fd1c2ddce10bae5b4252df06
+    tags:
+    - customer
+    - interviewer
+    - product
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  db-migration:
+    file: engineering/db-migration.md
+    category: engineering
+    description: 'Use this agent when creating database migrations, validating migration ordering across repositories, checking
+      for destructive schema changes, or ensuring Go and Swift ORMs stay consistent with the database schema. Examples:\n\n<example>\nContext:
+      Creating a new migration\nuser: "Add a device_tokens table for push notifications"\nassistant: "Database migrations
+      need careful ordering and safety. Let me use the db-migration agent to create a safe, reversible migration."\n<commentary>\nMigrations
+      must handle existing data, use IF NOT EXISTS guards, and consider rollback.\n</commentary>\n</example>\n\n<example>\nContext:
+      Migration conflict between repos\nuser: "The Go and Swift backends both have migration 19 but they''re different"\nassistant:
+      "Migration conflicts cause deployment failures. I''ll use the db-migration agent to reconcile the migration history
+      and establish ordering."\n<commentary>\nWhen multiple repos manage the same database, migration numbering must be coordinated.\n</commentary>\n</example>\n\n<example>\nContext:
+      Schema drift detection\nuser: "Production has columns that aren''t in any migration file"\nassistant: "Schema drift
+      indicates out-of-band changes. Let me use the db-migration agent to audit the production schema against migration history."\n<commentary>\nManual
+      database changes cause drift that makes migrations fail or miss columns.\n</commentary>\n</example>'
+    description_hash: sha256:8fb6338f3abd635eedf995fefd52cfad6027edeabd1a79d372bf73a82737b3ad
+    body_hash: sha256:f65347a48513300ad3b0352c6919ffb0dabb472837c63f52a9bc5eb711f3dba1
+    tags:
+    - db
+    - engineering
+    - migration
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  devops-automator:
+    file: engineering/devops-automator.md
+    category: engineering
+    description: 'Use this agent when setting up CI/CD pipelines, configuring cloud infrastructure, implementing monitoring
+      systems, or automating deployment processes. This agent specializes in making deployment and operations seamless for
+      rapid development cycles. Examples:\n\n<example>\nContext: Setting up automated deployments\nuser: "We need automatic
+      deployments when we push to main"\nassistant: "I''ll set up a complete CI/CD pipeline. Let me use the devops-automator
+      agent to configure automated testing, building, and deployment."\n<commentary>\nAutomated deployments require careful
+      pipeline configuration and proper testing stages.\n</commentary>\n</example>\n\n<example>\nContext: Infrastructure scaling
+      issues\nuser: "Our app crashes when we get traffic spikes"\nassistant: "I''ll implement auto-scaling and load balancing.
+      Let me use the devops-automator agent to ensure your infrastructure handles traffic gracefully."\n<commentary>\nScaling
+      requires proper infrastructure setup with monitoring and automatic responses.\n</commentary>\n</example>\n\n<example>\nContext:
+      Monitoring and alerting setup\nuser: "We have no idea when things break in production"\nassistant: "Observability is
+      crucial for rapid iteration. I''ll use the devops-automator agent to set up comprehensive monitoring and alerting."\n<commentary>\nProper
+      monitoring enables fast issue detection and resolution in production.\n</commentary>\n</example>'
+    description_hash: sha256:541aaa2716c4eb47007eb4a3fffa1a16e4a2ae5a5c834e72aee0f83d3032879f
+    body_hash: sha256:00221538b3b9d90388c1790337fdef042850da4d9babe90747c76a6cc736161b
+    tags:
+    - automator
+    - devops
+    - engineering
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  embedded-device:
+    file: engineering/embedded-device.md
+    category: engineering
+    description: 'Use this agent when working on WendyOS device-side concerns including Yocto recipes, wendy-agent internals,
+      containerd integration, Bluetooth/mDNS discovery, cross-compilation for ARM64/Jetson, OTA updates, or device identity
+      management. Examples:\n\n<example>\nContext: Device agent development\nuser: "The wendy-agent drops its gRPC connection
+      to the cloud after deploy"\nassistant: "Device-to-cloud connectivity has multiple failure modes. Let me use the embedded-device
+      agent to diagnose the connection lifecycle."\n<commentary>\nAgent-to-cloud connections go through mTLS and may be affected
+      by keepalive, NAT, or certificate issues.\n</commentary>\n</example>\n\n<example>\nContext: Yocto build issues\nuser:
+      "The WendyOS image build fails on the containerd recipe"\nassistant: "Yocto recipe failures need layer-aware debugging.
+      I''ll use the embedded-device agent to check the recipe, dependencies, and build configuration."\n<commentary>\nYocto
+      builds have complex dependency chains across meta-layers that need systematic debugging.\n</commentary>\n</example>\n\n<example>\nContext:
+      Cross-compilation\nuser: "The Swift binary crashes on Jetson but works on macOS"\nassistant: "ARM64 cross-compilation
+      has platform-specific issues. Let me use the embedded-device agent to check architecture, linking, and runtime dependencies."\n<commentary>\nCross-compiled
+      Swift binaries may have different Foundation behavior or missing system libraries.\n</commentary>\n</example>'
+    description_hash: sha256:5030e05d113f6cbb5f69d615a941fbe68b1ce7fd7efc7bd1fe9e4c5eb322404e
+    body_hash: sha256:b2a9e23c8a1ae21a8fa709b6f3190508a12023125bfe8aefa1664a98263c89db
+    tags:
+    - device
+    - embedded
+    - engineering
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  embedded-linux:
+    file: engineering/embedded-linux.md
+    category: engineering
+    description: 'Use this agent for embedded Linux and Yocto/OpenEmbedded work including writing and debugging recipes, BSP
+      integration, kernel configuration, bootloader setup, OTA updates (Mender/SWUpdate), cross-compilation, device tree customization,
+      and CI/CD for embedded builds. Covers Jetson (meta-tegra), Raspberry Pi (meta-raspberrypi), and general ARM64 targets.
+      Examples:\n\n<example>\nContext: Yocto build failure\nuser: "bitbake core-image-minimal fails with a do_compile error
+      in our custom recipe"\nassistant: "Recipe build failures need layer-aware debugging. Let me use the embedded-linux agent
+      to trace the error through the recipe, dependencies, and build configuration."\n<commentary>\nYocto compile failures
+      can stem from missing dependencies, incorrect SRC_URI, toolchain issues, or layer priority conflicts. Systematic log
+      analysis is essential.\n</commentary>\n</example>\n\n<example>\nContext: Board bring-up\nuser: "We need to add support
+      for a custom carrier board based on Jetson Orin"\nassistant: "Custom carrier boards need BSP-level changes. I''ll use
+      the embedded-linux agent to handle the device tree, kernel config, and machine configuration."\n<commentary>\nJetson
+      carrier board support involves meta-tegra machine configs, device tree overlays, and potentially pin multiplexing changes.\n</commentary>\n</example>\n\n<example>\nContext:
+      OTA update integration\nuser: "Set up Mender for our Raspberry Pi image with A/B partitioning"\nassistant: "Mender integration
+      touches the partition layout, bootloader, and image generation. Let me use the embedded-linux agent to configure meta-mender
+      for your target."\n<commentary>\nMender requires careful partition scheme setup, U-Boot integration for rollback, and
+      proper artifact generation in the build.\n</commentary>\n</example>\n\n<example>\nContext: CI/CD pipeline\nuser: "Our
+      Yocto builds take 4 hours in CI, how do we speed this up?"\nassistant: "Long Yocto CI builds usually mean poor sstate-cache
+      utilization. I''ll use the embedded-linux agent to optimize your pipeline with KAS and proper caching."\n<commentary>\nWith
+      shared sstate-cache and downloads, incremental Yocto builds should take under 30 minutes. KAS makes this reproducible.\n</commentary>\n</example>'
+    description_hash: sha256:dd2add70422658e8b6053980aec303a10ac0bd86413d662e7ea23191404162d2
+    body_hash: sha256:ec4a7813edc537552bc5dcf6469bbe683a19056b532e58ac012c095af498deec
+    tags:
+    - embedded
+    - engineering
+    - linux
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  experiment-tracker:
+    file: project-management/experiment-tracker.md
+    category: project-management
+    description: 'PROACTIVELY use this agent when experiments are started, modified, or when results need analysis. This agent
+      specializes in tracking A/B tests, feature rollouts, and product iterations with real users within the 6-day development
+      cycle. For LLM/agent model quality, judge-based rubrics, or behavioral regressions, use agent-eval-engineer instead.
+      Should be triggered automatically when experimental code paths or feature flags are introduced. Examples:\n\n<example>\nContext:
+      When implementing feature flags or A/B test variants\nuser: "Add a feature flag to test the new onboarding flow"\nassistant:
+      "I''ve implemented the feature flag for the onboarding flow A/B test. Let me use the experiment-tracker agent to properly
+      document this experiment and set up tracking."\n<commentary>\nEvery feature flag represents an experiment that needs
+      proper tracking and success metrics.\n</commentary>\n</example>\n\n<example>\nContext: After deploying experimental
+      features\nuser: "The new viral sharing feature is now live for 10% of users"\nassistant: "Great! The viral sharing feature
+      is deployed. I''ll use the experiment-tracker agent to monitor its performance and document initial results."\n<commentary>\nLive
+      experiments need immediate tracking setup to capture valuable data from the start.\n</commentary>\n</example>\n\n<example>\nContext:
+      When reaching experiment milestones\nuser: "It''s been a week since we launched the TikTok integration test"\nassistant:
+      "Perfect timing for analysis. Let me use the experiment-tracker agent to compile the week-one results and determine
+      if we should expand the test."\n<commentary>\nRegular experiment checkpoints ensure data-driven decisions about feature
+      rollouts.\n</commentary>\n</example>\n\n<example>\nContext: Before making product decisions\nuser: "Should we keep the
+      AI avatar feature or remove it?"\nassistant: "Let me analyze the experiment data to inform this decision. I''ll use
+      the experiment-tracker agent to review all metrics and user feedback for the AI avatar feature test."\n<commentary>\nProduct
+      decisions should be backed by experiment data, not gut feelings.\n</commentary>\n</example>'
+    description_hash: sha256:e42a5e5a507c14cd1869c12af8518e0b8c05e7d3c0fab1557ef665df58ffe8cf
+    body_hash: sha256:d5b9799057657e250dde173b92f4da5ae58ba5fc0e26663109b910164202fbca
+    tags:
+    - experiment
+    - project-management
+    - tracker
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  feedback-synthesizer:
+    file: product/feedback-synthesizer.md
+    category: product
+    description: 'Use this agent when you need to analyze user feedback from multiple sources, identify patterns in user complaints
+      or requests, synthesize insights from reviews, or prioritize feature development based on user input. This agent excels
+      at turning raw feedback into actionable product insights. Examples:\n\n<example>\nContext: Weekly review of user feedback
+
+      user: "We got a bunch of new app store reviews this week"\nassistant: "Let me analyze those reviews for actionable insights.
+      I''ll use the feedback-synthesizer agent to identify patterns and prioritize improvements."\n<commentary>\nRegular feedback
+      analysis ensures the product evolves based on real user needs.\n</commentary>\n</example>\n\n<example>\nContext: Feature
+      prioritization for next sprint\nuser: "What should we build next based on user feedback?"\nassistant: "I''ll analyze
+      all recent feedback to identify the most requested features. Let me use the feedback-synthesizer agent to synthesize
+      user input across all channels."\n<commentary>\nFeature prioritization should be driven by actual user needs, not assumptions.\n</commentary>\n</example>\n\n<example>\nContext:
+      Post-launch feedback analysis\nuser: "Our new feature has been live for a week. What are users saying?"\nassistant:
+      "I''ll compile and analyze user reactions to the new feature. Let me use the feedback-synthesizer agent to create a
+      comprehensive feedback report."\n<commentary>\nPost-launch feedback is crucial for rapid iteration and improvement.\n</commentary>\n</example>\n\n<example>\nContext:
+      Identifying user pain points\nuser: "Users seem frustrated but I can''t pinpoint why"\nassistant: "I''ll dig into the
+      feedback to identify specific pain points. Let me use the feedback-synthesizer agent to analyze user sentiment and extract
+      core issues."\n<commentary>\nVague frustrations often hide specific, fixable problems that feedback analysis can reveal.\n</commentary>\n</example>'
+    description_hash: sha256:33c48863ef095f3806a434e2208d129bc53ebd2b64d0cd1a92dd5fdfb94a268b
+    body_hash: sha256:058aefb3e409dafa316865dcb22be26d799ca4e6c5fcf5cbff96f852dda0cca5
+    tags:
+    - feedback
+    - product
+    - synthesizer
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  finance-tracker:
+    file: studio-operations/finance-tracker.md
+    category: studio-operations
+    description: 'Use this agent when managing budgets, optimizing costs, forecasting revenue, or analyzing financial performance.
+      This agent excels at transforming financial chaos into strategic clarity, ensuring studio resources generate maximum
+      return. Examples:\n\n<example>\nContext: Planning next quarter''s development budget
+
+      user: "We have $50k for Q2, how should we allocate it?"
+
+      assistant: "I''ll create an optimized budget allocation plan. Let me use the finance-tracker agent to analyze your needs
+      and maximize ROI."
+
+      <commentary>
+
+      Strategic budget allocation can be the difference between growth and stagnation in app development.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: App profitability analysis
+
+      user: "Our fitness app has 10k users but we''re still losing money"
+
+      assistant: "Let''s analyze your unit economics and find the path to profitability. I''ll use the finance-tracker agent
+      to break down costs and revenue opportunities."
+
+      <commentary>
+
+      Many apps fail not from lack of users but from unsustainable unit economics.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Evaluating monetization strategies
+
+      user: "Should we switch from ads to subscriptions?"
+
+      assistant: "This requires careful financial modeling. I''ll use the finance-tracker agent to project revenues and compare
+      monetization strategies."
+
+      <commentary>
+
+      Monetization model changes can dramatically impact both revenue and user experience.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Investor reporting preparation
+
+      user: "I need to show our investors our burn rate and runway"
+
+      assistant: "I''ll prepare comprehensive financial reports for your investors. Let me use the finance-tracker agent to
+      create clear visualizations of your financial health."
+
+      <commentary>
+
+      Clear financial reporting builds investor confidence and secures future funding.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:6d3be69546e4fc0ba9251c3146e637fe2bc3b86016caa3077d5737573148e2a7
+    body_hash: sha256:a88541e1eed4779a04b075df9daf7c30fc6d8ca6b4a58af04e7ab91d81252f09
+    tags:
+    - finance
+    - studio-operations
+    - tracker
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  frontend-developer:
+    file: engineering/frontend-developer.md
+    category: engineering
+    description: 'Use this agent when building user interfaces, implementing React/Vue/Angular components, handling state
+      management, or optimizing frontend performance. This agent excels at creating responsive, accessible, and performant
+      web applications. Examples:\n\n<example>\nContext: Building a new user interface\nuser: "Create a dashboard for displaying
+      user analytics"\nassistant: "I''ll build an analytics dashboard with interactive charts. Let me use the frontend-developer
+      agent to create a responsive, data-rich interface."\n<commentary>\nComplex UI components require frontend expertise
+      for proper implementation and performance.\n</commentary>\n</example>\n\n<example>\nContext: Fixing UI/UX issues\nuser:
+      "The mobile navigation is broken on small screens"\nassistant: "I''ll fix the responsive navigation issues. Let me use
+      the frontend-developer agent to ensure it works perfectly across all device sizes."\n<commentary>\nResponsive design
+      issues require deep understanding of CSS and mobile-first development.\n</commentary>\n</example>\n\n<example>\nContext:
+      Optimizing frontend performance\nuser: "Our app feels sluggish when loading large datasets"\nassistant: "Performance
+      optimization is crucial for user experience. I''ll use the frontend-developer agent to implement virtualization and
+      optimize rendering."\n<commentary>\nFrontend performance requires expertise in React rendering, memoization, and data
+      handling.\n</commentary>\n</example>'
+    description_hash: sha256:dff300d287e2a0e67cc1bfe3db8f8df360906a56b6cd24a74766b6c9fec9c060
+    body_hash: sha256:755c598761f90dc46fdd3cd3d634c7df4c291df49ca2e297c8019de056998056
+    tags:
+    - developer
+    - engineering
+    - frontend
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  go-engineer:
+    file: engineering/go-engineer.md
+    category: engineering
+    description: 'Use this agent when writing or modifying Go code, building Cobra-based CLIs, designing cross-platform Go
+      binaries (linux/amd64, linux/arm64, darwin/arm64), enforcing golangci-lint/gofumpt/govulncheck discipline, or driving
+      the Linear-issue → worktree → codex-reviewed-PR workflow on Go projects. Primary owner of `lab-control` and any future
+      Go tooling in Mihai''s lab. Examples:\n\n<example>\nContext: Adding a new subcommand to lab-control\nuser: "Add a `lab
+      ssh render` subcommand that emits an OpenSSH config from inventory.yaml"\nassistant: "New CLI surface area needs idiomatic
+      cobra wiring and a YAML schema check. Let me use the go-engineer agent to scaffold the cmd file, internal renderer,
+      and table-driven tests in a worktree off mit-301."\n<commentary>\nNew subcommands belong under cmd/lab/, business logic
+      under internal/, and every code path needs a table-driven test before merge.\n</commentary>\n</example>\n\n<example>\nContext:
+      Cross-compilation regression\nuser: "CI just failed on darwin/arm64 with `undefined: syscall.Mount`"\nassistant: "Build-tag
+      drift between linux and darwin paths. I''ll use the go-engineer agent to split the platform-specific code behind `//go:build`
+      tags and verify all three target triples build clean."\n<commentary>\nlab-control must build on linux/amd64, linux/arm64,
+      and darwin/arm64 — any syscall or os-specific import needs proper build tags, not runtime branches.\n</commentary>\n</example>\n\n<example>\nContext:
+      Coverage gate failure\nuser: "PR is at 74% coverage, gate is 80%. Where do I add tests?"\nassistant: "Coverage targets
+      the uncovered branches, not feel-good padding. Let me use the go-engineer agent to run `go test -coverprofile`, identify
+      the missed branches in internal/inventory, and write table-driven cases for the YAML edge paths."\n<commentary>\nCoverage
+      debt is paid against actual uncovered branches via go tool cover -func, prioritizing error paths and YAML schema edges.\n</commentary>\n</example>\n\n<example>\nContext:
+      Codex review before merge\nuser: "Branch mit-305-host-groups is feature-complete, ready to merge?"\nassistant: "Not
+      until codex signs off. I''ll use the go-engineer agent to run the full local gate (golangci-lint, govulncheck, race-tests,
+      cross-builds), shell out to `codex exec` with the PR diff for review, and address findings before flipping the merge
+      button."\n<commentary>\nThe house workflow requires: green CI + 80%+ coverage + codex review pass. The agent owns running
+      all three and incorporating codex''s feedback, not just acknowledging it.\n</commentary>\n</example>'
+    description_hash: sha256:60a7949eb814af61f46e5ef36ea03abc1cd4efc81b4bd840cc446a1f549e6fdc
+    body_hash: sha256:ce22403e10d14f76953bd874a4de073c14ae92b56bab2b4d27e924b93b8eee57
+    tags:
+    - engineer
+    - engineering
+    - go
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-01'
+    aliases: []
+  gpu-engineer:
+    file: engineering/gpu-engineer.md
+    category: engineering
+    description: 'Use this agent when working on CUDA kernels, TensorRT/TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared
+      memory tuning, or any GPU-accelerated computing task. This agent has deep expertise in NVIDIA hardware architectures
+      (Hopper, Blackwell, GeForce vs. datacenter SKUs), CUDA programming, kernel profiling, and performance optimization.
+      Examples:\n\n<example>\nContext: Debugging a CUDA kernel failure on specific GPU hardware\nuser: "Our CUTLASS GEMM kernel
+      fails on GB10 but works on B200"\nassistant: "Hardware-specific kernel failures usually come from resource limits —
+      shared memory, registers, or occupancy. Let me use the gpu-engineer agent to diagnose the root cause and create a hardware-appropriate
+      configuration."\n<commentary>\nDifferent GPU SKUs within the same architecture can have very different resource limits.\n</commentary>\n</example>\n\n<example>\nContext:
+      Optimizing inference performance with TensorRT-LLM\nuser: "Our LLM inference is only hitting 40% of theoretical throughput"\nassistant:
+      "There''s likely a bottleneck in the kernel configs or memory layout. I''ll use the gpu-engineer agent to profile the
+      pipeline and identify optimization opportunities."\n<commentary>\nGPU inference optimization requires understanding
+      the full stack from model to metal.\n</commentary>\n</example>\n\n<example>\nContext: Writing custom CUDA kernels\nuser:
+      "I need a fused attention kernel that handles variable sequence lengths"\nassistant: "Fused kernels require careful
+      shared memory management and warp-level programming. Let me use the gpu-engineer agent to design and implement an efficient
+      kernel."\n<commentary>\nCustom CUDA kernels need deep understanding of the memory hierarchy and execution model.\n</commentary>\n</example>\n\n<example>\nContext:
+      Porting kernels across GPU architectures\nuser: "We need to support both Hopper and Blackwell with the same codebase"\nassistant:
+      "Cross-architecture support requires compile-time and runtime dispatch based on SM version. I''ll use the gpu-engineer
+      agent to implement proper architecture-aware kernel selection."\n<commentary>\nEach GPU generation introduces new instructions
+      and changes resource limits.\n</commentary>\n</example>'
+    description_hash: sha256:05a872cd3bce302c6326ebb5388ef50d849d68a1be8b06732fc3fb0a6ae17142
+    body_hash: sha256:7f21e56108f4fb29b32dec7a7607db922679d49aa1d4d693b2826a3336d33b79
+    tags:
+    - engineer
+    - engineering
+    - gpu
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  growth-hacker:
+    file: marketing/growth-hacker.md
+    category: marketing
+    description: ''
+    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    body_hash: sha256:bd7887081e9159ed64b2803033114471f84269f3205b22e513526cd840b8225a
+    tags:
+    - growth
+    - hacker
+    - marketing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  grpc-contracts:
+    file: engineering/grpc-contracts.md
+    category: engineering
+    description: 'Use this agent when validating gRPC/protobuf contract compatibility across multiple backends, checking ALB
+      header parsing consistency between Go and Swift, auditing proto file deployment, or designing cross-language contract
+      tests. Examples:\n\n<example>\nContext: Cross-language header parsing\nuser: "Both Go and Swift backends parse X-Client-Cert
+      headers — are they consistent?"\nassistant: "Cross-language header parsing divergence causes subtle auth failures. Let
+      me use the grpc-contracts agent to compare both implementations."\n<commentary>\nDifferent languages handle base64 decoding,
+      URL parsing, and string encoding differently.\n</commentary>\n</example>\n\n<example>\nContext: Proto file deployment
+      issues\nuser: "gRPC calls fail in production but work locally"\nassistant: "Proto file resolution differs between environments.
+      I''ll use the grpc-contracts agent to check proto bundling and path resolution."\n<commentary>\nProto files resolved
+      from process.cwd() may not exist in deployed containers or App Hosting bundles.\n</commentary>\n</example>\n\n<example>\nContext:
+      Adding a new gRPC service\nuser: "Add a new RPC to the certificate service proto"\nassistant: "Proto changes affect
+      all consumers. Let me use the grpc-contracts agent to trace all implementations and ensure compatibility."\n<commentary>\nProto
+      changes must be coordinated across Go, Swift, and TypeScript consumers.\n</commentary>\n</example>'
+    description_hash: sha256:72ccf028e1e2b7d521dbeae8aa957a56232814c18f17988e2c9e97eea8e7ba94
+    body_hash: sha256:fe8466920f7dcebc426f11d25b1b5220fecf7e3f9dc8e35cfa3b3d8756eed1bd
+    tags:
+    - contracts
+    - engineering
+    - grpc
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  hiring-manager:
+    file: studio-operations/hiring-manager.md
+    category: studio-operations
+    description: 'Use this agent to analyze the current agent roster, spot gaps exposed by real work, draft new role definitions,
+      and iterate with codex CLI before committing them. Also used to spot redundancy (two agents doing the same thing) and
+      to refresh existing role .md files when their scope drifts. Examples:\n\n<example>\nContext: A recent debugging session
+      exposed a capability nobody owns\nuser: "We just spent three hours debugging nvidia-ctk CDI spec generation. Neither
+      embedded-linux nor embedded-device had a clean take. Do we need a new agent?"\nassistant: "A concrete gap test, not
+      a hunch — perfect for hiring-manager. It will compare the CDI-spec workload against embedded-linux (Yocto/BSP) and embedded-device
+      (device-side agent internals). If neither''s description mentions CDI or nvidia-container-runtime, the verdict is: extend
+      embedded-linux (likely), split a new cdi-runtime agent (if the scope justifies it), or no-op (if it was really a one-off)."\n<commentary>\nThe
+      decision here is three-way: extend / split / no-op. That''s the hiring-manager''s actual judgment call — not "should
+      we add an agent" but "which of these three moves is right given the evidence."\n</commentary>\n</example>\n\n<example>\nContext:
+      Wondering whether a role should be added\nuser: "Do we need a vision engineer? Or an edge-vision engineer?"\nassistant:
+      "Before drafting anything new, let me use the hiring-manager to compare that proposed scope against what vision-engineer
+      and gpu-engineer already cover. If there''s a real gap, it''ll iterate with codex to sharpen the role; if not, it''ll
+      recommend enhancing an existing one."\n<commentary>\nA common failure mode is creating duplicate agents. The hiring-manager''s
+      first job is to check coverage before proposing additions.\n</commentary>\n</example>\n\n<example>\nContext: An existing
+      agent''s scope has drifted\nuser: "swift-backend keeps getting pulled into GStreamer C interop work that''s really a
+      separate thing"\nassistant: "Scope creep in an agent description is a signal to either split it or refine its description.
+      I''ll use the hiring-manager to decide which and revise the .md with codex rounds."\n<commentary>\nAgent descriptions
+      rot over time as work evolves. The hiring-manager keeps them sharp.\n</commentary>\n</example>\n\n<example>\nContext:
+      Periodic roster audit\nuser: "Do a pass on the roster — anything duplicates or is obviously missing?"\nassistant: "I''ll
+      use hiring-manager in audit mode. It''ll surface three things: (1) overlap pairs (e.g., backend-architect and swift-backend
+      both claiming gRPC service design), (2) rot — agents whose description keywords don''t match what the repo now actually
+      has, (3) missing coverage — recurring task types with no clear owner. Output is a prioritized list, not a set of file
+      changes — you decide what to act on."\n<commentary>\nAudit mode is read-only. The value is the prioritization: which
+      overlap is costing you most churn, which gap is hit most often. That''s the judgment call, not the listing itself.\n</commentary>\n</example>'
+    description_hash: sha256:3be5b42dfe3f0037ae0a3f77ac652015d658ef637cf02ceaeb8d3ff654dd231d
+    body_hash: sha256:afe9b9c566711d10b7534d704d6808acee1e02e4a3fdbe89071994dffcbbd1eb
+    tags:
+    - hiring
+    - manager
+    - studio-operations
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-04-20'
+    aliases: []
+  idea-evaluator:
+    file: product/idea-evaluator.md
+    category: product
+    description: 'Use this agent to stress-test startup ideas before committing time to build them. Applies proven frameworks
+      (YC, lean startup, jobs-to-be-done) to score ideas, identify the riskiest assumptions, run pre-mortems, and make kill/pursue/pivot
+      decisions. The skeptical friend every founder needs. Examples:\n\n<example>\nContext: Evaluating a new startup idea\nuser:
+      "I want to build an app that helps people find workout buddies nearby"\nassistant: "Let me stress-test that idea before
+      you invest a sprint. I''ll use the idea-evaluator agent to score it across key dimensions and identify the riskiest
+      assumptions."\n<commentary>\nEvery sprint invested in the wrong idea is a sprint not invested in the right one.\n</commentary>\n</example>\n\n<example>\nContext:
+      Choosing between multiple ideas\nuser: "I have 4 ideas and can only build one this week. Help me pick."\nassistant:
+      "I''ll evaluate all 4 against the same criteria so you can compare apples to apples. Let me use the idea-evaluator agent
+      to rank them."\n<commentary>\nWhen choosing between ideas, consistent evaluation criteria prevent gut-feel bias.\n</commentary>\n</example>\n\n<example>\nContext:
+      Running a pre-mortem on an idea\nuser: "We''re about to start building the AI journaling app. What could go wrong?"\nassistant:
+      "Smart to ask before building. I''ll use the idea-evaluator agent to run a pre-mortem and surface the most likely failure
+      modes."\n<commentary>\nPre-mortems are cheaper than post-mortems. Find the failure modes before you build.\n</commentary>\n</example>\n\n<example>\nContext:
+      Deciding whether to kill or pivot an idea\nuser: "We built the MVP and got 50 signups but only 3 active users. Should
+      we keep going?"\nassistant: "Those numbers tell a story. Let me use the idea-evaluator agent to diagnose what''s happening
+      and recommend kill, pivot, or persevere."\n<commentary>\nThe hardest startup skill is knowing when to quit vs. when
+      to push through.\n</commentary>\n</example>'
+    description_hash: sha256:710008b81d82b3176e6ac87b08cd93aa809fb52221909002236b1102d8351604
+    body_hash: sha256:584ca15275c89eabc8983ae4f5a78987be94072335bca89911ce6fafa5c89de0
+    tags:
+    - evaluator
+    - idea
+    - product
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  infra-reviewer:
+    file: engineering/infra-reviewer.md
+    category: engineering
+    description: 'Use this agent when reviewing Terraform plans, validating GCP configurations, auditing CI/CD pipelines for
+      infrastructure conflicts, or catching cloud-specific gotchas before apply. This agent specializes in GCP (Cloud Run,
+      Certificate Manager, Network Security, CAS), Terraform state conflicts, and deployment pipeline consistency. Examples:\n\n<example>\nContext:
+      Reviewing Terraform before apply\nuser: "Review the ALB mTLS Terraform module before we apply it"\nassistant: "Terraform
+      for GCP mTLS has several gotchas. Let me use the infra-reviewer agent to validate locations, IAM, and resource dependencies."\n<commentary>\nGCP
+      resources have location constraints (TrustConfig must be global) that are easy to get wrong.\n</commentary>\n</example>\n\n<example>\nContext:
+      Deployment pipeline conflicts\nuser: "Our gcloud deploy and Terraform keep overwriting each other"\nassistant: "Dual
+      management of Cloud Run is a common issue. I''ll use the infra-reviewer agent to identify conflicts and recommend a
+      single source of truth."\n<commentary>\nWhen both CI/CD scripts and Terraform manage the same resources, state drift
+      causes outages.\n</commentary>\n</example>\n\n<example>\nContext: IAM and permissions audit\nuser: "The Terraform apply
+      fails with permission denied"\nassistant: "IAM issues need systematic debugging. Let me use the infra-reviewer agent
+      to check service account roles and API enablement."\n<commentary>\nGCP IAM requires specific roles per resource type
+      and APIs must be enabled before use.\n</commentary>\n</example>'
+    description_hash: sha256:0d732895f7447d12709f358333172f71e3630f166fa5d5369784c275d141aeeb
+    body_hash: sha256:e012bb46ea8871bf026f855ab8b65f442f5ef7f297a7e4d784f37382c1017009
+    tags:
+    - engineering
+    - infra
+    - reviewer
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  infrastructure-maintainer:
+    file: studio-operations/infrastructure-maintainer.md
+    category: studio-operations
+    description: 'Use this agent when monitoring system health, optimizing performance, managing scaling, or ensuring infrastructure
+      reliability. This agent excels at keeping studio applications running smoothly while preparing for growth and preventing
+      disasters. Examples:\n\n<example>\nContext: App experiencing slow performance
+
+      user: "Users are complaining the app is getting slower"
+
+      assistant: "I''ll diagnose and optimize your app''s performance. Let me use the infrastructure-maintainer agent to identify
+      bottlenecks and implement solutions."
+
+      <commentary>
+
+      Performance degradation often creeps in gradually until it reaches a tipping point that drives users away.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Preparing for viral growth
+
+      user: "We might go viral next week with this influencer partnership"
+
+      assistant: "Let''s ensure your infrastructure can handle the surge. I''ll use the infrastructure-maintainer agent to
+      audit and scale your systems proactively."
+
+      <commentary>
+
+      Viral moments can kill apps that aren''t prepared—success becomes failure without proper infrastructure.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Reducing infrastructure costs
+
+      user: "Our server costs are eating up all our profit margins"
+
+      assistant: "I''ll analyze and optimize your infrastructure spending. Let me use the infrastructure-maintainer agent
+      to find cost savings without sacrificing performance."
+
+      <commentary>
+
+      Many apps overspend on infrastructure due to poor optimization and outdated configurations.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Setting up monitoring and alerts
+
+      user: "I want to know immediately if something breaks"
+
+      assistant: "Proactive monitoring is essential. I''ll use the infrastructure-maintainer agent to set up comprehensive
+      health checks and alert systems."
+
+      <commentary>
+
+      The first user complaint should never be how you discover an outage.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:c88dd94f5b23a7e0e3cc8a5de36dfe5681dfcc5f8cab849f7052e98e54e07690
+    body_hash: sha256:301b9595168ca3a02833ed5cd572368120e45dce39e041ee5dd32e4f85240d2b
+    tags:
+    - infrastructure
+    - maintainer
+    - studio-operations
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  instagram-curator:
+    file: marketing/instagram-curator.md
+    category: marketing
+    description: ''
+    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    body_hash: sha256:7ab9a71d39e42c44af5832de6e20bef124d6caa61275ad5471a9254228483cd5
+    tags:
+    - curator
+    - instagram
+    - marketing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  joker:
+    file: bonus/joker.md
+    category: bonus
+    description: 'Use this agent when you need to lighten the mood, create funny content, or add humor to any situation. This
+      agent specializes in dad jokes, programming puns, and startup humor. Examples:\n\n<example>\nContext: Team needs a laugh
+      during a stressful sprint\nuser: "We''ve been debugging for hours and everyone''s frustrated"\nassistant: "Time for
+      a morale boost! Let me use the joker agent to share some programming humor."\n<commentary>\nHumor can help reset team
+      energy during challenging moments.\n</commentary>\n</example>\n\n<example>\nContext: Creating fun error messages\nuser:
+      "Our 404 page is boring"\nassistant: "Let''s make that error page memorable! I''ll use the joker agent to create some
+      funny 404 messages."\n<commentary>\nHumorous error pages can turn frustration into delight.\n</commentary>\n</example>'
+    description_hash: sha256:6a0b7b55520405e19b46c84f9bd01deeb2a972e16b51210e7b031586c3ad3098
+    body_hash: sha256:51f65b1a7a0f51e1702c5f009dde2b187a52d8059a11247f112f6a1493bd144d
+    tags:
+    - bonus
+    - joker
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  legal-compliance-checker:
+    file: studio-operations/legal-compliance-checker.md
+    category: studio-operations
+    description: 'Use this agent when reviewing terms of service, privacy policies, ensuring regulatory compliance, or handling
+      legal requirements. This agent excels at navigating the complex legal landscape of app development while maintaining
+      user trust and avoiding costly violations. Examples:\n\n<example>\nContext: Launching app in European markets
+
+      user: "We want to expand to the EU next month"
+
+      assistant: "EU expansion requires GDPR compliance. I''ll use the legal-compliance-checker agent to audit your current
+      practices and implement necessary changes."
+
+      <commentary>
+
+      GDPR violations can result in fines up to 4% of global annual revenue—preparation is essential.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Adding AI features to the app
+
+      user: "We''re integrating ChatGPT into our education app"
+
+      assistant: "AI integration has specific legal considerations. Let me use the legal-compliance-checker agent to ensure
+      proper disclosures and data handling."
+
+      <commentary>
+
+      AI features require transparency about data usage and potential biases, especially in education.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Collecting user health data
+
+      user: "Our fitness app will track heart rate and sleep patterns"
+
+      assistant: "Health data has strict privacy requirements. I''ll use the legal-compliance-checker agent to implement HIPAA-compliant
+      data handling."
+
+      <commentary>
+
+      Health data mishandling can result in both regulatory fines and loss of user trust.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Implementing in-app purchases for children''s app
+
+      user: "We want to add a coin store to our kids'' game"
+
+      assistant: "Children''s apps have special requirements for purchases. Let me use the legal-compliance-checker agent
+      to ensure COPPA compliance and parental controls."
+
+      <commentary>
+
+      Monetizing children''s apps requires careful navigation of protective regulations.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:4c6d6d8e1347a7624024b74a1731ef7f70725fe2a2d57001e38c9caa97d661f7
+    body_hash: sha256:1e57c4fd32896a785b6673a67d2cea53ccf17ba05eb51ec9b4a1fa8bcef55141
+    tags:
+    - checker
+    - compliance
+    - legal
+    - studio-operations
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  market-validator:
+    file: product/market-validator.md
+    category: product
+    description: 'Use this agent when you need to evaluate the business viability of a startup idea, size a market, analyze
+      unit economics, assess willingness-to-pay, or understand why similar ideas have succeeded or failed. This agent turns
+      gut feelings about opportunities into numbers and evidence. Examples:\n\n<example>\nContext: Evaluating whether a market
+      is big enough\nuser: "Is the market for AI-powered meal planning big enough to build a business around?"\nassistant:
+      "Let me use the market-validator agent to size the TAM/SAM/SOM and assess whether this market can support a venture-scale
+      business."\n<commentary>\nMarket sizing prevents building something nobody can make money from.\n</commentary>\n</example>\n\n<example>\nContext:
+      Figuring out a business model\nuser: "Should this be a subscription app or a one-time purchase?"\nassistant: "The right
+      model depends on user behavior and comparable products. I''ll use the market-validator agent to analyze monetization
+      approaches in this space."\n<commentary>\nBusiness model choice dramatically affects what you build and how you grow.\n</commentary>\n</example>\n\n<example>\nContext:
+      Understanding why a previous startup failed\nuser: "There were 3 apps that tried this before and all died. Should we
+      still try?"\nassistant: "Past failures contain gold — if you learn the right lessons. Let me use the market-validator
+      agent to do a post-mortem on those failures and identify what''s different now."\n<commentary>\nFailed startups in a
+      space can mean the idea is bad — or that timing/execution was wrong.\n</commentary>\n</example>\n\n<example>\nContext:
+      Assessing willingness to pay\nuser: "People say they want this but I don''t know if they''ll pay for it"\nassistant:
+      "Stated interest and actual payment are very different things. I''ll use the market-validator agent to assess willingness-to-pay
+      using comparable products and behavioral signals."\n<commentary>\nWillingness to pay is the single hardest thing to
+      validate pre-launch.\n</commentary>\n</example>'
+    description_hash: sha256:216e4a9c26fe482065c1319ad5205be72b7d7bdb224813666fd2325f3fdb9bbc
+    body_hash: sha256:c8dae5c721db69a6a1250505ad563f36c38a781cb62786b107ad8ca9c4f9e57b
+    tags:
+    - market
+    - product
+    - validator
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  mobile-app-builder:
+    file: engineering/mobile-app-builder.md
+    category: engineering
+    description: 'Use this agent when developing native iOS or Android applications, implementing React Native features, or
+      optimizing mobile performance. This agent specializes in creating smooth, native-feeling mobile experiences. Examples:\n\n<example>\nContext:
+      Building a new mobile app\nuser: "Create a TikTok-style video feed for our app"\nassistant: "I''ll build a performant
+      video feed with smooth scrolling. Let me use the mobile-app-builder agent to implement native performance optimizations."\n<commentary>\nVideo
+      feeds require careful mobile optimization for smooth scrolling and memory management.\n</commentary>\n</example>\n\n<example>\nContext:
+      Implementing mobile-specific features\nuser: "Add push notifications and biometric authentication"\nassistant: "I''ll
+      implement native push notifications and Face ID/fingerprint auth. Let me use the mobile-app-builder agent to ensure
+      proper platform integration."\n<commentary>\nNative features require platform-specific implementation and proper permissions
+      handling.\n</commentary>\n</example>\n\n<example>\nContext: Cross-platform development\nuser: "We need this feature
+      on both iOS and Android"\nassistant: "I''ll implement it using React Native for code reuse. Let me use the mobile-app-builder
+      agent to ensure native performance on both platforms."\n<commentary>\nCross-platform development requires balancing
+      code reuse with platform-specific optimizations.\n</commentary>\n</example>'
+    description_hash: sha256:5e6661a2503ee87758e72b62c2a61e8f2714f1d72230bab47da03b3d1fa751a7
+    body_hash: sha256:a20a2f23356bec699c7c4a779ccd026a6e8a14c456e361308af2dfc261a88de4
+    tags:
+    - app
+    - builder
+    - engineering
+    - mobile
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  performance-benchmarker:
+    file: testing/performance-benchmarker.md
+    category: testing
+    description: 'Use this agent for comprehensive performance testing, profiling, and optimization recommendations. This
+      agent specializes in measuring speed, identifying bottlenecks, and providing actionable optimization strategies for
+      applications. Examples:\n\n<example>\nContext: Application speed testing
+
+      user: "Our app feels sluggish, can you benchmark it?"
+
+      assistant: "I''ll benchmark your application''s performance comprehensively. Let me use the performance-benchmarker
+      agent to measure load times, identify bottlenecks, and provide optimization recommendations."
+
+      <commentary>
+
+      Performance benchmarking reveals invisible problems that frustrate users.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Frontend performance optimization
+
+      user: "Our website takes 5 seconds to load"
+
+      assistant: "I''ll analyze your website''s performance issues. Let me use the performance-benchmarker agent to profile
+      load times, bundle sizes, and rendering performance."
+
+      <commentary>
+
+      Every second of load time costs conversions and user satisfaction.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Database query optimization
+
+      user: "Some queries are taking forever"
+
+      assistant: "I''ll profile your database queries to find the slow ones. Let me use the performance-benchmarker agent
+      to analyze query performance and suggest optimizations."
+
+      <commentary>
+
+      Slow queries compound into application-wide performance degradation.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Mobile app performance
+
+      user: "Our React Native app is janky on older phones"
+
+      assistant: "I''ll benchmark your app''s performance on various devices. Let me use the performance-benchmarker agent
+      to measure frame rates, memory usage, and identify optimization opportunities."
+
+      <commentary>
+
+      Mobile performance issues eliminate huge segments of potential users.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:15954de560d495780feccbd7d70f3947ff341b9dc2bb7057523f504e7e51297c
+    body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
+    tags:
+    - benchmarker
+    - performance
+    - testing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  project-shipper:
+    file: project-management/project-shipper.md
+    category: project-management
+    description: 'PROACTIVELY use this agent when approaching launch milestones, release deadlines, or go-to-market activities.
+      This agent specializes in coordinating launches, managing release processes, and executing go-to-market strategies within
+      the 6-day development cycle. Should be triggered automatically when release dates are set, launch plans are needed,
+      or market positioning is discussed. Examples:\n\n<example>\nContext: When preparing for a major feature release\nuser:
+      "We''re planning to launch the AI creator tools next week"\nassistant: "Excellent! A major feature launch requires careful
+      coordination. Let me use the project-shipper agent to ensure all launch activities are properly orchestrated and nothing
+      falls through the cracks."\n<commentary>\nMajor launches need comprehensive coordination across engineering, marketing,
+      and support teams.\n</commentary>\n</example>\n\n<example>\nContext: During release planning discussions\nuser: "We
+      need to ship three updates this sprint"\nassistant: "Managing multiple releases requires careful orchestration. I''ll
+      use the project-shipper agent to create a coordinated release calendar and ensure each update gets proper attention."\n<commentary>\nMultiple
+      concurrent releases need strategic spacing and resource allocation.\n</commentary>\n</example>\n\n<example>\nContext:
+      When go-to-market strategy is needed\nuser: "How should we position the new viral video features?"\nassistant: "Positioning
+      is crucial for feature adoption. Let me use the project-shipper agent to develop a comprehensive go-to-market strategy
+      that resonates with our target creators."\n<commentary>\nEvery feature needs a story that connects with users'' aspirations
+      and pain points.\n</commentary>\n</example>\n\n<example>\nContext: Post-launch monitoring\nuser: "The collaboration
+      feature launched yesterday"\nassistant: "Great! The critical first 48 hours determine success. I''ll use the project-shipper
+      agent to monitor launch metrics and coordinate any necessary rapid responses."\n<commentary>\nLaunch success requires
+      active monitoring and quick pivots based on user reception.\n</commentary>\n</example>'
+    description_hash: sha256:7d6f71e0796f4aa6a2a635ab73cb57b5d92f1dc142d3277291914966c8140b9f
+    body_hash: sha256:613813ed50456ec689dadbdc4803edb4fa20613a96101b24a9ca3da09553d3fa
+    tags:
+    - project
+    - project-management
+    - shipper
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  rapid-prototyper:
+    file: engineering/rapid-prototyper.md
+    category: engineering
+    description: 'Use this agent when you need to quickly create a new application prototype, MVP, or proof-of-concept within
+      the 6-day development cycle. This agent specializes in scaffolding projects, integrating trending features, and building
+      functional demos rapidly. Examples:\n\n<example>\nContext: Starting a new experiment or app idea\nuser: "Create a new
+      app that helps people overcome phone anxiety"\nassistant: "I''ll help you create a phone anxiety app. Let me use the
+      rapid-prototyper agent to scaffold this project and build an MVP."\n<commentary>\nWhen starting any new project or experiment,
+      use the rapid-prototyper to quickly set up the foundation and core features.\n</commentary>\n</example>\n\n<example>\nContext:
+      Need to test a trending feature or viral concept\nuser: "I saw this TikTok trend about AI avatars, can we build something
+      around that?"\nassistant: "That''s a great trending opportunity! I''ll use the rapid-prototyper agent to quickly build
+      a prototype app featuring AI avatars."\n<commentary>\nFor capitalizing on trends and viral content, the rapid-prototyper
+      can quickly create testable prototypes.\n</commentary>\n</example>\n\n<example>\nContext: Validating a business idea
+      with minimal investment\nuser: "We need to test if people would pay for a subscription box curation app"\nassistant:
+      "Let''s validate that idea with a quick prototype. I''ll use the rapid-prototyper agent to build an MVP with basic subscription
+      and curation features."\n<commentary>\nBusiness validation requires fast prototyping to test market fit before full
+      investment.\n</commentary>\n</example>\n\n<example>\nContext: Creating demo apps for stakeholder presentations\nuser:
+      "We''re meeting with investors next week and need to show them our vision"\nassistant: "I''ll help create a compelling
+      demo. Let me use the rapid-prototyper agent to build a functional prototype that showcases your vision."\n<commentary>\nInvestor
+      demos and stakeholder presentations benefit from working prototypes rather than just mockups.\n</commentary>\n</example>'
+    description_hash: sha256:066e875eb74bfbcbe827e29d2286a0f7a2b9a79d706df2e89841be08efad794f
+    body_hash: sha256:02ab1a60dcd04e11ec76540dbb00b27bfe35dd4eb6b73fc013046fcf4eb6fa4c
+    tags:
+    - engineering
+    - prototyper
+    - rapid
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  reddit-community-builder:
+    file: marketing/reddit-community-builder.md
+    category: marketing
+    description: ''
+    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    body_hash: sha256:b13ad116fbc9330e08055d7c69e0a79af82311c38653cbeee0342a540aa17db7
+    tags:
+    - builder
+    - community
+    - marketing
+    - reddit
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  security-auditor:
+    file: engineering/security-auditor.md
+    category: engineering
+    description: 'Use this agent when reviewing code or infrastructure for security vulnerabilities, auditing PKI/mTLS configurations,
+      validating certificate lifecycles, or checking for OWASP-style issues. This agent specializes in finding header injection,
+      open redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations. Examples:\n\n<example>\nContext:
+      Reviewing mTLS configuration\nuser: "We''re setting up mTLS with ALB header forwarding"\nassistant: "mTLS header forwarding
+      has critical spoofing risks. Let me use the security-auditor agent to validate the entire chain from ALB to backend."\n<commentary>\nmTLS
+      via header forwarding requires ingress restriction and header validation to prevent spoofing.\n</commentary>\n</example>\n\n<example>\nContext:
+      Auth flow security review\nuser: "Review the CLI auth enrollment flow for vulnerabilities"\nassistant: "OAuth-like enrollment
+      flows have multiple attack surfaces. I''ll use the security-auditor agent to check for open redirects, token theft,
+      and CSRF."\n<commentary>\nBrowser-to-CLI redirect flows must validate redirect URIs and protect tokens in transit.\n</commentary>\n</example>\n\n<example>\nContext:
+      Certificate lifecycle audit\nuser: "Are revoked certificates still being accepted?"\nassistant: "Certificate revocation
+      is critical. Let me use the security-auditor agent to trace the full validation path and check for revocation bypass."\n<commentary>\nWhen
+      ALBs don''t check CRLs, backends must implement their own revocation checking.\n</commentary>\n</example>'
+    description_hash: sha256:566525f913fd8288718debe584954c647d61a5705b2b746d2a38ffca958456be
+    body_hash: sha256:76b39eda069687698b727e50355ea27aa16b8fe5533546791fdf2e0a8902fdb1
+    tags:
+    - auditor
+    - engineering
+    - security
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  social-amplifier:
+    file: writing/social-amplifier.md
+    category: writing
+    description: 'Use this agent to turn finished or near-finished blog posts into platform-native LinkedIn and X posts that
+      sound like Mihai, or to draft standalone social posts when a thought is worth sharing but not worth a full blog post.
+      Produces different posts per platform (not the same post reformatted), runs a codex CLI feedback loop. Examples:\n\n<example>\nContext:
+      Blog post just finished\nuser: "The Triton SM121 post is done. Make the social versions."\nassistant: "Using the social-amplifier
+      agent to draft LinkedIn and X versions from the final post."\n</example>\n\n<example>\nContext: Standalone thought\nuser:
+      "Quick thought about edge inference latency I want to post — not a full blog, just social"\nassistant: "Standalone social.
+      Using the social-amplifier agent."\n</example>\n\n<example>\nContext: LinkedIn-only request\nuser: "I want a LinkedIn
+      post about shipping the Jetson flash pipeline — skip X"\nassistant: "Single-platform mode. I''ll use the social-amplifier
+      agent for LinkedIn only."\n</example>'
+    description_hash: sha256:30ea78f41aea2d65cc3087ff6355eb3fa942873d43259d9ade2541bdfa26179e
+    body_hash: sha256:ad13f605e0908bb5113c67a46bef34ef4d9ab552fdae3436358af4d8b88d90e3
+    tags:
+    - amplifier
+    - social
+    - writing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-04-20'
+    aliases: []
+  sprint-prioritizer:
+    file: product/sprint-prioritizer.md
+    category: product
+    description: 'Use this agent when planning 6-day development cycles, prioritizing features, managing product roadmaps,
+      or making trade-off decisions. This agent specializes in maximizing value delivery within tight timelines. Examples:\n\n<example>\nContext:
+      Planning the next sprint\nuser: "We have 50 feature requests but only 6 days"\nassistant: "I''ll help prioritize for
+      maximum impact. Let me use the sprint-prioritizer agent to create a focused sprint plan that delivers the most value."\n<commentary>\nSprint
+      planning requires balancing user needs, technical constraints, and business goals.\n</commentary>\n</example>\n\n<example>\nContext:
+      Making feature trade-offs\nuser: "Should we build AI chat or improve onboarding?"\nassistant: "Let''s analyze the impact
+      of each option. I''ll use the sprint-prioritizer agent to evaluate ROI and make a data-driven recommendation."\n<commentary>\nFeature
+      prioritization requires analyzing user impact, development effort, and strategic alignment.\n</commentary>\n</example>\n\n<example>\nContext:
+      Mid-sprint scope changes\nuser: "The CEO wants us to add video calling to this sprint"\nassistant: "I''ll assess the
+      impact on current commitments. Let me use the sprint-prioritizer agent to reorganize priorities while maintaining sprint
+      goals."\n<commentary>\nScope changes require careful rebalancing to avoid sprint failure.\n</commentary>\n</example>'
+    description_hash: sha256:797b7b809a813b10a068a36c6884ba98874c4045a4ad1c7e89ae5fd612df4623
+    body_hash: sha256:82fdf9aa6451263c00d7e9c54c7073a2e6cf3edd3511c559d49eed90b31acd7f
+    tags:
+    - prioritizer
+    - product
+    - sprint
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  studio-coach:
+    file: bonus/studio-coach.md
+    category: bonus
+    description: 'PROACTIVELY use this agent when complex multi-agent tasks begin, when agents seem stuck or overwhelmed,
+      or when the team needs motivation and coordination. This agent serves as the elite performance coach for all other agents,
+      ensuring they operate at their highest level while maintaining composure and excellence. Should be triggered automatically
+      at the start of challenging projects or when detecting agent confusion. Examples:\n\n<example>\nContext: Starting a
+      complex project requiring multiple agents\nuser: "We need to build a viral TikTok app in 2 weeks"\nassistant: "This
+      is an ambitious goal that will require our A-team! Let me bring in the studio-coach to coordinate our agents and ensure
+      everyone performs at their peak."\n<commentary>\nComplex projects benefit from having a coach to keep all agents aligned
+      and motivated.\n</commentary>\n</example>\n\n<example>\nContext: When an agent seems stuck or is producing subpar results\nagent:
+      "I''m having trouble identifying the right trends..."\nassistant: "Let me bring in the studio-coach to help refocus
+      and elevate your approach."\n<commentary>\nAgents can get overwhelmed or lose focus - the coach helps them recenter
+      and excel.\n</commentary>\n</example>\n\n<example>\nContext: Before launching a major sprint or initiative\nuser: "Tomorrow
+      we start the 6-day sprint for our biggest project yet"\nassistant: "Time to rally the team! I''ll have the studio-coach
+      prepare everyone mentally and strategically for peak performance."\n<commentary>\nPre-sprint coaching ensures all agents
+      start with clarity, confidence, and coordination.\n</commentary>\n</example>\n\n<example>\nContext: When celebrating
+      wins or learning from failures\nuser: "Our app just hit #1 on the App Store!"\nassistant: "Incredible achievement! Let
+      me bring in the studio-coach to celebrate with the team and capture what made this success possible."\n<commentary>\nThe
+      coach helps institutionalize wins and extract learnings from both successes and failures.\n</commentary>\n</example>'
+    description_hash: sha256:435e30134a99597c269e282684beeb5dd4b72f602663de1797f997baf6459259
+    body_hash: sha256:7379ed505019fdd9d92fd599e424545a4aa23a9e765b72582cae142028cb6c3c
+    tags:
+    - bonus
+    - coach
+    - studio
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  studio-producer:
+    file: project-management/studio-producer.md
+    category: project-management
+    description: 'PROACTIVELY use this agent when coordinating across multiple teams, allocating resources, or optimizing
+      studio workflows. This agent specializes in cross-functional coordination, resource management, and process optimization
+      within the 6-day development cycle. Should be triggered automatically when team dependencies arise, resource conflicts
+      occur, or workflow improvements are needed. Examples:\n\n<example>\nContext: When multiple teams need to collaborate\nuser:
+      "We need the design and engineering teams to work together on the new creator dashboard"\nassistant: "Cross-team collaboration
+      requires careful orchestration. Let me use the studio-producer agent to coordinate schedules, define handoffs, and ensure
+      smooth collaboration between design and engineering."\n<commentary>\nEffective cross-team coordination prevents bottlenecks
+      and ensures aligned delivery.\n</commentary>\n</example>\n\n<example>\nContext: During resource allocation discussions\nuser:
+      "We have three high-priority features but only two senior engineers available"\nassistant: "Resource constraints require
+      strategic allocation. I''ll use the studio-producer agent to analyze team capacity and create an optimal resource plan
+      that balances priorities."\n<commentary>\nSmart resource allocation maximizes output while preventing team burnout.\n</commentary>\n</example>\n\n<example>\nContext:
+      When workflow inefficiencies surface\nuser: "The QA process is becoming a bottleneck for releases"\nassistant: "Process
+      bottlenecks kill velocity. Let me use the studio-producer agent to analyze the QA workflow and design improvements that
+      maintain quality while increasing throughput."\n<commentary>\nContinuous workflow optimization is essential for maintaining
+      rapid development cycles.\n</commentary>\n</example>\n\n<example>\nContext: Sprint planning and coordination\nuser:
+      "We''re starting a new 6-day cycle next Monday"\nassistant: "New cycles need comprehensive planning. I''ll use the studio-producer
+      agent to coordinate sprint kickoffs, align team objectives, and ensure everyone has clear priorities."\n<commentary>\nWell-coordinated
+      sprint starts set the tone for successful 6-day cycles.\n</commentary>\n</example>'
+    description_hash: sha256:de49e3c77b5780056d5746e8d6df10439912c300a692b13d30defb0f92e51177
+    body_hash: sha256:c27ac38f39dcca9ddbdbd3318e0cd164e48919ad60d23ebd20e2c78710ed0c8c
+    tags:
+    - producer
+    - project-management
+    - studio
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  support-responder:
+    file: studio-operations/support-responder.md
+    category: studio-operations
+    description: 'Use this agent when handling customer support inquiries, creating support documentation, setting up automated
+      responses, or analyzing support patterns. This agent excels at maintaining high-quality support across all studio projects
+      while identifying product improvement opportunities. Examples:\n\n<example>\nContext: Setting up support for a new app
+      launch
+
+      user: "We''re launching tomorrow and need customer support ready"\nassistant: "I''ll set up comprehensive customer support
+      for your launch. Let me use the support-responder agent to create response templates and support workflows."\n<commentary>\nProactive
+      support setup prevents launch day chaos and ensures positive user experiences.\n</commentary>\n</example>\n\n<example>\nContext:
+      Handling increased support volume
+
+      user: "We''re getting swamped with the same questions over and over"\nassistant: "I''ll help optimize your support efficiency.
+      Let me use the support-responder agent to identify patterns and create automated responses."\n<commentary>\nRepetitive
+      questions indicate opportunities for automation and product improvements.\n</commentary>\n</example>\n\n<example>\nContext:
+      Analyzing support tickets for product insights
+
+      user: "What are users actually struggling with in our app?"\nassistant: "Support tickets are a goldmine of insights.
+      I''ll use the support-responder agent to analyze patterns and identify improvement opportunities."\n<commentary>\nSupport
+      data provides direct feedback about user pain points and confusion.\n</commentary>\n</example>\n\n<example>\nContext:
+      Creating help documentation
+
+      user: "Users keep asking how to connect their TikTok account"\nassistant: "Let''s create clear documentation for that.
+      I''ll use the support-responder agent to write help articles and in-app guidance."\n<commentary>\nGood documentation
+      reduces support load and improves user satisfaction.\n</commentary>\n</example>'
+    description_hash: sha256:0bb6ebeee97a52edef0772671dba3a4ac1363b72ac4e719f5003e30ece0a9bc9
+    body_hash: sha256:f541d3974c8dad1451874d6ca0e25a4b3e39ea43f49397c0535b6d851e033de1
+    tags:
+    - responder
+    - studio-operations
+    - support
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  swift-backend:
+    file: engineering/swift-backend.md
+    category: engineering
+    description: 'Use this agent when building or modifying Swift server-side backends, implementing gRPC services in Swift,
+      working with Hummingbird, swift-nio, swift-certificates, or PostgreSQL via postgres-nio. This agent automatically loads
+      relevant Swift skills and understands the Wendy cloud services architecture. Examples:\n\n<example>\nContext: Modifying
+      Swift gRPC service implementation\nuser: "Add header-based certificate extraction fallback to AuthService"\nassistant:
+      "Server-side Swift gRPC changes need careful handling. Let me use the swift-backend agent to implement the header extraction
+      with proper validation."\n<commentary>\nSwift gRPC services require understanding of interceptors, contexts, and async
+      patterns.\n</commentary>\n</example>\n\n<example>\nContext: Swift backend performance issue\nuser: "The bidirectional
+      streaming RPC drops connections after 5 minutes"\nassistant: "gRPC streaming in Swift needs keepalive configuration.
+      I''ll use the swift-backend agent to diagnose and fix the connection lifecycle."\n<commentary>\nSwift gRPC streaming
+      requires understanding of NIO channels, HTTP/2 settings, and keepalive.\n</commentary>\n</example>\n\n<example>\nContext:
+      Database operations in Swift backend\nuser: "Add a certificate revocation check to the enrollment flow"\nassistant:
+      "Database queries in the Swift backend use postgres-nio. Let me use the swift-backend agent to implement the revocation
+      check with proper connection pooling."\n<commentary>\nPostgreSQL operations in Swift require async/await patterns with
+      postgres-nio.\n</commentary>\n</example>'
+    description_hash: sha256:aead8ae11d96f18923c77d259bf0d86fdcefd93c9682a09b6695645abf3d670c
+    body_hash: sha256:0fce0483ca582a844f6d4e9dc03a60f3ba82fb44f60f2214c04a7e4eb3293ec1
+    tags:
+    - backend
+    - engineering
+    - swift
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  test-results-analyzer:
+    file: testing/test-results-analyzer.md
+    category: testing
+    description: 'Use this agent for analyzing test results, synthesizing test data, identifying trends, and generating quality
+      metrics reports. This agent specializes in turning raw test data into actionable insights that drive quality improvements.
+      Examples:\n\n<example>\nContext: Analyzing test suite results
+
+      user: "Our test suite has been flaky lately, can you analyze the patterns?"
+
+      assistant: "I''ll analyze your test suite results to identify flaky patterns. Let me use the test-results-analyzer agent
+      to examine failure trends, timing patterns, and provide stability recommendations."
+
+      <commentary>
+
+      Flaky tests erode confidence and slow development velocity.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Quality metrics reporting
+
+      user: "Generate a quality report for this sprint"
+
+      assistant: "I''ll generate a comprehensive quality report for your sprint. Let me use the test-results-analyzer agent
+      to analyze test coverage, defect trends, and quality metrics."
+
+      <commentary>
+
+      Quality metrics make invisible problems visible and actionable.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Test trend analysis
+
+      user: "Are our tests getting slower over time?"
+
+      assistant: "I''ll analyze your test execution trends over time. Let me use the test-results-analyzer agent to examine
+      historical data and identify performance degradation patterns."
+
+      <commentary>
+
+      Slow tests compound into slow development cycles.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Coverage analysis
+
+      user: "Which parts of our codebase lack test coverage?"
+
+      assistant: "I''ll analyze your test coverage to find gaps. Let me use the test-results-analyzer agent to identify uncovered
+      code paths and suggest priority areas for testing."
+
+      <commentary>
+
+      Coverage gaps are where bugs love to hide.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:31cd4f4840202522c976dc5880ce9c6d29f634835d17547e5835c7b633d04335
+    body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
+    tags:
+    - analyzer
+    - results
+    - test
+    - testing
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  test-writer-fixer:
+    file: engineering/test-writer-fixer.md
+    category: engineering
+    description: 'Use this agent when code changes have been made and you need to write new tests, run existing tests, analyze
+      failures, and fix them while maintaining test integrity. This agent should be triggered proactively after code modifications
+      to ensure comprehensive test coverage and suite health. Examples:\n\n<example>\nContext: The user has just implemented
+      a new feature or modified existing code.\nuser: "I''ve updated the user authentication logic to support OAuth"\nassistant:
+      "I''ve successfully updated the authentication logic. Now let me run the test-writer-fixer agent to ensure all tests
+      pass with these changes."\n<commentary>\nSince code changes were made, use the Task tool to launch the test-writer-fixer
+      agent to run relevant tests and fix any failures.\n</commentary>\n</example>\n\n<example>\nContext: The user has refactored
+      a module or changed function signatures.\nuser: "Please refactor this payment processing module to use async/await"\nassistant:
+      "I''ve completed the refactoring to use async/await throughout the payment module."\n<function call omitted for brevity>\nassistant:
+      "Now I''ll use the test-writer-fixer agent to run the tests and fix any issues caused by the refactoring."\n<commentary>\nAfter
+      refactoring code, proactively use the test-writer-fixer agent to ensure tests still pass.\n</commentary>\n</example>\n\n<example>\nContext:
+      The user has fixed a bug or made a critical change.\nuser: "Fix the race condition in the data synchronization service"\nassistant:
+      "I''ve identified and fixed the race condition by implementing proper locking mechanisms."\n<function call omitted for
+      brevity>\nassistant: "Let me run the test-writer-fixer agent to verify the fix doesn''t break existing functionality."\n<commentary>\nAfter
+      bug fixes, use the test-writer-fixer agent to ensure the fix works and doesn''t introduce regressions.\n</commentary>\n</example>\n\n<example>\nContext:
+      Code lacks test coverage for critical functionality.\nuser: "Our payment processing module has no tests"\nassistant:
+      "That''s a critical gap. Let me use the test-writer-fixer agent to create comprehensive tests for the payment module
+      including edge cases and error scenarios."\n<commentary>\nCritical modules without tests are high-risk areas that need
+      immediate test coverage.\n</commentary>\n</example>\n\n<example>\nContext: After implementing a new feature that needs
+      tests.\nuser: "I''ve added the social sharing functionality"\nassistant: "Great! The social sharing is implemented.
+      Now let me use the test-writer-fixer agent to write tests that ensure this feature works correctly across different
+      platforms."\n<commentary>\nNew features should always include comprehensive test coverage from the start.\n</commentary>\n</example>'
+    description_hash: sha256:94dc1dab9d77d73ac19f745357455fc7d9757b9dc9c8d2fa2505c54e246b6446
+    body_hash: sha256:84c521dae1a1d6642c064f4c54a33318cd525aa09e2ec7ebe89eee2e04f03069
+    tags:
+    - engineering
+    - fixer
+    - test
+    - writer
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  tiktok-strategist:
+    file: marketing/tiktok-strategist.md
+    category: marketing
+    description: 'Use this agent when you need to create TikTok marketing strategies, develop viral content ideas, plan TikTok
+      campaigns, or optimize for TikTok''s algorithm. This agent specializes in creating shareable moments and leveraging
+      TikTok trends for app growth. Examples:\n\n<example>\nContext: Launching a new app and need TikTok strategy\nuser: "We''re
+      launching our phone anxiety app next week. How should we approach TikTok?"\nassistant: "TikTok will be crucial for your
+      launch. Let me use the tiktok-strategist agent to create a comprehensive TikTok marketing strategy for your phone anxiety
+      app."\n<commentary>\nNew app launches benefit from TikTok''s viral potential and young user base.\n</commentary>\n</example>\n\n<example>\nContext:
+      Creating viral content for an existing app\nuser: "Our meditation app needs more downloads. What kind of TikTok content
+      should we make?"\nassistant: "I''ll help you create viral TikTok content ideas. Let me use the tiktok-strategist agent
+      to develop content that showcases your app in trending formats."\n<commentary>\nExisting apps can boost downloads through
+      strategic TikTok content that fits platform culture.\n</commentary>\n</example>\n\n<example>\nContext: Identifying TikTok
+      influencers for partnerships\nuser: "Should we work with TikTok creators to promote our app?"\nassistant: "Creator partnerships
+      can be very effective. Let me use the tiktok-strategist agent to identify the right creators and collaboration strategies
+      for your app."\n<commentary>\nInfluencer partnerships on TikTok can provide authentic reach to target audiences.\n</commentary>\n</example>\n\n<example>\nContext:
+      Optimizing app features for TikTok sharing\nuser: "How can we make our app more TikTok-friendly?"\nassistant: "Making
+      your app TikTok-native is smart. I''ll use the tiktok-strategist agent to identify features and moments in your app
+      that users would want to share on TikTok."\n<commentary>\nApps with built-in TikTok-worthy moments see higher organic
+      growth through user-generated content.\n</commentary>\n</example>'
+    description_hash: sha256:7a81977ef3316ce15c0c9cfc42c24695053ee224187ef6b91bbcf144b0635ad3
+    body_hash: sha256:4600c641292d9e7c6602758059126011e8bb4712f5942eff77ccf3e606c941ff
+    tags:
+    - marketing
+    - strategist
+    - tiktok
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  tool-evaluator:
+    file: testing/tool-evaluator.md
+    category: testing
+    description: 'Use this agent when evaluating new development tools, frameworks, or services for the studio. This agent
+      specializes in rapid tool assessment, comparative analysis, and making recommendations that align with the 6-day development
+      cycle philosophy. Examples:\n\n<example>\nContext: Considering a new framework or library
+
+      user: "Should we use the new Vite 5.0 for our next project?"\nassistant: "I''ll evaluate Vite 5.0 for your needs. Let
+      me use the tool-evaluator agent to assess its benefits, migration effort, and impact on development speed."\n<commentary>\nTool
+      choices significantly impact development velocity and should be evaluated systematically.\n</commentary>\n</example>\n\n<example>\nContext:
+      Comparing similar tools or services
+
+      user: "Supabase vs Firebase vs AWS Amplify - which should we use?"\nassistant: "I''ll compare these backend services
+      for your use case. Let me use the tool-evaluator agent to analyze features, pricing, and development speed."\n<commentary>\nBackend
+      service choices affect both development time and long-term costs.\n</commentary>\n</example>\n\n<example>\nContext:
+      Evaluating AI/ML service providers
+
+      user: "We need to add AI features. OpenAI, Anthropic, or Replicate?"\nassistant: "I''ll evaluate these AI providers
+      for your specific needs. Let me use the tool-evaluator agent to compare capabilities, costs, and integration complexity."\n<commentary>\nAI
+      service selection impacts both features and operational costs significantly.\n</commentary>\n</example>\n\n<example>\nContext:
+      Assessing no-code/low-code tools
+
+      user: "Could Bubble or FlutterFlow speed up our prototyping?"\nassistant: "Let''s evaluate if no-code tools fit your
+      workflow. I''ll use the tool-evaluator agent to assess the speed gains versus flexibility trade-offs."\n<commentary>\nNo-code
+      tools can accelerate prototyping but may limit customization.\n</commentary>\n</example>'
+    description_hash: sha256:1643e3ce76fe98f28e4cc6b6c2ed076759cadc1b67670fc3ba63918c552541bd
+    body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
+    tags:
+    - evaluator
+    - testing
+    - tool
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  trend-researcher:
+    file: product/trend-researcher.md
+    category: product
+    description: 'Use this agent when you need to identify market opportunities, analyze trending topics, research viral content,
+      or understand emerging user behaviors. This agent specializes in finding product opportunities from TikTok trends, App
+      Store patterns, and social media virality. Examples:\n\n<example>\nContext: Looking for new app ideas based on current
+      trends\nuser: "What''s trending on TikTok that we could build an app around?"\nassistant: "I''ll research current TikTok
+      trends that have app potential. Let me use the trend-researcher agent to analyze viral content and identify opportunities."\n<commentary>\nWhen
+      seeking new product ideas, the trend-researcher can identify viral trends with commercial potential.\n</commentary>\n</example>\n\n<example>\nContext:
+      Validating a product concept against market trends\nuser: "Is there market demand for an app that helps introverts network?"\nassistant:
+      "Let me validate this concept against current market trends. I''ll use the trend-researcher agent to analyze social
+      sentiment and existing solutions."\n<commentary>\nBefore building, validate ideas against real market signals and user
+      behavior patterns.\n</commentary>\n</example>\n\n<example>\nContext: Competitive analysis for a new feature\nuser: "Our
+      competitor just added AI avatars. Should we care?"\nassistant: "I''ll analyze the market impact and user reception of
+      AI avatars. Let me use the trend-researcher agent to assess this feature''s traction."\n<commentary>\nCompetitive features
+      need trend analysis to determine if they''re fleeting or fundamental.\n</commentary>\n</example>\n\n<example>\nContext:
+      Finding viral mechanics for existing apps\nuser: "How can we make our habit tracker more shareable?"\nassistant: "I''ll
+      research viral sharing mechanics in successful apps. Let me use the trend-researcher agent to identify patterns we can
+      adapt."\n<commentary>\nExisting apps can be enhanced by incorporating proven viral mechanics from trending apps.\n</commentary>\n</example>'
+    description_hash: sha256:280845c83613138d063639c7bfe469a355160d8cb22dfc58537238a9c7cd0b1f
+    body_hash: sha256:b2bab77bf4ba28cbded722c28996cb7aca67d26926185c301a21200000420714
+    tags:
+    - product
+    - researcher
+    - trend
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  twitter-engager:
+    file: marketing/twitter-engager.md
+    category: marketing
+    description: ''
+    description_hash: sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+    body_hash: sha256:37a3261785d7f7c91c79a4e632a1c26d2045dc1251b4432104c39ec0fc28de08
+    tags:
+    - engager
+    - marketing
+    - twitter
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  ui-designer:
+    file: design/ui-designer.md
+    category: design
+    description: 'Use this agent when creating user interfaces, designing components, building design systems, or improving
+      visual aesthetics. This agent specializes in creating beautiful, functional interfaces that can be implemented quickly
+      within 6-day sprints. Examples:\n\n<example>\nContext: Starting a new app or feature design
+
+      user: "We need UI designs for the new social sharing feature"\nassistant: "I''ll create compelling UI designs for your
+      social sharing feature. Let me use the ui-designer agent to develop interfaces that are both beautiful and implementable."\n<commentary>\nUI
+      design sets the visual foundation for user experience and brand perception.\n</commentary>\n</example>\n\n<example>\nContext:
+      Improving existing interfaces
+
+      user: "Our settings page looks dated and cluttered"\nassistant: "I''ll modernize and simplify your settings UI. Let
+      me use the ui-designer agent to redesign it with better visual hierarchy and usability."\n<commentary>\nRefreshing existing
+      UI can dramatically improve user perception and usability.\n</commentary>\n</example>\n\n<example>\nContext: Creating
+      consistent design systems
+
+      user: "Our app feels inconsistent across different screens"\nassistant: "Design consistency is crucial for professional
+      apps. I''ll use the ui-designer agent to create a cohesive design system for your app."\n<commentary>\nDesign systems
+      ensure consistency and speed up future development.\n</commentary>\n</example>\n\n<example>\nContext: Adapting trendy
+      design patterns
+
+      user: "I love how BeReal does their dual camera view. Can we do something similar?"\nassistant: "I''ll adapt that trendy
+      pattern for your app. Let me use the ui-designer agent to create a unique take on the dual camera interface."\n<commentary>\nAdapting
+      successful patterns from trending apps can boost user engagement.\n</commentary>\n</example>'
+    description_hash: sha256:9b9c160fd7d41c3d58bc32a5f3e4400d77d313332dcf14a2ec905bca1ae0df61
+    body_hash: sha256:50d63044c26060efdbfb2cf3418b46b5723467644113ee0e7b79250aad55e1aa
+    tags:
+    - design
+    - designer
+    - ui
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  ux-researcher:
+    file: design/ux-researcher.md
+    category: design
+    description: 'Use this agent when conducting user research, analyzing user behavior, creating journey maps, or validating
+      design decisions through testing. This agent specializes in understanding user needs, pain points, and behaviors to
+      inform product decisions within rapid development cycles. Examples:\n\n<example>\nContext: Understanding user needs
+      for a new feature
+
+      user: "We want to add a mood tracking feature but aren''t sure what users really need"
+
+      assistant: "I''ll help uncover what users truly need from mood tracking. Let me use the ux-researcher agent to analyze
+      user behaviors and design effective research methods."
+
+      <commentary>
+
+      Understanding user needs before building prevents costly pivots later.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Improving app onboarding
+
+      user: "Our onboarding has a 60% drop-off rate"
+
+      assistant: "That''s a critical issue affecting user retention. I''ll use the ux-researcher agent to identify friction
+      points and design a smoother onboarding experience."
+
+      <commentary>
+
+      Data-driven UX improvements can dramatically increase conversion rates.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Validating design decisions
+
+      user: "Should we use a tab bar or hamburger menu for navigation?"
+
+      assistant: "Let''s make this decision based on user behavior data. I''ll use the ux-researcher agent to analyze navigation
+      patterns and recommend the best approach for your users."
+
+      <commentary>
+
+      UX research removes guesswork from design decisions.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Creating user personas
+
+      user: "We need to better understand our target users for the fitness app"
+
+      assistant: "Understanding your users is crucial for product-market fit. I''ll use the ux-researcher agent to develop
+      detailed personas based on user research and behavior patterns."
+
+      <commentary>
+
+      Well-defined personas guide every product decision from features to marketing.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:4182d8fa9bc2c62eba5773632b7103f2d23e3636d97560361916c7cac71ee67e
+    body_hash: sha256:b2a23b17c716d06e8b06bcf7d20c345c0b31840ff04bfff1bfe56c1ad0ce3553
+    tags:
+    - design
+    - researcher
+    - ux
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  vision-engineer:
+    file: engineering/vision-engineer.md
+    category: engineering
+    description: 'Use this agent when working on computer vision pipelines, video processing, object detection models (YOLO,
+      SSD, etc.), TensorRT optimization, camera/RTSP stream handling, frame preprocessing, model inference, NMS postprocessing,
+      multi-object tracking, or edge deployment of vision models on NVIDIA Jetson or similar accelerators. This agent specializes
+      in building production vision systems that process video at real-time frame rates. Examples:
+
+
+      <example>
+
+      Context: Building or debugging a YOLO object detection pipeline
+
+      user: "The YOLO detector is producing wrong bounding box coordinates after preprocessing"
+
+      assistant: "Bounding box coordinate transforms between model space and image space are a common source of bugs. Let
+      me use the vision-engineer agent to trace the full coordinate pipeline from letterbox resize through inference output
+      to screen-space boxes."
+
+      <commentary>
+
+      Coordinate space bugs in detection pipelines require understanding letterboxing, aspect ratio preservation, and the
+      exact output format of YOLO variants (transposed vs non-transposed, center-xy vs top-left, normalized vs pixel coordinates).
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Optimizing TensorRT inference performance on Jetson
+
+      user: "Our YOLO11n model runs at 12 FPS on Orin but we need 30 FPS"
+
+      assistant: "Let me use the vision-engineer agent to profile the pipeline and identify bottlenecks — it could be preprocessing,
+      GPU memory transfers, engine configuration, or postprocessing overhead."
+
+      <commentary>
+
+      Vision pipeline optimization requires understanding the full frame-to-detection latency breakdown: decode, preprocess,
+      GPU transfer, inference, postprocess, and render.
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Implementing multi-object tracking
+
+      user: "We need to track people across frames and assign stable IDs"
+
+      assistant: "I''ll implement a tracking algorithm suited to your detector. Let me use the vision-engineer agent to build
+      a SORT/DeepSORT-style tracker with Kalman filtering and IoU-based association."
+
+      <commentary>
+
+      Tracking requires understanding detection noise, occlusion handling, track lifecycle management, and the trade-offs
+      between simple IoU trackers and visual-feature-based trackers like DeepSORT or NvDCF.
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Video stream processing and RTSP integration
+
+      user: "Our RTSP camera feed drops frames and the detector gets stale data"
+
+      assistant: "RTSP reliability depends on transport protocol, buffering, and frame queue management. Let me use the vision-engineer
+      agent to diagnose the stream pipeline and implement proper frame pacing."
+
+      <commentary>
+
+      Video stream handling involves FFmpeg/GStreamer configuration, hardware vs software decode, frame rate control, and
+      managing the backpressure between decode speed and inference speed.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
+    body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
+    tags:
+    - engineer
+    - engineering
+    - vision
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  visual-storyteller:
+    file: design/visual-storyteller.md
+    category: design
+    description: 'Use this agent when creating visual narratives, designing infographics, building presentations, or communicating
+      complex ideas through imagery. This agent specializes in transforming data and concepts into compelling visual stories
+      that engage users and stakeholders. Examples:\n\n<example>\nContext: Creating app onboarding illustrations
+
+      user: "We need to explain how our AI journaling app works in a visual way"
+
+      assistant: "I''ll create an engaging visual narrative for your onboarding. Let me use the visual-storyteller agent to
+      design illustrations that simplify AI concepts and guide users."
+
+      <commentary>
+
+      Visual storytelling in onboarding dramatically improves user comprehension and retention.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Designing investor pitch deck
+
+      user: "We need a pitch deck that shows our growth trajectory and vision"
+
+      assistant: "A compelling visual story can make or break funding rounds. I''ll use the visual-storyteller agent to create
+      a presentation that captivates investors."
+
+      <commentary>
+
+      Data visualization and narrative flow are crucial for successful pitches.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Creating marketing infographics
+
+      user: "We want to show how our app saves users 2 hours per week"
+
+      assistant: "That''s a powerful value proposition to visualize. Let me use the visual-storyteller agent to create an
+      infographic that makes this benefit instantly clear."
+
+      <commentary>
+
+      Well-designed infographics can go viral and drive organic growth.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Explaining complex features
+
+      user: "Users don''t understand how our recommendation algorithm works"
+
+      assistant: "Complex systems need simple visual explanations. I''ll use the visual-storyteller agent to create visual
+      metaphors that demystify your algorithm."
+
+      <commentary>
+
+      Visual explanations build trust by making complexity approachable.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:316b307c653c6d5f8b161f70a8c05e40f300812bdc0886a8d7ec6c90bc6f25fe
+    body_hash: sha256:d0d2906337076d3009dc851e4c394a1a3f6cd31911cce9b49a02b03646941e13
+    tags:
+    - design
+    - storyteller
+    - visual
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  whimsy-injector:
+    file: design/whimsy-injector.md
+    category: design
+    description: 'PROACTIVELY use this agent after any UI/UX changes to ensure delightful, playful elements are incorporated.
+      This agent specializes in adding joy, surprise, and memorable moments to user experiences. The agent should be triggered
+      automatically when design or interface updates are made. Examples:\n\n<example>\nContext: After implementing new features
+      or UI components\nuser: "I''ve added the new onboarding flow for the app"\nassistant: "Great! I''ve implemented the
+      onboarding flow. Now let me use the whimsy-injector agent to add delightful touches that will make users smile during
+      their first experience."\n<commentary>\nEvery new UI addition is an opportunity to inject personality and delight.\n</commentary>\n</example>\n\n<example>\nContext:
+      When error states or empty states are created\nuser: "Set up error handling for the payment flow"\nassistant: "I''ve
+      implemented the error handling. Let me use the whimsy-injector agent to transform those error messages into moments
+      that reduce user frustration."\n<commentary>\nError states are perfect opportunities to show personality and maintain
+      user goodwill.\n</commentary>\n</example>\n\n<example>\nContext: After creating standard UI components\nuser: "Build
+      a loading spinner for the data fetch"\nassistant: "I''ve created the basic loading functionality. Now I''ll use the
+      whimsy-injector agent to make the loading experience entertaining rather than frustrating."\n<commentary>\nLoading states
+      can become memorable moments instead of boring waits.\n</commentary>\n</example>\n\n<example>\nContext: When reviewing
+      completed features\nuser: "The user profile page is done"\nassistant: "Perfect! The profile page is complete. Let me
+      use the whimsy-injector agent to audit it for opportunities to add surprising delights and shareable moments."\n<commentary>\nCompleted
+      features often miss opportunities for delight that can differentiate the app.\n</commentary>\n</example>'
+    description_hash: sha256:546ebc59fb2accc6c6e49c3db2b0551765241da5d5f89a27cb125d9e6774d48c
+    body_hash: sha256:57663bb442a59c4efd089a4e0b24588650d63591ce929bec81bc50d024fbc64b
+    tags:
+    - design
+    - injector
+    - whimsy
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
+  workflow-optimizer:
+    file: testing/workflow-optimizer.md
+    category: testing
+    description: 'Use this agent for optimizing human-agent collaboration workflows and analyzing workflow efficiency. This
+      agent specializes in identifying bottlenecks, streamlining processes, and ensuring smooth handoffs between human creativity
+      and AI assistance. Examples:\n\n<example>\nContext: Improving development workflow efficiency
+
+      user: "Our team spends too much time on repetitive tasks"
+
+      assistant: "I''ll analyze your workflow to identify automation opportunities. Let me use the workflow-optimizer agent
+      to map current processes and recommend optimizations."
+
+      <commentary>
+
+      Workflow optimization can reclaim hours of productive time each week.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Human-AI collaboration testing
+
+      user: "Test how well our AI coding assistant integrates with developer workflows"
+
+      assistant: "I''ll evaluate the human-AI collaboration effectiveness. Let me use the workflow-optimizer agent to measure
+      handoff efficiency and identify friction points."
+
+      <commentary>
+
+      Smooth human-AI collaboration multiplies productivity rather than just adding to it.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Process bottleneck analysis
+
+      user: "Our deployment process takes too long"
+
+      assistant: "I''ll analyze your deployment workflow for bottlenecks. Let me use the workflow-optimizer agent to time
+      each step and identify optimization opportunities."
+
+      <commentary>
+
+      Deployment bottlenecks compound, turning minutes into hours across releases.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Tool integration efficiency
+
+      user: "Are we using our tools effectively together?"
+
+      assistant: "I''ll analyze your tool integration and usage patterns. Let me use the workflow-optimizer agent to identify
+      redundancies and missing automations."
+
+      <commentary>
+
+      Poor tool integration creates hidden time taxes on every task.
+
+      </commentary>
+
+      </example>'
+    description_hash: sha256:61760a51a4dc9b7708d735378568d606e63b656f66a235547bbde76f77e9859e
+    body_hash: sha256:fde57ac7fd199bf0799246eec016079fabc0dadb47c72a55fa28241f3bad97fe
+    tags:
+    - optimizer
+    - testing
+    - workflow
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-03-19'
+    aliases: []
