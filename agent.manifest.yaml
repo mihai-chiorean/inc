@@ -77,14 +77,14 @@ agents:
     - engineer
     - engineering
     project_hints:
-      files:
-      - requirements.txt
-      - pyproject.toml
+      files: []
       regex:
       - (?i)\bopenai\b
       - (?i)\banthropic\b
+      - (?i)\bclaude(?:[\s-]?api)?\b
       - (?i)\btransformers\b
       - (?i)\blangchain\b
+      - (?i)\bllama-?index\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -534,12 +534,13 @@ agents:
       files:
       - migrations/
       - alembic/
-      - schema.sql
       - '**/migrations/*.sql'
+      - '**/migrations/*.py'
       regex:
-      - (?i)\bmigration\b
-      - (?i)\bpostgres\b
       - (?i)\balembic\b
+      - (?i)\bgolang-migrate\b
+      - (?i)\bflyway\b
+      - (?i)\bsqlite-?migrate\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -809,19 +810,24 @@ agents:
     - frontend
     project_hints:
       files:
-      - package.json
       - vite.config.ts
       - vite.config.js
       - next.config.js
       - next.config.ts
       - angular.json
       - svelte.config.js
+      - remix.config.js
+      - remix.config.ts
+      - astro.config.mjs
+      - astro.config.ts
       regex:
       - (?i)\breact\b
       - (?i)\bvue\b
       - (?i)\bangular\b
       - (?i)\bnext\.?js\b
       - (?i)\bsvelte\b
+      - (?i)\bremix\b
+      - (?i)\bastro\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -1050,9 +1056,8 @@ agents:
     - reviewer
     project_hints:
       files:
-      - '*.tf'
-      - terraform/
       - '**/*.tf'
+      - terraform/
       regex:
       - (?i)\bterraform\b
       - (?i)\bgcp\b

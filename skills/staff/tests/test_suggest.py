@@ -176,6 +176,97 @@ def test_deterministic_ordering(tmp: Path) -> None:
     expect(ids_a == sorted(ids_a), "agents emitted in sorted order by id")
 
 
+def test_excluded_dirs_skip_globs(tmp: Path) -> None:
+    print("test_excluded_dirs_skip_globs")
+    # Put a .proto inside .git — should be ignored
+    (tmp / ".git").mkdir()
+    (tmp / ".git" / "hooks.proto").write_text('syntax = "proto3";\n')
+    (tmp / "node_modules").mkdir()
+    (tmp / "node_modules" / "deep.proto").write_text('syntax = "proto3";\n')
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("grpc-contracts" not in ids, "*.proto in .git/node_modules ignored")
+
+
+def test_glob_depth_cap(tmp: Path) -> None:
+    print("test_glob_depth_cap")
+    # Build a path 6 levels deep with a .proto leaf — should be excluded
+    deep = tmp / "a" / "b" / "c" / "d" / "e" / "f"
+    deep.mkdir(parents=True)
+    (deep / "leaf.proto").write_text('syntax = "proto3";\n')
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("grpc-contracts" not in ids, "deeply nested *.proto excluded by depth cap")
+
+
+def test_directory_hint_with_slash_path(tmp: Path) -> None:
+    print("test_directory_hint_with_slash_path")
+    (tmp / ".github").mkdir()
+    (tmp / ".github" / "workflows").mkdir()
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("devops-automator" in ids, ".github/workflows directory triggers devops-automator")
+
+
+def test_match_json_field_structure(tmp: Path) -> None:
+    print("test_match_json_field_structure")
+    (tmp / "go.mod").write_text("module x\n")
+    (tmp / "CLAUDE.md").write_text("This project uses Cobra.\n")
+    out = run_suggest(tmp)
+    go = next((p for p in out["suggested"] if p["id"] == "go-engineer"), None)
+    expect(go is not None, "go-engineer in proposals")
+    expect("matches" in go, "proposal has matches[] structured field")
+    expect(isinstance(go["matches"], list) and len(go["matches"]) >= 1, "matches has entries")
+    file_matches = [m for m in go["matches"] if m["type"] == "file"]
+    regex_matches = [m for m in go["matches"] if m["type"] == "regex"]
+    expect(len(file_matches) >= 1, "go.mod produces a file match")
+    expect("paths" in file_matches[0], "file match has 'paths'")
+    expect(len(regex_matches) >= 1, "Cobra mention produces a regex match")
+    expect("snippet" in regex_matches[0], "regex match has 'snippet'")
+    expect("doc" in regex_matches[0], "regex match has 'doc' (which doc file matched)")
+
+
+def test_malformed_project_config(tmp: Path) -> None:
+    print("test_malformed_project_config")
+    (tmp / ".claude" / "staff").mkdir(parents=True)
+    (tmp / ".claude/staff/config.yaml").write_text(": not valid yaml :::\n")
+    cmd = [
+        sys.executable, str(SCRIPT),
+        "--project-root", str(tmp),
+        "--hr-repo", str(HR_REPO),
+        "--json",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    expect(result.returncode == 2, "malformed project config exits 2")
+    expect("config" in result.stderr.lower() or "yaml" in result.stderr.lower(),
+           "stderr mentions config/yaml")
+    # No traceback to stderr
+    expect("Traceback" not in result.stderr, "no python traceback leaks")
+
+
+def test_malformed_manifest_shape(tmp: Path) -> None:
+    print("test_malformed_manifest_shape")
+    fake_hr = tmp / "fake-hr"
+    fake_hr.mkdir()
+    # Missing 'agents' key entirely
+    (fake_hr / "agent.manifest.yaml").write_text("schema_version: 1\n")
+    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--json"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    expect(result.returncode == 2, "manifest missing 'agents' exits 2")
+    expect("agents" in result.stderr.lower(), "stderr mentions missing agents key")
+    expect("Traceback" not in result.stderr, "no python traceback leaks")
+
+
+def test_missing_manifest(tmp: Path) -> None:
+    print("test_missing_manifest")
+    fake_hr = tmp / "empty-hr"
+    fake_hr.mkdir()
+    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--json"]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    expect(result.returncode == 2, "missing manifest exits 2")
+    expect("manifest" in result.stderr.lower(), "stderr mentions missing manifest")
+
+
 def test_invalid_regex_in_manifest_does_not_crash(tmp: Path) -> None:
     """Ensure a malformed regex in a custom manifest doesn't crash the script."""
     print("test_invalid_regex_in_manifest_does_not_crash")
@@ -238,6 +329,13 @@ def main() -> int:
         test_invalid_hr_repo_url_scheme,
         test_file_url_with_spaces,
         test_deterministic_ordering,
+        test_excluded_dirs_skip_globs,
+        test_glob_depth_cap,
+        test_directory_hint_with_slash_path,
+        test_match_json_field_structure,
+        test_malformed_project_config,
+        test_malformed_manifest_shape,
+        test_missing_manifest,
         test_invalid_regex_in_manifest_does_not_crash,
     ]
 
