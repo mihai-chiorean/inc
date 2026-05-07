@@ -13,7 +13,7 @@ Selects which agents from the canonical HR repo (`claude-agents`) are staffed in
 |---|---|---|
 | `/staff suggest` | **MIT-281 — implemented** | Propose a roster based on project hints. Read-only |
 | `/staff apply` | **MIT-282 — implemented** | Copy chosen agents from HR into `.claude/agents/`, write lockfile |
-| `/staff status` | MIT-283 (pending) | Show staffed/diff/overlay state vs HR HEAD |
+| `/staff status` | **MIT-283 — implemented** | Show staffed/diff/overlay state vs HR HEAD |
 | `/staff add <id>` | MIT-284 (pending) | Add an agent to the staffed set |
 | `/staff remove <id>` | MIT-284 (pending) | Drop an agent |
 | `/staff sync` | MIT-290 (pending, v2) | Regenerate from HR HEAD; preserve overlays |
@@ -129,6 +129,49 @@ Re-running apply with the same input produces the same `.claude/agents/<id>.md` 
 - **Doesn't preserve hand-edits to `.claude/agents/<id>.md`** — those files are generated. Use overlays for project-specific context.
 - **Doesn't touch overlay sources** under `.claude/staff/overlays/<id>.md`.
 - **Doesn't remove agents from previous lockfile entries** that aren't in the current input. Use `/staff remove` for that.
+
+## /staff status
+
+Read-only inspection of staffed agents vs HR HEAD. Reports per-agent flags:
+
+| Flag | Meaning |
+|---|---|
+| `OK` | Pin matches HR, generated file untouched, overlay (if any) fresh |
+| `HR-DRIFT` | HR HEAD has different `body_hash` or `description_hash` than the pin |
+| `MANUAL-EDIT` | `.claude/agents/<id>.md` was hand-edited (sha differs from `generated_hash_at_apply`) |
+| `OVERLAY-EDITED` | Overlay source body differs from `overlay_hash_at_apply` |
+| `OVERLAY-STALE` | Overlay `last_reviewed` is older than `stale_overlay_days` (default 90) |
+| `MISSING` | Agent in lockfile but `.claude/agents/<id>.md` not on disk |
+| `ORPHAN-FILE` | `.claude/agents/<id>.md` exists but isn't in the lockfile |
+| `ALIAS-RENAMED` | Lockfile uses a stable id that's now an alias of a renamed agent |
+| `ERROR` | Couldn't process this entry (see message) |
+
+### Invocation
+
+```bash
+# Default: text output, exits 1 if any drift detected
+python3 ~/.claude/skills/staff/scripts/status.py
+
+# JSON output for hooks/tooling
+python3 ~/.claude/skills/staff/scripts/status.py --json
+
+# Override stale threshold
+python3 ~/.claude/skills/staff/scripts/status.py --stale-overlay-days 30
+```
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Everything clean — no drift, no orphans, no stale overlays |
+| 1 | Drift / warnings detected (informational; not an error) |
+| 2 | Could not run (missing lockfile, malformed manifest, etc.) |
+
+Hooks can react to exit 1 to flag the project as needing `/staff sync` (when MIT-290 lands).
+
+### HR repo discovery
+
+In priority order: `--hr-repo` flag → `.claude/staff/config.yaml` → lockfile's `hr_repo:` → `STAFF_HR_REPO`. Status falls back to the lockfile's recorded HR repo as a convenience — it's the only operation that can do so without staffing decisions.
 
 ## How matching works
 
