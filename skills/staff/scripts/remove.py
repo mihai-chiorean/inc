@@ -36,17 +36,36 @@ def main() -> int:
         return 2
 
     paths = apply_mod.Paths.from_project(project_root, project_root)  # hr_repo unused for remove
+
+    if not paths.lock_path.exists():
+        print(f"error: no lockfile at {paths.lock_path}; nothing to remove", file=sys.stderr)
+        return 2
+
     try:
         existing_lock = apply_mod.load_lockfile(paths.lock_path)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 
-    if not paths.lock_path.exists():
-        print(f"error: no lockfile at {paths.lock_path}; nothing to remove", file=sys.stderr)
-        return 2
-
     staffed = dict(existing_lock.get("staffed") or {})
+
+    # Resolve aliases against the manifest IF the manifest is reachable. This
+    # lets `/staff remove <alias>` work even if the lockfile uses an old name.
+    # We don't *require* the manifest, since remove should still work after
+    # HR has gone stale or been moved.
+    alias_map: dict[str, str] = {}
+    hr_repo_str = existing_lock.get("hr_repo", "")
+    if hr_repo_str:
+        try:
+            hr_repo = apply_mod.parse_hr_repo_path(hr_repo_str)
+            if (hr_repo / "agent.manifest.yaml").is_file():
+                manifest = apply_mod.load_manifest(hr_repo)
+                for canonical_id, entry in manifest["agents"].items():
+                    for a in entry.get("aliases") or []:
+                        alias_map[a] = canonical_id
+        except (ValueError, yaml.YAMLError):
+            pass  # remove still works without manifest
+
     not_staffed: list[str] = []
     to_remove: list[str] = []
     seen: set[str] = set()
@@ -54,10 +73,13 @@ def main() -> int:
         if raw in seen:
             continue
         seen.add(raw)
-        if raw not in staffed:
-            not_staffed.append(raw)
-        else:
+        # Try direct lookup; then alias-resolved name; either is fine
+        if raw in staffed:
             to_remove.append(raw)
+        elif raw in alias_map and alias_map[raw] in staffed:
+            to_remove.append(alias_map[raw])
+        else:
+            not_staffed.append(raw)
 
     if not_staffed:
         print(
@@ -88,16 +110,13 @@ def main() -> int:
     # need to consult HR for a pure remove, and changing the pin would be
     # surprising).
     hr_commit = existing_lock.get("hr_commit_pinned", "0" * 40)
-    hr_repo_str = existing_lock.get("hr_repo", "")
 
-    # Delete agent files
+    # Order matters for partial-failure safety: rewrite the lockfile FIRST
+    # (so it no longer claims the agent), THEN delete files. If a delete
+    # fails partway, status will report ORPHAN-FILE on the leftover, which
+    # is correct: the lockfile no longer staffs it.
     for aid in to_remove:
-        out_path = paths.agents_dir / f"{aid}.md"
-        if out_path.exists():
-            out_path.unlink()
         del staffed[aid]
-
-    # Re-write lockfile preserving hr_repo + hr_commit_pinned from before
     lock = {
         "schema_version": apply_mod.LOCKFILE_SCHEMA_VERSION,
         "hr_repo": hr_repo_str,
@@ -108,6 +127,16 @@ def main() -> int:
     }
     out = yaml.safe_dump(lock, sort_keys=False, width=120, allow_unicode=True)
     apply_mod.atomic_write(paths.lock_path, out)
+
+    # Now delete the files. A failure here leaves an orphan but the lockfile
+    # is consistent.
+    for aid in to_remove:
+        out_path = paths.agents_dir / f"{aid}.md"
+        if out_path.exists():
+            try:
+                out_path.unlink()
+            except OSError as exc:
+                print(f"warning: could not delete {out_path}: {exc}", file=sys.stderr)
 
     print(f"removed {len(to_remove)} agents from {paths.agents_dir}")
     if overlays_to_warn:

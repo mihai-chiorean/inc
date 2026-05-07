@@ -222,6 +222,76 @@ def test_remove_dry_run_writes_nothing(root: Path) -> None:
     expect(lockfile_ids(project) == {"alpha", "beta"}, "dry-run did not modify lockfile")
 
 
+def test_add_already_staffed_via_alias_rejects(root: Path) -> None:
+    """If lockfile holds the OLD canonical id and HR has renamed it (with the
+    old id moved to aliases), adding the NEW canonical should detect the
+    same agent is already staffed."""
+    print("test_add_already_staffed_via_alias_rejects")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    run_apply(project, hr, ["alpha"])
+    # Now rename alpha → delta in HR with alpha as alias
+    m = yaml.safe_load((hr / "agent.manifest.yaml").read_text())
+    m["agents"]["delta"] = {**m["agents"]["alpha"], "aliases": ["alpha"]}
+    del m["agents"]["alpha"]
+    (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(m))
+    # Move the file to match
+    (hr / "engineering" / "delta.md").write_text((hr / "engineering" / "alpha.md").read_text())
+    (hr / "engineering" / "alpha.md").unlink()
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "rename alpha->delta"], cwd=hr)
+    # Try to add delta — should reject because alpha (the old id) is already staffed
+    res = run_add(project, hr, ["delta"], expect_exit=6)
+    expect("agent-already-staffed" in res.stderr,
+           "stderr names the error class even when collision is alias-based")
+    expect("alias" in res.stderr.lower(),
+           "stderr explains the alias relationship")
+
+
+def test_remove_by_alias_resolves(root: Path) -> None:
+    """remove <alias> should resolve to the canonical id stored in the lockfile."""
+    print("test_remove_by_alias_resolves")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    # Apply alpha. Then add an alias 'al' for alpha in the manifest.
+    run_apply(project, hr, ["alpha"])
+    m = yaml.safe_load((hr / "agent.manifest.yaml").read_text())
+    m["agents"]["alpha"]["aliases"] = ["al"]
+    (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(m))
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "add alias"], cwd=hr)
+    # Patch the lockfile's hr_repo so remove can find the manifest
+    lock_path = project / ".claude/staff/lock.yaml"
+    lock = yaml.safe_load(lock_path.read_text())
+    lock["hr_repo"] = f"file://{hr}"
+    lock_path.write_text(yaml.safe_dump(lock))
+    # Now remove by alias
+    run_remove(project, ["al"])
+    expect(lockfile_ids(project) == set(), "alpha removed by its alias 'al'")
+
+
+def test_add_falls_back_to_lockfile_hr_repo(root: Path) -> None:
+    """When --hr-repo, config, and env are all absent, add should use the
+    lockfile's recorded hr_repo (matching status's behavior)."""
+    print("test_add_falls_back_to_lockfile_hr_repo")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    run_apply(project, hr, ["alpha"])
+    # Patch lockfile to record hr_repo (apply already does this, just verifying)
+    lock_path = project / ".claude/staff/lock.yaml"
+    lock = yaml.safe_load(lock_path.read_text())
+    expect("hr_repo" in lock, "lockfile records hr_repo")
+    # Now invoke add WITHOUT --hr-repo, and with STAFF_HR_REPO unset
+    cmd = [sys.executable, str(ADD), "beta", "--project-root", str(project)]
+    env = {"PATH": "/usr/bin:/bin", "HOME": str(root)}
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
+    expect(result.returncode == 0, f"add succeeds with lockfile fallback (got {result.returncode}: {result.stderr})")
+    expect(lockfile_ids(project) == {"alpha", "beta"}, "beta added via lockfile-recorded HR repo")
+
+
 # ===== integration =====
 
 def test_add_then_remove_round_trip(root: Path) -> None:
@@ -251,6 +321,9 @@ def main() -> int:
         test_remove_no_lockfile_exits_2,
         test_remove_preserves_overlay,
         test_remove_dry_run_writes_nothing,
+        test_add_already_staffed_via_alias_rejects,
+        test_remove_by_alias_resolves,
+        test_add_falls_back_to_lockfile_hr_repo,
         test_add_then_remove_round_trip,
     ]
     for fn in tests:
