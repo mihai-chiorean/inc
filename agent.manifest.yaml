@@ -77,8 +77,14 @@ agents:
     - engineer
     - engineering
     project_hints:
-      files: []
-      regex: []
+      files:
+      - requirements.txt
+      - pyproject.toml
+      regex:
+      - (?i)\bopenai\b
+      - (?i)\banthropic\b
+      - (?i)\btransformers\b
+      - (?i)\blangchain\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -525,8 +531,15 @@ agents:
     - engineering
     - migration
     project_hints:
-      files: []
-      regex: []
+      files:
+      - migrations/
+      - alembic/
+      - schema.sql
+      - '**/migrations/*.sql'
+      regex:
+      - (?i)\bmigration\b
+      - (?i)\bpostgres\b
+      - (?i)\balembic\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -552,8 +565,16 @@ agents:
     - devops
     - engineering
     project_hints:
-      files: []
-      regex: []
+      files:
+      - Dockerfile
+      - docker-compose.yml
+      - docker-compose.yaml
+      - .github/workflows
+      regex:
+      - (?i)\bterraform\b
+      - (?i)\bkubernetes\b
+      - (?i)\bansible\b
+      - (?i)\bk8s\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -579,8 +600,13 @@ agents:
     - embedded
     - engineering
     project_hints:
-      files: []
-      regex: []
+      files:
+      - wendy.json
+      regex:
+      - (?i)\bwendyos\b
+      - (?i)\bjetson\b
+      - (?i)\bcontainerd\b
+      - (?i)\bnerdctl\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -612,8 +638,16 @@ agents:
     - engineering
     - linux
     project_hints:
-      files: []
-      regex: []
+      files:
+      - conf/local.conf
+      - kas/*.yml
+      - kas/*.yaml
+      - meta-*/conf/layer.conf
+      regex:
+      - (?i)\byocto\b
+      - (?i)\bbitbake\b
+      - (?i)\bmeta-tegra\b
+      - (?i)\bmeta-raspberrypi\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -774,8 +808,20 @@ agents:
     - engineering
     - frontend
     project_hints:
-      files: []
-      regex: []
+      files:
+      - package.json
+      - vite.config.ts
+      - vite.config.js
+      - next.config.js
+      - next.config.ts
+      - angular.json
+      - svelte.config.js
+      regex:
+      - (?i)\breact\b
+      - (?i)\bvue\b
+      - (?i)\bangular\b
+      - (?i)\bnext\.?js\b
+      - (?i)\bsvelte\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -810,8 +856,12 @@ agents:
     - engineering
     - go
     project_hints:
-      files: []
-      regex: []
+      files:
+      - go.mod
+      - go.sum
+      regex:
+      - (?i)\bgolang?\b
+      - (?i)\bcobra\b
     conflicts: []
     introduced: '2026-05-01'
     aliases: []
@@ -843,8 +893,14 @@ agents:
     - engineering
     - gpu
     project_hints:
-      files: []
-      regex: []
+      files:
+      - '**/*.cu'
+      - '**/*.cuh'
+      regex:
+      - (?i)\bcuda\b
+      - (?i)\btensorrt(?:-llm)?\b
+      - (?i)\bcutlass\b
+      - (?i)\bcublas\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -888,8 +944,14 @@ agents:
     - engineering
     - grpc
     project_hints:
-      files: []
-      regex: []
+      files:
+      - '**/*.proto'
+      - buf.yaml
+      - buf.gen.yaml
+      regex:
+      - (?i)\bgrpc\b
+      - (?i)\bprotobuf\b
+      - (?i)\bprotoc\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -987,8 +1049,15 @@ agents:
     - infra
     - reviewer
     project_hints:
-      files: []
-      regex: []
+      files:
+      - '*.tf'
+      - terraform/
+      - '**/*.tf'
+      regex:
+      - (?i)\bterraform\b
+      - (?i)\bgcp\b
+      - (?i)\bcloud run\b
+      - (?i)\bcertificate manager\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -1227,8 +1296,14 @@ agents:
     - engineering
     - mobile
     project_hints:
-      files: []
-      regex: []
+      files:
+      - ios/Podfile
+      - android/build.gradle
+      - ios/*.xcodeproj
+      regex:
+      - (?i)\breact-?native\b
+      - (?i)\bexpo\b
+      - (?i)\bswiftui\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -1409,7 +1484,11 @@ agents:
     - security
     project_hints:
       files: []
-      regex: []
+      regex:
+      - (?i)\bm[\s-]?tls\b
+      - (?i)\boauth2?\b
+      - (?i)\bauthn?\b.*\bcert\b
+      - (?i)\bx509\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -1590,8 +1669,13 @@ agents:
     - engineering
     - swift
     project_hints:
-      files: []
-      regex: []
+      files:
+      - Package.swift
+      - Package.resolved
+      regex:
+      - (?i)\bhummingbird\b
+      - (?i)\bpostgres-?nio\b
+      - (?i)\bswift-?nio\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -2020,8 +2104,14 @@ agents:
     - engineering
     - vision
     project_hints:
-      files: []
-      regex: []
+      files:
+      - '**/*.pt'
+      - '**/*.onnx'
+      regex:
+      - (?i)\bopencv\b
+      - (?i)\btorchvision\b
+      - (?i)\bgstreamer\b
+      - (?i)\bdeepstream\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []

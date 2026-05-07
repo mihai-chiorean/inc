@@ -5,24 +5,95 @@ description: 'Per-project agent staffing for Claude Code. Use when: (1) a projec
 
 # /staff — per-project agent staffing
 
-> **Status (MIT-280):** schemas + manifest + examples landed. Operations (`suggest`, `apply`, `add`, `remove`, `status`, `sync`) are tracked under MIT-281…MIT-290 and not yet implemented. This SKILL.md is a stub; once the operations exist it will be filled in with usage instructions.
+Selects which agents from the canonical HR repo (`claude-agents`) are staffed in the current project. Replaces the "load every agent into every session" pattern with a curated per-project roster via Claude Code's native `.claude/agents/` scope.
 
-## What this skill does
+## Operations
 
-Selects which agents from the canonical HR repo (`claude-agents`) are staffed in the current project. Manages:
+| Command | Status | Description |
+|---|---|---|
+| `/staff suggest` | **MIT-281 — implemented** | Propose a roster based on project hints. Read-only |
+| `/staff apply` | MIT-282 (pending) | Copy chosen agents from HR into `.claude/agents/`, write lockfile |
+| `/staff status` | MIT-283 (pending) | Show staffed/diff/overlay state vs HR HEAD |
+| `/staff add <id>` | MIT-284 (pending) | Add an agent to the staffed set |
+| `/staff remove <id>` | MIT-284 (pending) | Drop an agent |
+| `/staff sync` | MIT-290 (pending, v2) | Regenerate from HR HEAD; preserve overlays |
 
-- `.claude/agents/<id>.md` — generated, what Claude Code loads
-- `.claude/staff/lock.yaml` — pinned HR commits per agent
-- `.claude/staff/config.yaml` — project-local config (HR repo path, stale-overlay threshold, commit policy)
-- `.claude/staff/overlays/<id>.md` — project-specific context appended to agents
+## /staff suggest
 
-## Why
+Reads the HR manifest, scans the project for hint matches (presence of specific files or regex patterns in `CLAUDE.md` / `README` / `AGENTS.md`), and prints a proposed roster. Read-only — never mutates project state.
 
-Claude Code loads every `.md` file in `~/.claude/agents/` into every session. A 58-agent user-scope roster bloats the routing prompt and causes mis-routes. Per-project staffing via Claude Code's native `.claude/agents/` scope replaces that with the agents the project actually needs.
+**Recall over precision:** an agent matches if any of its declared hints fire. The user prunes the proposal with `/staff remove` before `/staff apply`.
+
+### Invocation
+
+```bash
+# Default: scan cwd, infer HR repo from STAFF_HR_REPO env or .claude/staff/config.yaml
+python3 ~/.claude/skills/staff/scripts/suggest.py
+
+# Explicit project + HR repo
+python3 ~/.claude/skills/staff/scripts/suggest.py \
+    --project-root /home/mihai/workspace/wendy-cloud \
+    --hr-repo /home/mihai/workspace/claude-agents
+
+# JSON output (for piping to /staff apply later)
+python3 ~/.claude/skills/staff/scripts/suggest.py --json
+```
+
+### HR repo discovery (priority order)
+
+1. `--hr-repo PATH`
+2. `.claude/staff/config.yaml` in project root, key `hr_repo:`
+3. `STAFF_HR_REPO` environment variable
+
+If none are set, the script exits with a clear error.
+
+### Sample output (text)
+
+```
+project: /home/mihai/workspace/wendy-cloud
+hr_repo: /home/mihai/workspace/claude-agents
+manifest: 56 agents, 5 match
+
+[engineering]
+  go-engineer
+    · file: go.mod → go.mod
+  grpc-contracts
+    · file: **/*.proto → api/svc.proto
+  security-auditor
+    · regex: '(?i)\bm[\s-]?tls\b' matched in CLAUDE.md ('mTLS')
+  swift-backend
+    · file: Package.swift → Package.swift
+    · regex: '(?i)\bhummingbird\b' matched in CLAUDE.md ('Hummingbird')
+
+Next:
+  /staff apply        # install all 5 suggested agents
+  /staff add <id>     # add an agent not in the suggestion
+  /staff remove <id>  # drop one before apply
+```
+
+### When invoked from Claude Code
+
+When the user types `/staff suggest`:
+
+1. Run the script (above) and capture stdout.
+2. Present the proposed roster to the user, formatted readably.
+3. If the user confirms, chain into `/staff apply` (when MIT-282 lands) — for now, tell them the proposal is informational and `/staff apply` is not yet implemented.
+4. If the user wants changes, accept "remove X" or "add Y" instructions and re-display.
+
+## How matching works
+
+For each agent in the manifest, the agent matches if at least one of:
+
+- A **file** in `project_hints.files` exists at project root or matches as a glob (e.g., `**/*.proto`). Glob depth capped at 4 levels for performance.
+- A **regex** in `project_hints.regex` matches anywhere in `CLAUDE.md`, `README.md`, `README.rst`, `README`, or `AGENTS.md` at project root.
+
+Only the engineering and engineering-adjacent agents have hints curated in v1 (~14 agents). Marketing/design/writing/bonus agents don't match by file presence — they're added via `/staff add` based on user intent.
+
+To add hints for an agent, edit its `project_hints:` block in `agent.manifest.yaml` directly. The generator script preserves hand-curated hints across re-runs.
 
 ## Schemas
 
-See `docs/schemas.md` for the full spec of:
+See [`docs/schemas.md`](docs/schemas.md) for the spec of:
 
 - `agent.manifest.yaml` (HR repo root)
 - `.claude/staff/lock.yaml` (project)
@@ -31,11 +102,19 @@ See `docs/schemas.md` for the full spec of:
 
 ## Examples
 
-See `examples/`:
+See [`examples/`](examples/):
 
 - `lock.example.yaml` — sample lockfile
 - `overlay.example.md` — sample overlay
 - `config.example.yaml` — sample project config
+
+## Tests
+
+```bash
+python3 skills/staff/tests/test_suggest.py
+```
+
+Smoke tests for `/staff suggest`. Fixtures use temporary directories.
 
 ## Generating the manifest
 
@@ -43,4 +122,4 @@ See `examples/`:
 python3 scripts/generate-manifest.py
 ```
 
-Idempotent. Preserves hand-curated `tags`, `project_hints`, `conflicts`, and `aliases`. Run after adding, removing, or editing agent files in the HR repo.
+Idempotent. Preserves hand-curated `tags`, `project_hints`, `conflicts`, and `aliases`. Re-run after adding, removing, or editing agent files in the HR repo. No-op runs leave the file byte-unchanged.
