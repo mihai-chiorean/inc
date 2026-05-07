@@ -308,6 +308,69 @@ def test_partial_failure_no_lockfile_change(root: Path) -> None:
            "lockfile not written on partial failure")
 
 
+def test_partial_failure_no_agent_files_written(root: Path) -> None:
+    """Atomicity: if any requested agent fails, NO agent file is left written."""
+    print("test_partial_failure_no_agent_files_written")
+    hr = make_fake_hr(root)
+    (hr / "engineering" / "alpha.md").unlink()
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "remove alpha"], cwd=hr)
+    project = root / "proj"
+    project.mkdir()
+    # beta is healthy, alpha is missing — old (non-atomic) code would write
+    # beta.md before alpha failed.
+    run_apply(project, hr, agent_ids=["beta", "alpha"], expect_exit=5)
+    expect(not (project / ".claude/agents/beta.md").exists(),
+           "beta.md NOT written even though it would have succeeded (atomicity)")
+    expect(not (project / ".claude/agents/alpha.md").exists(),
+           "alpha.md not written")
+
+
+def test_lockfile_with_unsupported_schema_version(root: Path) -> None:
+    print("test_lockfile_with_unsupported_schema_version")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    lock = project / ".claude/staff/lock.yaml"
+    lock.parent.mkdir(parents=True)
+    lock.write_text("schema_version: 99\nstaffed: {}\n")
+    res = run_apply(project, hr, agent_ids=["alpha"], expect_exit=2)
+    expect("schema_version" in res.stderr or "schema version" in res.stderr.lower(),
+           "stderr mentions unsupported lockfile schema_version")
+
+
+def test_manifest_with_alias_collision_rejected(root: Path) -> None:
+    print("test_manifest_with_alias_collision_rejected")
+    hr = make_fake_hr(root)
+    # Edit manifest to add a colliding alias (alias 'alpha' on beta — collides with canonical)
+    m = yaml.safe_load((hr / "agent.manifest.yaml").read_text())
+    m["agents"]["beta"]["aliases"] = ["alpha"]
+    (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(m))
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "broken alias"], cwd=hr)
+    project = root / "proj"
+    project.mkdir()
+    res = run_apply(project, hr, agent_ids=["alpha"], expect_exit=2)
+    expect("alias" in res.stderr.lower() and ("collid" in res.stderr.lower() or "canonical" in res.stderr.lower()),
+           "stderr names the alias collision")
+
+
+def test_drift_payload_missing_manifest_hash_rejected(root: Path) -> None:
+    print("test_drift_payload_missing_manifest_hash_rejected")
+    hr = make_fake_hr(root)
+    project = root / "proj"
+    project.mkdir()
+    payload = {
+        "schema_version": 1,
+        "hr_commit": git(["rev-parse", "HEAD"], cwd=hr),
+        # manifest_hash deliberately missing
+        "suggested": [{"id": "alpha"}],
+    }
+    res = run_apply(project, hr, from_suggest_json=json.dumps(payload), expect_exit=2)
+    expect("manifest_hash" in res.stderr.lower(),
+           "stderr names the missing required field")
+
+
 def test_dry_run_writes_nothing(root: Path) -> None:
     print("test_dry_run_writes_nothing")
     hr = make_fake_hr(root)
@@ -335,7 +398,11 @@ def main() -> int:
         test_suggest_drift_blocks_apply,
         test_unsupported_suggest_schema_version,
         test_partial_failure_no_lockfile_change,
+        test_partial_failure_no_agent_files_written,
         test_dry_run_writes_nothing,
+        test_lockfile_with_unsupported_schema_version,
+        test_manifest_with_alias_collision_rejected,
+        test_drift_payload_missing_manifest_hash_rejected,
     ]
 
     for fn in tests:
