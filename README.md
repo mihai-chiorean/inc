@@ -12,9 +12,14 @@ This repo is the canonical home for agents and skills. Use `install.sh` to wire 
 git clone <this-repo>
 cd claude-agents
 ./install.sh --link --skills-only
+
+# Set this in ~/.zshrc so `staff` knows where HR lives:
+echo 'export STAFF_HR_REPO=$HOME/workspace/claude-agents' >> ~/.zshrc
 ```
 
-This installs only the skills (including `/staff`) and leaves `~/.claude/agents/` empty. Use `/staff suggest` in each project to populate `.claude/agents/` per project — the [Per-project agent staffing skill](https://linear.app/mitzoku/project/per-project-agent-staffing-skill-b7691b903726) avoids the bloat of dumping all 56 agents into every Claude Code session.
+This installs only the skills (including `/staff`) and leaves `~/.claude/agents/` empty. Each skill that ships executables under its `bin/` dir is symlinked into `~/.local/bin/` — for the staff skill that means `staff suggest`, `staff apply`, `staff status`, etc. work as plain commands from any project.
+
+Use `staff suggest` in each project to populate `.claude/agents/` — the [Per-project agent staffing skill](https://linear.app/mitzoku/project/per-project-agent-staffing-skill-b7691b903726) avoids the bloat of dumping all 56 agents into every Claude Code session.
 
 ### Legacy: install all agents globally
 

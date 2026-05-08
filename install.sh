@@ -17,6 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 AGENTS_TARGET="${HOME}/.claude/agents"
 SKILLS_TARGET="${HOME}/.claude/skills"
+BIN_TARGET="${HOME}/.local/bin"
 
 MODE="copy"
 DRY_RUN=0
@@ -153,11 +154,37 @@ if (( ! SKILLS_ONLY )); then
     install_file "${SCRIPT_DIR}/README.md" "${AGENTS_TARGET}/README.md"
 fi
 
+# ---- Skill binaries on PATH ----
+# Each skill that ships a bin/ directory gets its executables symlinked
+# into ~/.local/bin/ so they're invokable as plain commands instead of
+# `python3 ~/.claude/skills/<skill>/scripts/foo.py`.
+bin_count=0
+if [[ -d "${SCRIPT_DIR}/skills" ]]; then
+    run mkdir -p "${BIN_TARGET}"
+    for skill_dir in "${SCRIPT_DIR}/skills"/*/; do
+        bin_dir="${skill_dir}bin"
+        [[ -d "${bin_dir}" ]] || continue
+        for entry in "${bin_dir}"/*; do
+            [[ -f "${entry}" && -x "${entry}" ]] || continue
+            name="$(basename "${entry}")"
+            install_file "${entry}" "${BIN_TARGET}/${name}"
+            bin_count=$((bin_count + 1))
+        done
+    done
+fi
+
 echo
 if (( SKILLS_ONLY )); then
-    echo "${prefix}Summary: ${skill_count} skill dirs processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
+    echo "${prefix}Summary: ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
 else
-    echo "${prefix}Summary: ${agent_count} agents + ${skill_count} skill dirs processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
+    echo "${prefix}Summary: ${agent_count} agents + ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
+fi
+
+if (( bin_count > 0 )); then
+    case ":${PATH}:" in
+        *":${BIN_TARGET}:"*) : ;;
+        *) echo "${prefix}note: ${BIN_TARGET} is not on your PATH; binaries won't be invokable until you add it" >&2 ;;
+    esac
 fi
 
 if (( SKIPPED > 0 )); then

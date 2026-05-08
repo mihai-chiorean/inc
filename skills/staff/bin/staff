@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# staff — dispatcher for /staff skill subcommands.
+#
+# Resolves the staff skill directory (where this script lives), then execs
+# the matching Python script. Pass through all remaining args.
+#
+# Usage:
+#   staff suggest [--project-root PATH] [--hr-repo PATH] [--json] [--all]
+#   staff apply   [--from-suggest PATH|-] [--agents ID...] [--force] [--allow-dirty-hr] [--dry-run]
+#   staff status  [--json] [--stale-overlay-days N]
+#   staff add     <id...>
+#   staff remove  <id...>
+#   staff help | -h | --help
+
+set -euo pipefail
+
+# Resolve symlink so we find the real script directory even when invoked via
+# ~/.local/bin/staff (which is a symlink to skills/staff/bin/staff).
+THIS="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${THIS}")/../scripts" && pwd)"
+
+usage() {
+    cat <<EOF
+staff — per-project agent staffing for Claude Code
+
+Usage: staff <subcommand> [args]
+
+Subcommands:
+  suggest    Propose a roster of HR agents for the current project
+  apply      Install staffed agents into .claude/agents/
+  status     Show staffed/diff/overlay state vs HR HEAD
+  add        Add agents to the staffed set
+  remove     Drop agents from the staffed set
+  help       Show this message
+
+Each subcommand accepts -h for its own flags.
+
+HR repo discovery (any subcommand that needs it):
+  --hr-repo PATH                       explicit
+  .claude/staff/config.yaml hr_repo:   per-project
+  STAFF_HR_REPO env var                machine-wide
+  lockfile hr_repo                     fallback (status, add)
+EOF
+}
+
+if [[ $# -eq 0 ]]; then
+    usage
+    exit 0
+fi
+
+SUBCMD="$1"
+shift
+
+case "${SUBCMD}" in
+    suggest|apply|status|add|remove)
+        exec python3 "${SCRIPT_DIR}/${SUBCMD}.py" "$@"
+        ;;
+    help|-h|--help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "staff: unknown subcommand '${SUBCMD}'" >&2
+        echo "run 'staff help' for usage" >&2
+        exit 2
+        ;;
+esac

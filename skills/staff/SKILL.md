@@ -28,15 +28,15 @@ Reads the HR manifest, scans the project for hint matches (presence of specific 
 
 ```bash
 # Default: scan cwd, infer HR repo from STAFF_HR_REPO env or .claude/staff/config.yaml
-python3 ~/.claude/skills/staff/scripts/suggest.py
+staff suggest
 
 # Explicit project + HR repo
-python3 ~/.claude/skills/staff/scripts/suggest.py \
+staff suggest \
     --project-root /home/mihai/workspace/wendy-cloud \
     --hr-repo /home/mihai/workspace/claude-agents
 
 # JSON output (for piping to /staff apply later)
-python3 ~/.claude/skills/staff/scripts/suggest.py --json
+staff suggest --json
 ```
 
 ### HR repo discovery (priority order)
@@ -88,18 +88,18 @@ Installs agents from HR into the project's `.claude/agents/` and writes the lock
 
 ```bash
 # From a previous suggest run (recommended — drift checks)
-python3 ~/.claude/skills/staff/scripts/suggest.py --json > /tmp/staff.json
-python3 ~/.claude/skills/staff/scripts/apply.py --from-suggest /tmp/staff.json
+staff suggest --json > /tmp/staff.json
+staff apply --from-suggest /tmp/staff.json
 
 # Pipe directly
-python3 ~/.claude/skills/staff/scripts/suggest.py --json \
-  | python3 ~/.claude/skills/staff/scripts/apply.py --from-suggest -
+staff suggest --json \
+  | staff apply --from-suggest -
 
 # Explicit list (skips drift checks; intended for /staff add/remove)
-python3 ~/.claude/skills/staff/scripts/apply.py --agents go-engineer swift-backend
+staff apply --agents go-engineer swift-backend
 
 # Dry run
-python3 ~/.claude/skills/staff/scripts/apply.py --agents go-engineer --dry-run
+staff apply --agents go-engineer --dry-run
 ```
 
 ### Drift refusal
@@ -150,13 +150,13 @@ Read-only inspection of staffed agents vs HR HEAD. Reports per-agent flags:
 
 ```bash
 # Default: text output, exits 1 if any drift detected
-python3 ~/.claude/skills/staff/scripts/status.py
+staff status
 
 # JSON output for hooks/tooling
-python3 ~/.claude/skills/staff/scripts/status.py --json
+staff status --json
 
 # Override stale threshold
-python3 ~/.claude/skills/staff/scripts/status.py --stale-overlay-days 30
+staff status --stale-overlay-days 30
 ```
 
 ### Exit codes
@@ -179,14 +179,14 @@ Thin operations on the lockfile + `.claude/agents/`.
 
 ```bash
 # Add one or more agents (idempotent for new IDs; rejects already-staffed)
-python3 ~/.claude/skills/staff/scripts/add.py go-engineer swift-backend
+staff add go-engineer swift-backend
 
 # Remove (deletes the generated file; preserves overlays under .claude/staff/overlays/)
-python3 ~/.claude/skills/staff/scripts/remove.py swift-backend
+staff remove swift-backend
 
 # Dry runs
-python3 ~/.claude/skills/staff/scripts/add.py go-engineer --dry-run
-python3 ~/.claude/skills/staff/scripts/remove.py go-engineer --dry-run
+staff add go-engineer --dry-run
+staff remove go-engineer --dry-run
 ```
 
 ### add — exit codes
