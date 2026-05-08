@@ -222,6 +222,10 @@ Only the engineering and engineering-adjacent agents have hints curated in v1 (~
 
 To add hints for an agent, edit its `project_hints:` block in `agent.manifest.yaml` directly. The generator script preserves hand-curated hints across re-runs.
 
+## Manual
+
+End-to-end setup, daily workflow, ASCII flow diagrams, troubleshooting: [`docs/manual.md`](docs/manual.md).
+
 ## Schemas
 
 See [`docs/schemas.md`](docs/schemas.md) for the spec of:
