@@ -12,7 +12,7 @@ Selects which agents from the canonical HR repo (`claude-agents`) are staffed in
 | Command | Status | Description |
 |---|---|---|
 | `/staff suggest` | **MIT-281 — implemented** | Propose a roster based on project hints. Read-only |
-| `/staff apply` | MIT-282 (pending) | Copy chosen agents from HR into `.claude/agents/`, write lockfile |
+| `/staff apply` | **MIT-282 — implemented** | Copy chosen agents from HR into `.claude/agents/`, write lockfile |
 | `/staff status` | MIT-283 (pending) | Show staffed/diff/overlay state vs HR HEAD |
 | `/staff add <id>` | MIT-284 (pending) | Add an agent to the staffed set |
 | `/staff remove <id>` | MIT-284 (pending) | Drop an agent |
@@ -79,6 +79,56 @@ When the user types `/staff suggest`:
 2. Present the proposed roster to the user, formatted readably.
 3. If the user confirms, chain into `/staff apply` (when MIT-282 lands) — for now, tell them the proposal is informational and `/staff apply` is not yet implemented.
 4. If the user wants changes, accept "remove X" or "add Y" instructions and re-display.
+
+## /staff apply
+
+Installs agents from HR into the project's `.claude/agents/` and writes the lockfile. Generates merged files (HR base + optional overlay). Refuses to pin a dirty HR repo.
+
+### Invocation
+
+```bash
+# From a previous suggest run (recommended — drift checks)
+python3 ~/.claude/skills/staff/scripts/suggest.py --json > /tmp/staff.json
+python3 ~/.claude/skills/staff/scripts/apply.py --from-suggest /tmp/staff.json
+
+# Pipe directly
+python3 ~/.claude/skills/staff/scripts/suggest.py --json \
+  | python3 ~/.claude/skills/staff/scripts/apply.py --from-suggest -
+
+# Explicit list (skips drift checks; intended for /staff add/remove)
+python3 ~/.claude/skills/staff/scripts/apply.py --agents go-engineer swift-backend
+
+# Dry run
+python3 ~/.claude/skills/staff/scripts/apply.py --agents go-engineer --dry-run
+```
+
+### Drift refusal
+
+When `--from-suggest` is used, apply compares the input's `hr_commit` and `manifest_hash` to the current HR repo. If either differs, apply refuses with exit code 3 and tells you to re-run `/staff suggest` (or pass `--force`). This prevents the case where you ran suggest, the HR repo got new commits, and apply silently pins agents to content you didn't see in the proposal.
+
+### Dirty-HR refusal
+
+If the HR repo has uncommitted changes (`git status --porcelain` non-empty), apply refuses with exit code 4. Pass `--allow-dirty-hr` to override (the pin still records HEAD; uncommitted content is what gets copied).
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 2 | Bad args, missing manifest, malformed config, unknown agent ID, etc. |
+| 3 | HR drift (commit or manifest hash) — bypass with `--force` |
+| 4 | Dirty HR — bypass with `--allow-dirty-hr` |
+| 5 | One or more agents failed to apply (lockfile NOT written) |
+
+### Idempotency
+
+Re-running apply with the same input produces the same `.claude/agents/<id>.md` files. The lockfile's `staffed` map is unchanged; only `generated_at` (timestamp) updates. Useful for CI checks: a clean re-apply implies no drift.
+
+### What apply does NOT do
+
+- **Doesn't preserve hand-edits to `.claude/agents/<id>.md`** — those files are generated. Use overlays for project-specific context.
+- **Doesn't touch overlay sources** under `.claude/staff/overlays/<id>.md`.
+- **Doesn't remove agents from previous lockfile entries** that aren't in the current input. Use `/staff remove` for that.
 
 ## How matching works
 
