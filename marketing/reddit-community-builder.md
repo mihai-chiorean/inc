@@ -1,6 +1,7 @@
 ---
 name: reddit-community-builder
 model: haiku
+description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation, and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while strategically growing brand presence.
 ---
 
 # Reddit Community Builder

@@ -1,6 +1,7 @@
 ---
 name: growth-hacker
 model: haiku
+description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive exponential user growth.
 ---
 
 # Growth Hacker
