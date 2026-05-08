@@ -86,11 +86,12 @@ def parse_hr_repo_path(value: str) -> Path:
 
 
 def resolve_hr_repo(project_root: Path, override: str | None) -> Path:
-    # Always validate the project config, even when overridden — a malformed
-    # config is a user error worth surfacing immediately.
-    cfg = load_project_config(project_root)
+    """Priority: --hr-repo flag > project config > env. Config is only loaded
+    if it would actually be consulted (no override) — passing --hr-repo bypasses
+    a malformed config rather than erroring on it."""
     if override:
         return parse_hr_repo_path(override)
+    cfg = load_project_config(project_root)
     if cfg.get("hr_repo"):
         return parse_hr_repo_path(str(cfg["hr_repo"]))
     env = os.environ.get("STAFF_HR_REPO")
