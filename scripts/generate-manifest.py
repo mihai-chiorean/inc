@@ -2,14 +2,19 @@
 """Generate agent.manifest.yaml from agent .md files in this HR repo.
 
 Idempotent: re-run whenever agent files change. Preserves hand-curated fields
-(tags, project_hints, conflicts, aliases, introduced) by reading the existing
-manifest and merging.
+(tags, project_hints, conflicts, aliases, introduced) and per-agent
+description_summary across runs.
+
+Use --llm-summaries to (re-)compute summaries for agents that don't have one
+yet, or whose description has changed (description_hash mismatch). Without
+that flag, summaries are preserved as-is and never updated. Calls go through
+skills/staff/scripts/_llm.py (provider selected by STAFF_LLM env var).
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
-import os
 import re
 import subprocess
 import sys
@@ -20,6 +25,24 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO_ROOT / "agent.manifest.yaml"
+
+# Allow importing skills/staff/scripts/_llm.py
+sys.path.insert(0, str(REPO_ROOT / "skills/staff/scripts"))
+import _llm  # type: ignore  # noqa: E402
+
+SUMMARY_SCHEMA: dict = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {"summary": {"type": "string"}},
+    "required": ["summary"],
+}
+
+SUMMARY_SYSTEM = (
+    "You write tight, factual one-paragraph summaries of Claude Code subagent definitions. "
+    "Each summary is 2-4 sentences. Capture: when to use the agent, what it specialises in, "
+    "and any explicit anti-scope. Avoid marketing language. Do not mention the agent's name "
+    "in the summary (it's already keyed by id). Output ONLY the JSON object."
+)
 
 CATEGORIES = [
     "engineering",
@@ -132,11 +155,19 @@ def build_entry(path: Path, existing: dict) -> tuple[str, dict]:
 
     prev = existing.get(name, {})
 
+    desc_hash = sha256(description)
+    # Carry forward summary if description hasn't changed; otherwise blank
+    # so the LLM pass (if requested) re-summarises.
+    prev_summary = prev.get("description_summary") or ""
+    prev_desc_hash = prev.get("description_hash") or ""
+    summary = prev_summary if prev_desc_hash == desc_hash else ""
+
     entry = {
         "file": rel,
         "category": category,
         "description": description,
-        "description_hash": sha256(description),
+        "description_summary": summary,
+        "description_hash": desc_hash,
         "body_hash": sha256(body),
         "tags": prev.get("tags") or derive_tags(name, category),
         "project_hints": prev.get("project_hints") or {"files": [], "regex": []},
@@ -147,7 +178,37 @@ def build_entry(path: Path, existing: dict) -> tuple[str, dict]:
     return name, entry
 
 
+def summarise_agent(name: str, description: str, provider: _llm.LLMProvider) -> str:
+    """Call the LLM to produce a description_summary for one agent."""
+    prompt = (
+        f"Agent id: {name}\n\n"
+        f"Description (from frontmatter):\n{description}\n\n"
+        "Write a 2-4 sentence factual summary that a router could use to decide whether "
+        "to send a project's task to this agent. Output the JSON object."
+    )
+    payload = _llm.call_with_json(
+        provider, prompt, SUMMARY_SCHEMA, system=SUMMARY_SYSTEM, timeout_sec=120,
+    )
+    summary = (payload.get("summary") or "").strip()
+    if not summary:
+        raise _llm.LLMError(f"empty summary for {name!r}")
+    return summary
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Regenerate agent.manifest.yaml")
+    parser.add_argument(
+        "--llm-summaries", action="store_true",
+        help="Compute description_summary for any agent whose description has changed "
+             "or which has no summary yet. Calls the LLM provider configured via STAFF_LLM.",
+    )
+    parser.add_argument(
+        "--summarise-only", metavar="ID", action="append", default=[],
+        help="When used with --llm-summaries, only summarise these agent ids "
+             "(repeatable). Useful for incremental top-ups.",
+    )
+    args = parser.parse_args()
+
     existing = load_existing_manifest().get("agents") or {}
     files = collect_agent_files()
     if not files:
@@ -173,6 +234,30 @@ def main() -> int:
         print(f"\n{len(failures)} agent file(s) failed to parse — refusing to write a partial manifest.",
               file=sys.stderr)
         return 2
+
+    if args.llm_summaries:
+        try:
+            provider = _llm.get_provider()
+        except _llm.LLMError as exc:
+            print(f"error: cannot resolve LLM provider: {exc}", file=sys.stderr)
+            return 2
+        target_ids = (
+            sorted(set(args.summarise_only)) if args.summarise_only
+            else [aid for aid, e in agents.items() if not e["description_summary"]]
+        )
+        if target_ids:
+            print(f"computing description_summary via {provider.name} for {len(target_ids)} agents", file=sys.stderr)
+        for aid in target_ids:
+            if aid not in agents:
+                print(f"warning: --summarise-only {aid!r} not in manifest, skipping", file=sys.stderr)
+                continue
+            try:
+                summary = summarise_agent(aid, agents[aid]["description"], provider)
+            except _llm.LLMError as exc:
+                print(f"error: failed to summarise {aid}: {exc}", file=sys.stderr)
+                return 3
+            agents[aid]["description_summary"] = summary
+            print(f"  ✓ {aid} ({len(summary)} chars)", file=sys.stderr)
 
     seen_ids = set(agents.keys())
     for old_id, old_entry in existing.items():

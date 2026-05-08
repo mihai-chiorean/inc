@@ -1,0 +1,21 @@
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["skills/staff/scripts", "scripts"]
+# We use stdlib + PyYAML; keep the deps surface minimal.
+ignore_missing_imports = true
+# Tests are runnable scripts with shared helpers; allow some looseness there.
+exclude = ["skills/staff/tests/.*"]
+
+[tool.coverage.run]
+branch = true
+source = ["skills/staff/scripts"]
+
+[tool.coverage.report]
+fail_under = 80
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

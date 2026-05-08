@@ -42,6 +42,7 @@ agents:
       and redundant-call rate, and flag the specific intents where tool choice changed."\n<commentary>\nTool-call accuracy
       and trajectory shape are behavior metrics, not correctness. test-writer-fixer would not have caught this. performance-benchmarker
       would only see the latency side; this agent couples behavior + cost in one report.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:92ba5b982405dcdf945444bafd022e3819272324bf3ed5e6b31bd2fd335fedbc
     body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
     tags:
@@ -70,6 +71,7 @@ agents:
       computer vision features\nuser: "Users should be able to search products by taking a photo"\nassistant: "I''ll implement
       visual search using computer vision. Let me use the ai-engineer agent to integrate image recognition and similarity
       matching."\n<commentary>\nComputer vision features require efficient processing and accurate model selection.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:c0a2acc67126f6bb7d7b3514b956e0f1b7d2f8e4a9436fe6e4ac59aed6a223c5
     body_hash: sha256:db791bde5f3dd5f9c0c3d0c0ef645834d85f84370463d325942d5a0544309c1a
     tags:
@@ -146,6 +148,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
     body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
     tags:
@@ -216,6 +219,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:42930722e2291ac387e823e8d83aa8fa4086d914c48be37fa9602396526c77d2
     body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
     tags:
@@ -253,6 +257,7 @@ agents:
       user: "Should we change our app icon? Users say it''s boring"\nassistant: "Let''s test that systematically. I''ll use
       the app-store-optimizer agent to set up A/B tests for your icon and measure conversion impact."\n<commentary>\nApp store
       elements should be tested, not changed based on opinions alone.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:fddb282f8ab22cf2ba6beea5024bea12d8bdbc9ef38bb9323a27265883e78d2a
     body_hash: sha256:da74e59dd6809cc0d3eddae113819aa56f743983171d190370fc36605629d9cf
     tags:
@@ -280,6 +285,7 @@ agents:
       Implementing authentication system\nuser: "Add OAuth2 login with Google and GitHub"\nassistant: "I''ll implement secure
       OAuth2 authentication. Let me use the backend-architect agent to ensure proper token handling and security measures."\n<commentary>\nAuthentication
       systems require careful security considerations and proper implementation.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:c4420bdc7ddddba5ba5963b7d4d8c6a2434cd0c3f387777bfd0ac7b7e4bbb4a3
     body_hash: sha256:cd1b035250e5c927fa51a2b116dcd139d1f374ae3aa2adb41abed9f01ee550c9
     tags:
@@ -318,6 +324,7 @@ agents:
       deserve the most skepticism. I''ll use the bay-value-hunter agent to find what the listing isn''t telling you — permit
       gaps, foundation concerns, tenant-in-place wrinkles, or Hayward Fault proximity — before you tour."\n<commentary>\nA
       disciplined investor kills most deals. Great-looking deals usually have a catch.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:bea5f5c237d012ae5145407edbe7bfb7c83abc51d49a7e6c0fab87b9f9199fdf
     body_hash: sha256:86a9c3ac3b46a5f6d538199a38131b5f5e710fdfc13208f40eca86dbb1e7cbdc
     tags:
@@ -344,6 +351,7 @@ agents:
       like observer-making-sense. I''ll use the blog-writer agent — the drafting will help find the thesis."\n</example>\n\n<example>\nContext:
       Existing draft\nuser: "I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me sharpen it?"\nassistant:
       "Existing-draft branch. I''ll use the blog-writer agent to review and run the codex loop."\n</example>'
+    description_summary: ''
     description_hash: sha256:0dcb34d683192fa045b0d78015c28918a557aec21132b2ec9c7119cb1b46ba33
     body_hash: sha256:670f5a5acffa9f42737319ca2aaf2cc2ec73126821aadbedebf4eefc502f2acc
     tags:
@@ -414,6 +422,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:566ed0d7859e64886f9e10f95038220dc51ee20d472461a382a8cf1972e20677
     body_hash: sha256:c021eb05dcd6b2e643b3510d685bd8e85e0bd0292098b8c24df2d3717260da3b
     tags:
@@ -446,6 +455,7 @@ agents:
       Assessing competitive threat\nuser: "Could Spotify just build what we''re building?"\nassistant: "Platform risk is real.
       I''ll use the competitive-intel agent to assess the likelihood and timeline of incumbents entering your space."\n<commentary>\nUnderstanding
       whether a big player will copy you is critical for strategy.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:36865a28cdb1e3968c392a819f372e916007ed1f751f363e7c2fee57cae468fb
     body_hash: sha256:9dcbd738a00617921194b7e5c10916726e6b2f959e8d8b8192215b561ac9a33c
     tags:
@@ -464,6 +474,7 @@ agents:
     description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
       copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
       unique requirements.
+    description_summary: ''
     description_hash: sha256:7bccb0c446911812108bdb4a27effe59730af9f65fa7f4eab43eb0b5db6294fb
     body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
     tags:
@@ -498,6 +509,7 @@ agents:
       "Mixed signals usually mean you''re talking to different segments or asking the wrong questions. Let me use the customer-interviewer
       agent to analyze your interview notes and find the real patterns."\n<commentary>\nPattern recognition across interviews
       is where the gold is — but only if the data is clean.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:822b1bdaecdefdba95bfb6dabee5a9bd8cd3e8827256d8f6c119ec0bf937cacd
     body_hash: sha256:6499b9c49dc39d0ec322832c42a3d5eb7f3a55e4fd1c2ddce10bae5b4252df06
     tags:
@@ -524,6 +536,7 @@ agents:
       Schema drift detection\nuser: "Production has columns that aren''t in any migration file"\nassistant: "Schema drift
       indicates out-of-band changes. Let me use the db-migration agent to audit the production schema against migration history."\n<commentary>\nManual
       database changes cause drift that makes migrations fail or miss columns.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:8fb6338f3abd635eedf995fefd52cfad6027edeabd1a79d372bf73a82737b3ad
     body_hash: sha256:f65347a48513300ad3b0352c6919ffb0dabb472837c63f52a9bc5eb711f3dba1
     tags:
@@ -559,6 +572,7 @@ agents:
       Monitoring and alerting setup\nuser: "We have no idea when things break in production"\nassistant: "Observability is
       crucial for rapid iteration. I''ll use the devops-automator agent to set up comprehensive monitoring and alerting."\n<commentary>\nProper
       monitoring enables fast issue detection and resolution in production.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:541aaa2716c4eb47007eb4a3fffa1a16e4a2ae5a5c834e72aee0f83d3032879f
     body_hash: sha256:00221538b3b9d90388c1790337fdef042850da4d9babe90747c76a6cc736161b
     tags:
@@ -594,6 +608,7 @@ agents:
       Cross-compilation\nuser: "The Swift binary crashes on Jetson but works on macOS"\nassistant: "ARM64 cross-compilation
       has platform-specific issues. Let me use the embedded-device agent to check architecture, linking, and runtime dependencies."\n<commentary>\nCross-compiled
       Swift binaries may have different Foundation behavior or missing system libraries.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:5030e05d113f6cbb5f69d615a941fbe68b1ce7fd7efc7bd1fe9e4c5eb322404e
     body_hash: sha256:b2a9e23c8a1ae21a8fa709b6f3190508a12023125bfe8aefa1664a98263c89db
     tags:
@@ -632,6 +647,7 @@ agents:
       Yocto builds take 4 hours in CI, how do we speed this up?"\nassistant: "Long Yocto CI builds usually mean poor sstate-cache
       utilization. I''ll use the embedded-linux agent to optimize your pipeline with KAS and proper caching."\n<commentary>\nWith
       shared sstate-cache and downloads, incremental Yocto builds should take under 30 minutes. KAS makes this reproducible.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:dd2add70422658e8b6053980aec303a10ac0bd86413d662e7ea23191404162d2
     body_hash: sha256:ec4a7813edc537552bc5dcf6469bbe683a19056b532e58ac012c095af498deec
     tags:
@@ -673,6 +689,7 @@ agents:
       AI avatar feature or remove it?"\nassistant: "Let me analyze the experiment data to inform this decision. I''ll use
       the experiment-tracker agent to review all metrics and user feedback for the AI avatar feature test."\n<commentary>\nProduct
       decisions should be backed by experiment data, not gut feelings.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:e42a5e5a507c14cd1869c12af8518e0b8c05e7d3c0fab1557ef665df58ffe8cf
     body_hash: sha256:d5b9799057657e250dde173b92f4da5ae58ba5fc0e26663109b910164202fbca
     tags:
@@ -704,6 +721,7 @@ agents:
       Identifying user pain points\nuser: "Users seem frustrated but I can''t pinpoint why"\nassistant: "I''ll dig into the
       feedback to identify specific pain points. Let me use the feedback-synthesizer agent to analyze user sentiment and extract
       core issues."\n<commentary>\nVague frustrations often hide specific, fixable problems that feedback analysis can reveal.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:33c48863ef095f3806a434e2208d129bc53ebd2b64d0cd1a92dd5fdfb94a268b
     body_hash: sha256:058aefb3e409dafa316865dcb22be26d799ca4e6c5fcf5cbff96f852dda0cca5
     tags:
@@ -774,6 +792,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:6d3be69546e4fc0ba9251c3146e637fe2bc3b86016caa3077d5737573148e2a7
     body_hash: sha256:a88541e1eed4779a04b075df9daf7c30fc6d8ca6b4a58af04e7ab91d81252f09
     tags:
@@ -802,6 +821,7 @@ agents:
       optimization is crucial for user experience. I''ll use the frontend-developer agent to implement virtualization and
       optimize rendering."\n<commentary>\nFrontend performance requires expertise in React rendering, memoization, and data
       handling.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:dff300d287e2a0e67cc1bfe3db8f8df360906a56b6cd24a74766b6c9fec9c060
     body_hash: sha256:755c598761f90dc46fdd3cd3d634c7df4c291df49ca2e297c8019de056998056
     tags:
@@ -855,6 +875,12 @@ agents:
       cross-builds), shell out to `codex exec` with the PR diff for review, and address findings before flipping the merge
       button."\n<commentary>\nThe house workflow requires: green CI + 80%+ coverage + codex review pass. The agent owns running
       all three and incorporating codex''s feedback, not just acknowledging it.\n</commentary>\n</example>'
+    description_summary: Use for Go project work, especially writing or modifying Go code, Cobra-based CLI features, and cross-platform
+      binaries targeting linux/amd64, linux/arm64, and darwin/arm64. It specializes in idiomatic Go structure, build tags
+      for platform-specific behavior, table-driven tests, coverage improvement, and local quality gates including golangci-lint,
+      gofumpt, govulncheck, race tests, and cross-builds. It also owns the Linear issue to worktree to codex-reviewed PR workflow
+      for lab-control and related Go tooling; do not route non-Go work or platform issues that can be handled by runtime branching
+      instead of proper build constraints.
     description_hash: sha256:60a7949eb814af61f46e5ef36ea03abc1cd4efc81b4bd840cc446a1f549e6fdc
     body_hash: sha256:ce22403e10d14f76953bd874a4de073c14ae92b56bab2b4d27e924b93b8eee57
     tags:
@@ -892,6 +918,7 @@ agents:
       "Cross-architecture support requires compile-time and runtime dispatch based on SM version. I''ll use the gpu-engineer
       agent to implement proper architecture-aware kernel selection."\n<commentary>\nEach GPU generation introduces new instructions
       and changes resource limits.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:05a872cd3bce302c6326ebb5388ef50d849d68a1be8b06732fc3fb0a6ae17142
     body_hash: sha256:7f21e56108f4fb29b32dec7a7607db922679d49aa1d4d693b2826a3336d33b79
     tags:
@@ -916,6 +943,7 @@ agents:
     description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines
       marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive
       exponential user growth.
+    description_summary: ''
     description_hash: sha256:4ebbf6891930826ca69b97cea54fce1f96056c7d5256af40a20b73b6f6207dd3
     body_hash: sha256:bd7887081e9159ed64b2803033114471f84269f3205b22e513526cd840b8225a
     tags:
@@ -943,6 +971,7 @@ agents:
       Adding a new gRPC service\nuser: "Add a new RPC to the certificate service proto"\nassistant: "Proto changes affect
       all consumers. Let me use the grpc-contracts agent to trace all implementations and ensure compatibility."\n<commentary>\nProto
       changes must be coordinated across Go, Swift, and TypeScript consumers.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:72ccf028e1e2b7d521dbeae8aa957a56232814c18f17988e2c9e97eea8e7ba94
     body_hash: sha256:fe8466920f7dcebc426f11d25b1b5220fecf7e3f9dc8e35cfa3b3d8756eed1bd
     tags:
@@ -989,6 +1018,7 @@ agents:
       has, (3) missing coverage — recurring task types with no clear owner. Output is a prioritized list, not a set of file
       changes — you decide what to act on."\n<commentary>\nAudit mode is read-only. The value is the prioritization: which
       overlap is costing you most churn, which gap is hit most often. That''s the judgment call, not the listing itself.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:3be5b42dfe3f0037ae0a3f77ac652015d658ef637cf02ceaeb8d3ff654dd231d
     body_hash: sha256:afe9b9c566711d10b7534d704d6808acee1e02e4a3fdbe89071994dffcbbd1eb
     tags:
@@ -1020,6 +1050,7 @@ agents:
       we keep going?"\nassistant: "Those numbers tell a story. Let me use the idea-evaluator agent to diagnose what''s happening
       and recommend kill, pivot, or persevere."\n<commentary>\nThe hardest startup skill is knowing when to quit vs. when
       to push through.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:710008b81d82b3176e6ac87b08cd93aa809fb52221909002236b1102d8351604
     body_hash: sha256:584ca15275c89eabc8983ae4f5a78987be94072335bca89911ce6fafa5c89de0
     tags:
@@ -1048,6 +1079,7 @@ agents:
       fails with permission denied"\nassistant: "IAM issues need systematic debugging. Let me use the infra-reviewer agent
       to check service account roles and API enablement."\n<commentary>\nGCP IAM requires specific roles per resource type
       and APIs must be enabled before use.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:0d732895f7447d12709f358333172f71e3630f166fa5d5369784c275d141aeeb
     body_hash: sha256:e012bb46ea8871bf026f855ab8b65f442f5ef7f297a7e4d784f37382c1017009
     tags:
@@ -1124,6 +1156,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:c88dd94f5b23a7e0e3cc8a5de36dfe5681dfcc5f8cab849f7052e98e54e07690
     body_hash: sha256:301b9595168ca3a02833ed5cd572368120e45dce39e041ee5dd32e4f85240d2b
     tags:
@@ -1142,6 +1175,7 @@ agents:
     description: Use this agent for Instagram visual content strategy, Stories and Reels production, and platform-native growth
       tactics. Understands Instagram's algorithm, visual aesthetics, and engagement patterns to drive followers, engagement,
       and conversions.
+    description_summary: ''
     description_hash: sha256:172d51cb373d623ba76623008bcf3ae136046601dc3e879e1e687edb762318f1
     body_hash: sha256:7ab9a71d39e42c44af5832de6e20bef124d6caa61275ad5471a9254228483cd5
     tags:
@@ -1164,6 +1198,7 @@ agents:
       energy during challenging moments.\n</commentary>\n</example>\n\n<example>\nContext: Creating fun error messages\nuser:
       "Our 404 page is boring"\nassistant: "Let''s make that error page memorable! I''ll use the joker agent to create some
       funny 404 messages."\n<commentary>\nHumorous error pages can turn frustration into delight.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:6a0b7b55520405e19b46c84f9bd01deeb2a972e16b51210e7b031586c3ad3098
     body_hash: sha256:51f65b1a7a0f51e1702c5f009dde2b187a52d8059a11247f112f6a1493bd144d
     tags:
@@ -1233,6 +1268,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:4c6d6d8e1347a7624024b74a1731ef7f70725fe2a2d57001e38c9caa97d661f7
     body_hash: sha256:1e57c4fd32896a785b6673a67d2cea53ccf17ba05eb51ec9b4a1fa8bcef55141
     tags:
@@ -1266,6 +1302,7 @@ agents:
       "Stated interest and actual payment are very different things. I''ll use the market-validator agent to assess willingness-to-pay
       using comparable products and behavioral signals."\n<commentary>\nWillingness to pay is the single hardest thing to
       validate pre-launch.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:216e4a9c26fe482065c1319ad5205be72b7d7bdb224813666fd2325f3fdb9bbc
     body_hash: sha256:c8dae5c721db69a6a1250505ad563f36c38a781cb62786b107ad8ca9c4f9e57b
     tags:
@@ -1293,6 +1330,7 @@ agents:
       on both iOS and Android"\nassistant: "I''ll implement it using React Native for code reuse. Let me use the mobile-app-builder
       agent to ensure native performance on both platforms."\n<commentary>\nCross-platform development requires balancing
       code reuse with platform-specific optimizations.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:5e6661a2503ee87758e72b62c2a61e8f2714f1d72230bab47da03b3d1fa751a7
     body_hash: sha256:a20a2f23356bec699c7c4a779ccd026a6e8a14c456e361308af2dfc261a88de4
     tags:
@@ -1370,6 +1408,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:15954de560d495780feccbd7d70f3947ff341b9dc2bb7057523f504e7e51297c
     body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
     tags:
@@ -1403,6 +1442,7 @@ agents:
       feature launched yesterday"\nassistant: "Great! The critical first 48 hours determine success. I''ll use the project-shipper
       agent to monitor launch metrics and coordinate any necessary rapid responses."\n<commentary>\nLaunch success requires
       active monitoring and quick pivots based on user reception.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:7d6f71e0796f4aa6a2a635ab73cb57b5d92f1dc142d3277291914966c8140b9f
     body_hash: sha256:613813ed50456ec689dadbdc4803edb4fa20613a96101b24a9ca3da09553d3fa
     tags:
@@ -1435,6 +1475,7 @@ agents:
       "We''re meeting with investors next week and need to show them our vision"\nassistant: "I''ll help create a compelling
       demo. Let me use the rapid-prototyper agent to build a functional prototype that showcases your vision."\n<commentary>\nInvestor
       demos and stakeholder presentations benefit from working prototypes rather than just mockups.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:066e875eb74bfbcbe827e29d2286a0f7a2b9a79d706df2e89841be08efad794f
     body_hash: sha256:02ab1a60dcd04e11ec76540dbb00b27bfe35dd4eb6b73fc013046fcf4eb6fa4c
     tags:
@@ -1453,6 +1494,7 @@ agents:
     description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
       and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while
       strategically growing brand presence.
+    description_summary: ''
     description_hash: sha256:7e3f68fe81b1850f7bb73d214afab13464b31687d58b1eef83225340133f86aa
     body_hash: sha256:b13ad116fbc9330e08055d7c69e0a79af82311c38653cbeee0342a540aa17db7
     tags:
@@ -1481,6 +1523,11 @@ agents:
       Certificate lifecycle audit\nuser: "Are revoked certificates still being accepted?"\nassistant: "Certificate revocation
       is critical. Let me use the security-auditor agent to trace the full validation path and check for revocation bypass."\n<commentary>\nWhen
       ALBs don''t check CRLs, backends must implement their own revocation checking.\n</commentary>\n</example>'
+    description_summary: Use for security reviews of application code, infrastructure, authentication flows, PKI/mTLS setups,
+      certificate validation, and certificate lifecycle behavior. It specializes in identifying OWASP-style issues such as
+      header injection, open redirects, spoofing vectors, authentication bypasses, token handling risks, CSRF, and cryptographic
+      or revocation-checking misconfigurations. It is scoped to vulnerability auditing and validation of security controls,
+      not general feature implementation or non-security code review.
     description_hash: sha256:566525f913fd8288718debe584954c647d61a5705b2b746d2a38ffca958456be
     body_hash: sha256:76b39eda069687698b727e50355ea27aa16b8fe5533546791fdf2e0a8902fdb1
     tags:
@@ -1509,6 +1556,7 @@ agents:
       Using the social-amplifier agent."\n</example>\n\n<example>\nContext: LinkedIn-only request\nuser: "I want a LinkedIn
       post about shipping the Jetson flash pipeline — skip X"\nassistant: "Single-platform mode. I''ll use the social-amplifier
       agent for LinkedIn only."\n</example>'
+    description_summary: ''
     description_hash: sha256:30ea78f41aea2d65cc3087ff6355eb3fa942873d43259d9ade2541bdfa26179e
     body_hash: sha256:ad13f605e0908bb5113c67a46bef34ef4d9ab552fdae3436358af4d8b88d90e3
     tags:
@@ -1535,6 +1583,7 @@ agents:
       Mid-sprint scope changes\nuser: "The CEO wants us to add video calling to this sprint"\nassistant: "I''ll assess the
       impact on current commitments. Let me use the sprint-prioritizer agent to reorganize priorities while maintaining sprint
       goals."\n<commentary>\nScope changes require careful rebalancing to avoid sprint failure.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:797b7b809a813b10a068a36c6884ba98874c4045a4ad1c7e89ae5fd612df4623
     body_hash: sha256:82fdf9aa6451263c00d7e9c54c7073a2e6cf3edd3511c559d49eed90b31acd7f
     tags:
@@ -1567,6 +1616,7 @@ agents:
       wins or learning from failures\nuser: "Our app just hit #1 on the App Store!"\nassistant: "Incredible achievement! Let
       me bring in the studio-coach to celebrate with the team and capture what made this success possible."\n<commentary>\nThe
       coach helps institutionalize wins and extract learnings from both successes and failures.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:435e30134a99597c269e282684beeb5dd4b72f602663de1797f997baf6459259
     body_hash: sha256:7379ed505019fdd9d92fd599e424545a4aa23a9e765b72582cae142028cb6c3c
     tags:
@@ -1600,6 +1650,7 @@ agents:
       "We''re starting a new 6-day cycle next Monday"\nassistant: "New cycles need comprehensive planning. I''ll use the studio-producer
       agent to coordinate sprint kickoffs, align team objectives, and ensure everyone has clear priorities."\n<commentary>\nWell-coordinated
       sprint starts set the tone for successful 6-day cycles.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:de49e3c77b5780056d5746e8d6df10439912c300a692b13d30defb0f92e51177
     body_hash: sha256:c27ac38f39dcca9ddbdbd3318e0cd164e48919ad60d23ebd20e2c78710ed0c8c
     tags:
@@ -1638,6 +1689,7 @@ agents:
       user: "Users keep asking how to connect their TikTok account"\nassistant: "Let''s create clear documentation for that.
       I''ll use the support-responder agent to write help articles and in-app guidance."\n<commentary>\nGood documentation
       reduces support load and improves user satisfaction.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:0bb6ebeee97a52edef0772671dba3a4ac1363b72ac4e719f5003e30ece0a9bc9
     body_hash: sha256:f541d3974c8dad1451874d6ca0e25a4b3e39ea43f49397c0535b6d851e033de1
     tags:
@@ -1667,6 +1719,7 @@ agents:
       "Database queries in the Swift backend use postgres-nio. Let me use the swift-backend agent to implement the revocation
       check with proper connection pooling."\n<commentary>\nPostgreSQL operations in Swift require async/await patterns with
       postgres-nio.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:aead8ae11d96f18923c77d259bf0d86fdcefd93c9682a09b6695645abf3d670c
     body_hash: sha256:0fce0483ca582a844f6d4e9dc03a60f3ba82fb44f60f2214c04a7e4eb3293ec1
     tags:
@@ -1742,6 +1795,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:31cd4f4840202522c976dc5880ce9c6d29f634835d17547e5835c7b633d04335
     body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
     tags:
@@ -1780,6 +1834,7 @@ agents:
       tests.\nuser: "I''ve added the social sharing functionality"\nassistant: "Great! The social sharing is implemented.
       Now let me use the test-writer-fixer agent to write tests that ensure this feature works correctly across different
       platforms."\n<commentary>\nNew features should always include comprehensive test coverage from the start.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:94dc1dab9d77d73ac19f745357455fc7d9757b9dc9c8d2fa2505c54e246b6446
     body_hash: sha256:84c521dae1a1d6642c064f4c54a33318cd525aa09e2ec7ebe89eee2e04f03069
     tags:
@@ -1813,6 +1868,7 @@ agents:
       your app TikTok-native is smart. I''ll use the tiktok-strategist agent to identify features and moments in your app
       that users would want to share on TikTok."\n<commentary>\nApps with built-in TikTok-worthy moments see higher organic
       growth through user-generated content.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:7a81977ef3316ce15c0c9cfc42c24695053ee224187ef6b91bbcf144b0635ad3
     body_hash: sha256:4600c641292d9e7c6602758059126011e8bb4712f5942eff77ccf3e606c941ff
     tags:
@@ -1850,6 +1906,7 @@ agents:
       user: "Could Bubble or FlutterFlow speed up our prototyping?"\nassistant: "Let''s evaluate if no-code tools fit your
       workflow. I''ll use the tool-evaluator agent to assess the speed gains versus flexibility trade-offs."\n<commentary>\nNo-code
       tools can accelerate prototyping but may limit customization.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:1643e3ce76fe98f28e4cc6b6c2ed076759cadc1b67670fc3ba63918c552541bd
     body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
     tags:
@@ -1881,6 +1938,7 @@ agents:
       Finding viral mechanics for existing apps\nuser: "How can we make our habit tracker more shareable?"\nassistant: "I''ll
       research viral sharing mechanics in successful apps. Let me use the trend-researcher agent to identify patterns we can
       adapt."\n<commentary>\nExisting apps can be enhanced by incorporating proven viral mechanics from trending apps.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:280845c83613138d063639c7bfe469a355160d8cb22dfc58537238a9c7cd0b1f
     body_hash: sha256:b2bab77bf4ba28cbded722c28996cb7aca67d26926185c301a21200000420714
     tags:
@@ -1898,6 +1956,7 @@ agents:
     category: marketing
     description: Use this agent for real-time Twitter/X engagement, trending-topic leverage, and viral tweet creation. Specializes
       in concise communication, thread storytelling, and community building through strategic engagement on the platform.
+    description_summary: ''
     description_hash: sha256:4a710f8b1b34a837a318fd4b6a00cb593bc995f4e96d884fc08ab4e62220b089
     body_hash: sha256:37a3261785d7f7c91c79a4e632a1c26d2045dc1251b4432104c39ec0fc28de08
     tags:
@@ -1935,6 +1994,7 @@ agents:
       user: "I love how BeReal does their dual camera view. Can we do something similar?"\nassistant: "I''ll adapt that trendy
       pattern for your app. Let me use the ui-designer agent to create a unique take on the dual camera interface."\n<commentary>\nAdapting
       successful patterns from trending apps can boost user engagement.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:9b9c160fd7d41c3d58bc32a5f3e4400d77d313332dcf14a2ec905bca1ae0df61
     body_hash: sha256:50d63044c26060efdbfb2cf3418b46b5723467644113ee0e7b79250aad55e1aa
     tags:
@@ -2006,6 +2066,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:4182d8fa9bc2c62eba5773632b7103f2d23e3636d97560361916c7cac71ee67e
     body_hash: sha256:b2a23b17c716d06e8b06bcf7d20c345c0b31840ff04bfff1bfe56c1ad0ce3553
     tags:
@@ -2102,6 +2163,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
     body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
     tags:
@@ -2178,6 +2240,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:316b307c653c6d5f8b161f70a8c05e40f300812bdc0886a8d7ec6c90bc6f25fe
     body_hash: sha256:d0d2906337076d3009dc851e4c394a1a3f6cd31911cce9b49a02b03646941e13
     tags:
@@ -2209,6 +2272,7 @@ agents:
       completed features\nuser: "The user profile page is done"\nassistant: "Perfect! The profile page is complete. Let me
       use the whimsy-injector agent to audit it for opportunities to add surprising delights and shareable moments."\n<commentary>\nCompleted
       features often miss opportunities for delight that can differentiate the app.\n</commentary>\n</example>'
+    description_summary: ''
     description_hash: sha256:546ebc59fb2accc6c6e49c3db2b0551765241da5d5f89a27cb125d9e6774d48c
     body_hash: sha256:57663bb442a59c4efd089a4e0b24588650d63591ce929bec81bc50d024fbc64b
     tags:
@@ -2279,6 +2343,7 @@ agents:
       </commentary>
 
       </example>'
+    description_summary: ''
     description_hash: sha256:61760a51a4dc9b7708d735378568d606e63b656f66a235547bbde76f77e9859e
     body_hash: sha256:fde57ac7fd199bf0799246eec016079fabc0dadb47c72a55fa28241f3bad97fe
     tags:

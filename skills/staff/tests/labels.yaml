@@ -1,0 +1,33 @@
+# Labeled projects for the /staff suggest accuracy harness.
+#
+# Each entry is a project with the *expected* roster — the set of agents
+# Mihai would actually staff for that project. The harness runs `staff
+# suggest --strategy <s>` against each, computes precision/recall/F1.
+#
+# Add more projects here as you encounter them. Even 3-5 is enough to
+# decide whether summary-vs-full descriptions affects accuracy meaningfully.
+
+projects:
+  - name: lab-control
+    path: /home/mihai/workspace/lab-control
+    expected:
+      - go-engineer
+      - security-auditor
+      - embedded-device
+      - devops-automator
+    notes: |
+      Go cobra CLI for multi-machine lab orchestration. SSH key distribution,
+      hardened agent loopback, containerd app deploy, GitHub Actions CI.
+      ai-engineer is borderline (talks about agents but not building AI features).
+
+  - name: claude-agents (this repo)
+    path: /home/mihai/workspace/claude-agents
+    expected:
+      - agent-eval-engineer
+      - hiring-manager
+      - blog-writer
+    notes: |
+      The HR repo itself. The agents that work on this repo are the meta
+      ones — eval framework, role definitions, changelog/blog. test-writer-fixer
+      is borderline since the staff scripts have tests, but its Go-flavored
+      examples don't quite match. We may add it after observing.

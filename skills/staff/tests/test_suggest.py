@@ -21,7 +21,9 @@ HR_REPO = REPO_ROOT
 
 
 def run_suggest(project_root: Path, json_output: bool = True, extra_args: list[str] | None = None) -> dict | str:
-    cmd = [sys.executable, str(SCRIPT), "--project-root", str(project_root), "--hr-repo", str(HR_REPO)]
+    # Tests default to --no-llm: this is the deterministic path, what we want
+    # to assert behavior on. LLM-mode tests pass extra_args=["--llm-provider", ...] explicitly.
+    cmd = [sys.executable, str(SCRIPT), "--project-root", str(project_root), "--hr-repo", str(HR_REPO), "--no-llm"]
     if json_output:
         cmd.append("--json")
     if extra_args:
@@ -141,7 +143,7 @@ def test_invalid_hr_repo_url_scheme(tmp: Path) -> None:
         sys.executable, str(SCRIPT),
         "--project-root", str(tmp),
         "--hr-repo", "https://example.com/agents",
-        "--json",
+        "--no-llm", "--json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode != 0, "non-file:// HR URL exits non-zero")
@@ -157,7 +159,7 @@ def test_file_url_with_spaces(tmp: Path) -> None:
         sys.executable, str(SCRIPT),
         "--project-root", str(tmp),
         "--hr-repo", file_url,
-        "--json",
+        "--no-llm", "--json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode == 0, "file:// URL is accepted")
@@ -236,7 +238,7 @@ def test_malformed_project_config(tmp: Path) -> None:
     cmd = [
         sys.executable, str(SCRIPT),
         "--project-root", str(tmp),
-        "--json",
+        "--no-llm", "--json",
     ]
     env = {**os.environ}
     env.pop("STAFF_HR_REPO", None)  # ensure we hit the config path, not env
@@ -257,7 +259,7 @@ def test_malformed_config_ignored_when_overridden(tmp: Path) -> None:
         sys.executable, str(SCRIPT),
         "--project-root", str(tmp),
         "--hr-repo", str(HR_REPO),
-        "--json",
+        "--no-llm", "--json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode == 0, "override bypasses config validation")
@@ -269,7 +271,7 @@ def test_malformed_manifest_shape(tmp: Path) -> None:
     fake_hr.mkdir()
     # Missing 'agents' key entirely
     (fake_hr / "agent.manifest.yaml").write_text("schema_version: 1\n")
-    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--json"]
+    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--no-llm", "--json"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode == 2, "manifest missing 'agents' exits 2")
     expect("agents" in result.stderr.lower(), "stderr mentions missing agents key")
@@ -280,7 +282,7 @@ def test_missing_manifest(tmp: Path) -> None:
     print("test_missing_manifest")
     fake_hr = tmp / "empty-hr"
     fake_hr.mkdir()
-    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--json"]
+    cmd = [sys.executable, str(SCRIPT), "--project-root", str(tmp), "--hr-repo", str(fake_hr), "--no-llm", "--json"]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode == 2, "missing manifest exits 2")
     expect("manifest" in result.stderr.lower(), "stderr mentions missing manifest")
@@ -318,7 +320,7 @@ def test_invalid_regex_in_manifest_does_not_crash(tmp: Path) -> None:
         sys.executable, str(SCRIPT),
         "--project-root", str(project),
         "--hr-repo", str(fake_hr),
-        "--json",
+        "--no-llm", "--json",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, check=False)
     expect(result.returncode == 0, "invalid regex does not crash; warning to stderr")
