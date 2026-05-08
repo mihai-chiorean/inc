@@ -226,6 +226,12 @@ To add hints for an agent, edit its `project_hints:` block in `agent.manifest.ya
 
 End-to-end setup, daily workflow, ASCII flow diagrams, troubleshooting: [`docs/manual.md`](docs/manual.md).
 
+## Repo leakage policy
+
+Whether `.claude/agents/` is committed or gitignored, what stays committed regardless, recommended `.gitignore` entries, migration in either direction: [`docs/leakage.md`](docs/leakage.md).
+
+**TL;DR**: gitignore `.claude/agents/` (generated), commit `.claude/staff/` (lockfile + config + overlays). Override with `commit_generated_agents: true` in config when the project needs HR-independent reproducibility.
+
 ## Schemas
 
 See [`docs/schemas.md`](docs/schemas.md) for the spec of:
