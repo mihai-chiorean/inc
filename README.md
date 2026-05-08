@@ -4,19 +4,43 @@ A comprehensive collection of specialized AI agents designed to accelerate and e
 
 ## 📥 Installation
 
-1. **Download this repository:**
-   ```bash
-   git clone https://github.com/contains-studio/agents.git
-   ```
+This repo is the canonical home for agents and skills. Use `install.sh` to wire them into Claude Code.
 
-2. **Copy to your Claude Code agents directory:**
-   ```bash
-   cp -r agents/* ~/.claude/agents/
-   ```
-   
-   Or manually copy all the agent files to your `~/.claude/agents/` directory.
+### Recommended: skills only + per-project staffing
 
-3. **Restart Claude Code** to load the new agents.
+```bash
+git clone <this-repo>
+cd claude-agents
+./install.sh --link --skills-only
+```
+
+This installs only the skills (including `/staff`) and leaves `~/.claude/agents/` empty. Use `/staff suggest` in each project to populate `.claude/agents/` per project — the [Per-project agent staffing skill](https://linear.app/mitzoku/project/per-project-agent-staffing-skill-b7691b903726) avoids the bloat of dumping all 56 agents into every Claude Code session.
+
+### Legacy: install all agents globally
+
+```bash
+./install.sh --link
+```
+
+Symlinks every agent into `~/.claude/agents/` and every skill into `~/.claude/skills/`. All agents load into every Claude Code session. Kept for backwards compatibility; prefer `--skills-only` + `/staff` for new setups.
+
+### Flags
+
+| Flag | Purpose |
+|---|---|
+| `--link` | Symlink instead of copy (keeps the repo as source of truth; updates via `git pull`) |
+| `--dry-run` | Print what would happen, no writes |
+| `--skills-only` | Install skills only; skip agents |
+
+### Idempotency
+
+`./install.sh` is safe to re-run. Existing symlinks pointing into this repo are left alone; targets that point elsewhere are reported and skipped (no clobbering).
+
+After updates: `git pull && ./install.sh --link --skills-only`. Then in each project, `/staff sync` (when MIT-290 lands) will refresh staffed agents.
+
+### Restart Claude Code
+
+After install, restart Claude Code to pick up new agents and skills.
 
 ## 🚀 Quick Start
 
