@@ -1,0 +1,17 @@
+[run]
+source = skills/staff/scripts
+parallel = True
+branch = True
+
+[paths]
+source =
+    skills/staff/scripts
+    */skills/staff/scripts
+
+[report]
+fail_under = 80
+skip_empty = True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
