@@ -37,8 +37,6 @@ import yaml
 DEFAULT_STALE_OVERLAY_DAYS = 90
 LOCKFILE_SCHEMA_VERSION = 1
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-KNOWN_AGENT_KEYS = {"name", "description", "model", "color", "tools"}
-KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
 
 
 # ---------- shared helpers (kept local to script) ----------
@@ -50,26 +48,6 @@ def canonicalize_for_hash(s: str) -> str:
 
 def sha256(s: str) -> str:
     return "sha256:" + hashlib.sha256(canonicalize_for_hash(s).encode("utf-8")).hexdigest()
-
-
-def parse_agent_frontmatter_permissive(raw: str) -> dict:
-    out: dict[str, str] = {}
-    current_key: str | None = None
-    for line in raw.splitlines():
-        m = KEY_LINE_RE.match(line)
-        if m and m.group(1) in KNOWN_AGENT_KEYS:
-            current_key = m.group(1)
-            out[current_key] = m.group(2)
-        elif current_key is not None:
-            out[current_key] += "\n" + line
-    return out
-
-
-def split_agent_file(text: str) -> tuple[str, str, dict]:
-    m = FRONTMATTER_RE.match(text)
-    if not m:
-        raise ValueError("agent file has no frontmatter")
-    return m.group(1), m.group(2), parse_agent_frontmatter_permissive(m.group(1))
 
 
 def parse_overlay(text: str) -> tuple[dict, str]:

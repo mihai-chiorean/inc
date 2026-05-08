@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.mypy_cache/
+
 # Virtualenvs
 .venv/
 venv/
