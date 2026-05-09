@@ -231,6 +231,10 @@ End-to-end setup, daily workflow, ASCII flow diagrams, troubleshooting: [`docs/m
 
 Whether `.claude/agents/` is committed or gitignored, what stays committed regardless, recommended `.gitignore` entries, migration in either direction: [`docs/leakage.md`](docs/leakage.md).
 
+## Claude Code load semantics
+
+How project + user + plugin scopes compose, what shadowing means, why pruning user-scope (not just staffing per-project) is what shrinks the router's view: [`docs/load-semantics.md`](docs/load-semantics.md). Includes empirical findings and the `claude agents --setting-sources` cmd for inspecting what loaded.
+
 **TL;DR**: gitignore `.claude/agents/` (generated), commit `.claude/staff/` (lockfile + config + overlays). Override with `commit_generated_agents: true` in config when the project needs HR-independent reproducibility.
 
 ## Schemas
