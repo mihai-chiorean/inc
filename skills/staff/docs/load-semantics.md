@@ -55,8 +55,8 @@ This matters for `/staff`: when a project staffs an agent that already exists in
 
 ## What composes vs. what shadows
 
-- **Different-name agents from different scopes COMPOSE.** All load. A user-scope `go-engineer` and a project-scope `swift-backend` are both available. Total in `claude agents` = (project agents) + (user agents not shadowed) + (plugins not shadowed).
-- **Same-name agents from different scopes SHADOW.** Only the highest-priority one is dispatched. The others are listed-but-inactive.
+- **Different-name agents from different scopes COMPOSE.** All load. A user-scope `go-engineer` and a project-scope `swift-backend` are both available. The router-visible **dispatchable** set = (project agents) + (user agents not shadowed) + (plugins not shadowed). Note: `claude agents` lists shadowed entries too with a `(shadowed by …)` label — listed ≠ dispatchable.
+- **Same-name agents from different scopes SHADOW.** Only the highest-priority one is dispatched. The others appear in `claude agents` output as `(shadowed by …)` but never receive a routing call.
 
 Practical implication: the "`/staff` puts ONLY the staffed subset in `.claude/agents/`, leaves user-scope alone" pattern works exactly as intended. The user-scope set continues to load (composition); the project subset takes priority on any naming collision (shadow). Pruning user-scope down to truly-global agents (per `staff audit`'s retirement-candidates output) is what shrinks the routing prompt — staffing alone doesn't.
 
@@ -66,9 +66,15 @@ Practical implication: the "`/staff` puts ONLY the staffed subset in `.claude/ag
 
 Quoting the docs: *"Project subagents are discovered by walking up from the current working directory."*
 
-Concrete: if you `cd ~/workspace/lab-control/cmd/lab` and start Claude Code, it walks `cmd/lab/` → `cmd/` → `lab-control/` and uses the first `.claude/agents/` it finds. If lab-control has `.claude/agents/`, those agents load. If you'd been one level up at `~/workspace/`, no project agents would load (no `.claude/agents/` at that level).
+**Empirically tested 2026-05-09:** every ancestor `.claude/agents/` directory contributes — they **compose**, not first-found-wins.
 
-This means a parent repo's `.claude/agents/` doesn't affect a sub-repo's session unless the sub-repo lacks its own `.claude/agents/` — first-found-wins on the walk.
+Test: created `parent/.claude/agents/parent-only.md` and `parent/sub/.claude/agents/sub-only.md` (different names). From `parent/sub`, `claude agents --setting-sources project` showed BOTH `parent-only` and `sub-only` as project agents. From `parent` alone, only `parent-only` showed up. So:
+
+- A nested project gets the union of every ancestor's `.claude/agents/` (with same-name shadowing applied at the closest scope).
+- The closest ancestor wins on name collisions (same shadowing rule, applied within the project-scope tier).
+- `cd`'ing into a subdirectory of a project doesn't restrict the agent set; it adds to it if there are nested `.claude/agents/`.
+
+Practical implication: if you have nested repos (e.g., a monorepo where `apps/foo/` has its own `.claude/agents/`), running Claude from `apps/foo/` gets BOTH foo's agents AND the parent's agents. This composition can be useful (parent provides shared infra agents, child provides feature-specific) or surprising (you accidentally pull in a parent's agents). Be deliberate.
 
 `--add-dir` does NOT add additional project agent dirs. From the docs: *"Directories added with `--add-dir` grant file access only and are not scanned for subagents."* If you want extra agents in a session, use `--agents` (priority 2) instead.
 
