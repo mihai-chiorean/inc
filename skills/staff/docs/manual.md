@@ -110,7 +110,7 @@ That's it. Open Claude Code in the project; the staffed agents load from `.claud
                           ▼
                    staff apply \
                      --agents <ids>     ← pull HR updates for the drifting agents
-                     --force              (or wait for /staff sync, MIT-290)
+                     --force              (or use /staff sync for per-agent diff + accept)
                           │
                           ▼
                    staff status          ← back to clean
@@ -283,7 +283,7 @@ Two-phase apply means: if any agent fails to compute, **no files are written**. 
 
 ---
 
-## How sync (when MIT-290 lands) will fit
+## How sync fits
 
 ```
 HR moves forward                                     project still pinned
@@ -293,7 +293,7 @@ git -C $STAFF_HR_REPO pull
           staff status     ← shows HR-DRIFT for affected agents
                   │
                   ▼
-          staff sync       ← MIT-290; for each drifting agent:
+          staff sync       ← for each drifting agent:
                                 show diff (HR HEAD body vs pinned body)
                                 prompt: take HR / skip
                                 regenerate merged file from HR + existing overlay
@@ -358,7 +358,7 @@ cd ~/workspace/claude-agents && git pull   # update HR
 cd ~/workspace/<project>
 staff status                                # see HR-DRIFT flags
 staff apply --agents <id1> <id2> --force    # re-pin specific agents
-# (or wait for /staff sync — MIT-290)
+# (or use staff sync for per-agent diff + accept)
 ```
 
 ### "I want to write a project-specific overlay for go-engineer"
@@ -420,7 +420,7 @@ staff suggest                                # uses local LLM
 ## What this isn't
 
 - **Not a package manager.** No semver, no version pinning beyond HR commits.
-- **Not a three-way merge.** Sync (when MIT-290 lands) regenerates from HR HEAD; manual edits to merged files are detected as drift, not preserved.
+- **Not a three-way merge.** `staff sync` regenerates from HR HEAD; manual edits to merged files are detected as drift and surfaced before being overwritten.
 - **Not multi-source HR.** One HR repo per project, period.
 - **Not auto-renaming.** If an agent's stable ID changes upstream, an operator must hand-add the old ID to `aliases:` in the manifest before regen.
 
