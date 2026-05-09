@@ -46,6 +46,11 @@ class ProjectAudit:
     is_git_repo: bool
     has_lockfile: bool
     suggested: list[str] = field(default_factory=list)
+    # Agents currently in the project's lockfile.staffed map. May overlap with
+    # `suggested` but can also include agents that were /staff add'd manually
+    # without being matched by /staff suggest. Both sources count as "wanted"
+    # when computing retirement candidates.
+    lock_staffed: list[str] = field(default_factory=list)
     error: str | None = None
 
 
@@ -99,12 +104,30 @@ def run_suggest(project: Path, hr_repo: Path, no_llm: bool) -> tuple[list[str], 
     return [s["id"] for s in payload.get("suggested", [])], None
 
 
+def read_lockfile_staffed_ids(project: Path) -> list[str]:
+    """Best-effort read of the lockfile's staffed map. Returns an empty list
+    on missing or malformed lockfile (the audit isn't authoritative on
+    lockfile health — that's /staff status's job)."""
+    p = project / ".claude/staff/lock.yaml"
+    if not p.exists():
+        return []
+    try:
+        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+    except (yaml.YAMLError, OSError):
+        return []
+    staffed = data.get("staffed") if isinstance(data, dict) else None
+    if not isinstance(staffed, dict):
+        return []
+    return sorted(staffed.keys())
+
+
 def audit_project(project: Path, hr_repo: Path, no_llm: bool) -> ProjectAudit:
     audit = ProjectAudit(
         path=project, name=project.name,
         is_git_repo=is_git_root(project),
         has_lockfile=(project / ".claude/staff/lock.yaml").exists(),
     )
+    audit.lock_staffed = read_lockfile_staffed_ids(project)
     suggested, err = run_suggest(project, hr_repo, no_llm)
     audit.suggested = suggested
     audit.error = err
@@ -163,11 +186,14 @@ def emit_text(audits: list[ProjectAudit], retirement: list[str], all_proposed: s
 
 
 def emit_json(audits: list[ProjectAudit], retirement: list[str], all_proposed: set[str],
-              user_scope: set[str], hr_repo: Path) -> str:
+              user_scope: set[str], hr_repo: Path, *,
+              all_lock_staffed: set[str] | None = None,
+              failed_count: int = 0) -> str:
     return json.dumps({
         "schema_version": 1,
         "hr_repo": str(hr_repo),
         "user_scope_count": len(user_scope),
+        "failed_count": failed_count,
         "projects": [
             {
                 "name": a.name,
@@ -175,11 +201,13 @@ def emit_json(audits: list[ProjectAudit], retirement: list[str], all_proposed: s
                 "is_git_repo": a.is_git_repo,
                 "has_lockfile": a.has_lockfile,
                 "suggested": a.suggested,
+                "lock_staffed": a.lock_staffed,
                 "error": a.error,
             }
             for a in audits
         ],
         "all_proposed": sorted(all_proposed),
+        "all_lock_staffed": sorted(all_lock_staffed or set()),
         "retirement_candidates": retirement,
     }, indent=2)
 
@@ -236,23 +264,37 @@ def main() -> int:
         audits.append(audit_project(project, hr_repo, args.no_llm))
 
     all_proposed: set[str] = set()
+    all_lock_staffed: set[str] = set()
     for a in audits:
         all_proposed.update(a.suggested)
+        all_lock_staffed.update(a.lock_staffed)
 
-    # Retirement candidates: in user_scope but never proposed
-    # Excludes truly-global agents (hardcoded list — kept short and obvious)
+    # Retirement candidates: in user_scope but never wanted by ANY project.
+    # "Wanted" means proposed by /staff suggest OR currently in a lockfile
+    # (which catches manually-`/staff add`'d agents that suggest doesn't match).
+    # Excludes truly-global agents (hardcoded — kept short and obvious; codex
+    # noted this could later move to manifest metadata, deferred for v1).
     truly_global = {
         "hiring-manager", "agent-eval-engineer", "blog-writer",
         "joker", "studio-coach", "studio-producer",
     }
-    retirement = sorted(user_scope - all_proposed - truly_global)
+    wanted = all_proposed | all_lock_staffed
+    retirement = sorted(user_scope - wanted - truly_global)
+
+    failed_count = sum(1 for a in audits if a.error is not None)
 
     if args.json:
-        print(emit_json(audits, retirement, all_proposed, user_scope, hr_repo))
+        print(emit_json(audits, retirement, all_proposed, user_scope, hr_repo,
+                        all_lock_staffed=all_lock_staffed, failed_count=failed_count))
     else:
         emit_text(audits, retirement, all_proposed, user_scope, hr_repo)
 
-    # Exit 1 if any retirement candidates or unstaffed projects (informational)
+    # Exit codes:
+    #   0 - clean: nothing wanted retiring, no unstaffed projects, no failures
+    #   1 - informational: retirement candidates and/or unstaffed projects
+    #   3 - operational: at least one project's suggest failed (don't pretend clean)
+    if failed_count > 0:
+        return 3
     has_unstaffed = any(not a.has_lockfile and a.error is None for a in audits)
     return 1 if (retirement or has_unstaffed) else 0
 

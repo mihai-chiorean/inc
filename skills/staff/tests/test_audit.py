@@ -308,5 +308,97 @@ class TestAuditEdgeCases(unittest.TestCase):
             self.assertIn("error", result.stdout.lower())
 
 
+class TestLockfileStaffedRespected(unittest.TestCase):
+    """Codex round-2: agents in lockfile.staffed but not matched by suggest must
+    NOT be marked as retirement candidates. Otherwise audit punishes manual
+    /staff add."""
+
+    def test_lockfile_staffed_agent_not_retirement_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            ws = root / "ws"
+            ws.mkdir()
+            proj = make_git_project(ws, "myapp", with_go=True)
+            # Lockfile claims 'manually-added' is staffed even though
+            # /staff suggest doesn't have hints that would match it
+            lock_path = proj / ".claude/staff/lock.yaml"
+            lock_path.parent.mkdir(parents=True)
+            lock_path.write_text(
+                "schema_version: 1\nstaffed:\n  manually-added: {pinned_at: x}\n"
+            )
+            scope = root / "user-scope"
+            scope.mkdir()
+            (scope / "engineering").mkdir()
+            (scope / "engineering" / "manually-added.md").write_text("body")
+            payload = run_audit(
+                "--hr-repo", str(hr),
+                "--projects", str(proj),
+                "--user-scope-dir", str(scope),
+            )
+            assert payload is not None
+            self.assertNotIn("manually-added", payload["retirement_candidates"])
+            self.assertIn("manually-added", payload["all_lock_staffed"])
+
+    def test_lock_staffed_emitted_per_project(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            ws = root / "ws"
+            ws.mkdir()
+            proj = make_git_project(ws, "myapp", with_go=True)
+            lock_path = proj / ".claude/staff/lock.yaml"
+            lock_path.parent.mkdir(parents=True)
+            lock_path.write_text(
+                "schema_version: 1\nstaffed:\n  alpha: {}\n  beta: {}\n"
+            )
+            payload = run_audit(
+                "--hr-repo", str(hr),
+                "--projects", str(proj),
+            )
+            assert payload is not None
+            self.assertEqual(payload["projects"][0]["lock_staffed"], ["alpha", "beta"])
+
+    def test_corrupt_lockfile_does_not_crash(self) -> None:
+        """Audit isn't authoritative on lockfile health (/staff status is).
+        A corrupt lockfile should be treated as 'no lock-staffed agents'
+        rather than crash the audit."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            ws = root / "ws"
+            ws.mkdir()
+            proj = make_git_project(ws, "myapp", with_go=True)
+            lock_path = proj / ".claude/staff/lock.yaml"
+            lock_path.parent.mkdir(parents=True)
+            lock_path.write_text(": not valid yaml :::\n")
+            payload = run_audit(
+                "--hr-repo", str(hr),
+                "--projects", str(proj),
+            )
+            assert payload is not None
+            self.assertEqual(payload["projects"][0]["lock_staffed"], [])
+
+
+class TestSuggestFailureExitCode(unittest.TestCase):
+    """Codex round-2: a failed suggest run should not produce exit 0.
+    Otherwise CI sees 'audit clean' when nothing actually ran."""
+
+    def test_failed_count_in_json(self) -> None:
+        """Even when audit runs cleanly, the json should expose failed_count: 0."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            ws = root / "ws"
+            ws.mkdir()
+            proj = make_git_project(ws, "myapp", with_go=True)
+            payload = run_audit(
+                "--hr-repo", str(hr),
+                "--projects", str(proj),
+            )
+            assert payload is not None
+            self.assertEqual(payload["failed_count"], 0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
