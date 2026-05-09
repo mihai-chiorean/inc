@@ -590,7 +590,7 @@ class TestSyncAgentsTypos(unittest.TestCase):
             r = run_sync(project, hr=hr,
                          extra=["--yes", "--agents", "nonexistent", "alsobogus"],
                          expect_exit=2)
-            self.assertIn("none of the requested agents", r.stderr)
+            self.assertIn("not in lockfile", r.stderr)
 
 
 class TestSyncMissingDefaultSkip(unittest.TestCase):
@@ -646,6 +646,228 @@ class TestSyncDryRunNoPrompts(unittest.TestCase):
                                     capture_output=True, text=True, check=False, timeout=10)
             self.assertEqual(result.returncode, 0)
             self.assertIn("dry-run default", result.stdout)
+
+
+class TestSyncStagedOverlayRollback(unittest.TestCase):
+    """Codex round-2: when one plan succeeds and a later plan fails, the
+    staged overlay from the successful plan must be rolled back."""
+
+    def test_overlay_rollback_on_later_plan_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            project = root / "proj"
+            project.mkdir()
+            overlays = project / ".claude/staff/overlays"
+            overlays.mkdir(parents=True)
+            (overlays / "alpha.md").write_text(
+                "---\nagent_id: alpha\nlast_reviewed: 2026-05-09\n---\n\nalpha notes\n",
+            )
+            apply_agents(project, hr, ["alpha", "beta"])
+
+            # Rename alpha→aleph in HR (alias path will stage the overlay).
+            (hr / "engineering" / "alpha.md").rename(hr / "engineering" / "aleph.md")
+            new_path = hr / "engineering" / "aleph.md"
+            new_path.write_text(
+                new_path.read_text().replace("name: alpha", "name: aleph"),
+            )
+            # Force beta's plan to fail by removing its file from HR while
+            # leaving it in the manifest with a body_hash that won't match
+            # what the lockfile pinned.
+            (hr / "engineering" / "beta.md").unlink()
+            import hashlib
+            def sha256(s: str) -> str:
+                return "sha256:" + hashlib.sha256(s.strip().encode("utf-8")).hexdigest()
+            body = new_path.read_text().split("---", 2)[2]
+            manifest = {
+                "schema_version": 1,
+                "agents": {
+                    "aleph": {
+                        "file": "engineering/aleph.md", "category": "engineering",
+                        "description": "Alpha v1", "description_summary": "Alpha v1",
+                        "description_hash": sha256("Alpha v1"),
+                        "body_hash": sha256(body), "tags": ["aleph"],
+                        "project_hints": {"files": [], "regex": []},
+                        "conflicts": [], "introduced": "2026-01-01",
+                        "aliases": ["alpha"],
+                    },
+                    "beta": {
+                        "file": "engineering/beta.md", "category": "engineering",
+                        "description": "Beta v2 (forces drift)",
+                        "description_summary": "Beta v2",
+                        "description_hash": sha256("Beta v2 (forces drift)"),
+                        "body_hash": sha256("placeholder; file removed"),
+                        "tags": ["beta"],
+                        "project_hints": {"files": [], "regex": []},
+                        "conflicts": [], "introduced": "2026-01-01",
+                        "aliases": [],
+                    },
+                },
+            }
+            (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(manifest))
+            git(["add", "-A"], cwd=hr)
+            git(["commit", "-q", "-m", "rename + remove beta file"], cwd=hr)
+
+            r = run_sync(project, hr=hr, extra=["--yes"], expect_exit=5)
+            self.assertIn("failed to plan", r.stderr.lower())
+            # Critical: the staged overlay at the new canonical path must
+            # be gone after the abort. Pre-fix: it would remain.
+            self.assertFalse((overlays / "aleph.md").exists(),
+                             "staged overlay rolled back after later plan failure")
+            self.assertTrue((overlays / "alpha.md").exists(),
+                            "old overlay preserved on rollback")
+
+
+class TestSyncLockKeyCollision(unittest.TestCase):
+    """Codex round-2: if both old alias key and new canonical key exist in
+    the lockfile, sync must abort rather than silently overwrite."""
+
+    def test_lockfile_rekey_collision_aborts(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            project = root / "proj"
+            project.mkdir()
+            apply_agents(project, hr, ["alpha", "beta"])
+
+            (hr / "engineering" / "alpha.md").rename(hr / "engineering" / "aleph.md")
+            new_path = hr / "engineering" / "aleph.md"
+            new_path.write_text(
+                new_path.read_text().replace("name: alpha", "name: aleph"),
+            )
+            import hashlib
+            def sha256(s: str) -> str:
+                return "sha256:" + hashlib.sha256(s.strip().encode("utf-8")).hexdigest()
+            body = new_path.read_text().split("---", 2)[2]
+            beta_body = (hr / "engineering" / "beta.md").read_text().split("---", 2)[2]
+            manifest = {
+                "schema_version": 1,
+                "agents": {
+                    "aleph": {
+                        "file": "engineering/aleph.md", "category": "engineering",
+                        "description": "Alpha v1", "description_summary": "Alpha v1",
+                        "description_hash": sha256("Alpha v1"),
+                        "body_hash": sha256(body), "tags": ["aleph"],
+                        "project_hints": {"files": [], "regex": []},
+                        "conflicts": [], "introduced": "2026-01-01",
+                        "aliases": ["alpha"],
+                    },
+                    "beta": {
+                        "file": "engineering/beta.md", "category": "engineering",
+                        "description": "Beta v1", "description_summary": "Beta v1",
+                        "description_hash": sha256("Beta v1"),
+                        "body_hash": sha256(beta_body), "tags": ["beta"],
+                        "project_hints": {"files": [], "regex": []},
+                        "conflicts": [], "introduced": "2026-01-01",
+                        "aliases": [],
+                    },
+                },
+            }
+            (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(manifest))
+            git(["add", "-A"], cwd=hr)
+            git(["commit", "-q", "-m", "rename"], cwd=hr)
+
+            # Hand-corrupt: lockfile has both alpha (alias) AND aleph (canonical)
+            lock_path = project / ".claude/staff/lock.yaml"
+            lock = yaml.safe_load(lock_path.read_text())
+            lock["staffed"]["aleph"] = {"pinned_at": "x", "file": "engineering/aleph.md"}
+            lock_path.write_text(yaml.safe_dump(lock))
+
+            r = run_sync(project, hr=hr, extra=["--yes"], expect_exit=5)
+            self.assertIn("re-key collision", r.stderr.lower())
+
+
+class TestSyncGeneratedFileCollision(unittest.TestCase):
+    """Codex round-2: if a generated file at the new canonical path exists
+    and isn't owned by an active lockfile entry, sync aborts."""
+
+    def test_generated_file_collision_aborts(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            project = root / "proj"
+            project.mkdir()
+            apply_agents(project, hr, ["alpha"])
+
+            (hr / "engineering" / "alpha.md").rename(hr / "engineering" / "aleph.md")
+            new_path = hr / "engineering" / "aleph.md"
+            new_path.write_text(
+                new_path.read_text().replace("name: alpha", "name: aleph"),
+            )
+            import hashlib
+            def sha256(s: str) -> str:
+                return "sha256:" + hashlib.sha256(s.strip().encode("utf-8")).hexdigest()
+            body = new_path.read_text().split("---", 2)[2]
+            manifest = yaml.safe_load((hr / "agent.manifest.yaml").read_text())
+            manifest["agents"]["aleph"] = {
+                "file": "engineering/aleph.md", "category": "engineering",
+                "description": "Alpha v1", "description_summary": "Alpha v1",
+                "description_hash": sha256("Alpha v1"),
+                "body_hash": sha256(body), "tags": ["aleph"],
+                "project_hints": {"files": [], "regex": []},
+                "conflicts": [], "introduced": "2026-01-01",
+                "aliases": ["alpha"],
+            }
+            del manifest["agents"]["alpha"]
+            (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(manifest))
+            git(["add", "-A"], cwd=hr)
+            git(["commit", "-q", "-m", "rename"], cwd=hr)
+
+            # Stray generated file at the canonical path
+            (project / ".claude/agents/aleph.md").write_text(
+                "---\nname: aleph\ndescription: hand-written\n---\n\nstray\n",
+            )
+
+            r = run_sync(project, hr=hr, extra=["--yes"], expect_exit=5)
+            self.assertIn("generated-file collision", r.stderr.lower())
+
+
+class TestSyncMixedAgentsTypo(unittest.TestCase):
+    """Codex round-2: --agents with any unknown id should exit 2 (loud).
+    Previously: only all-unknown exited 2; mixed warned and proceeded."""
+
+    def test_mixed_known_unknown_exits_2(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            project = root / "proj"
+            project.mkdir()
+            apply_agents(project, hr, ["alpha", "beta"])
+            r = run_sync(project, hr=hr,
+                         extra=["--yes", "--agents", "alpha", "aplha"],
+                         expect_exit=2)
+            self.assertIn("not in lockfile", r.stderr)
+
+
+class TestSyncEofWithoutYes(unittest.TestCase):
+    """Codex round-2: stdin closed with no --yes should NOT mutate.
+    Previously: EOFError returned prompt default, which for HR-DRIFT was 'accept'."""
+
+    def test_eof_does_not_mutate_without_yes(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            hr = make_fake_hr(root)
+            project = root / "proj"
+            project.mkdir()
+            apply_agents(project, hr, ["alpha"])
+            old_pin = lockfile_pinned_at(project, "alpha")
+
+            (hr / "engineering" / "alpha.md").write_text(
+                "---\nname: alpha\ndescription: Alpha v2\nmodel: sonnet\n---\n\nv2 body.\n",
+            )
+            write_manifest(hr)
+            git(["add", "-A"], cwd=hr)
+            git(["commit", "-q", "-m", "v2"], cwd=hr)
+
+            cmd = [sys.executable, str(SYNC),
+                   "--project-root", str(project),
+                   "--hr-repo", str(hr)]
+            result = subprocess.run(cmd, stdin=subprocess.DEVNULL,
+                                    capture_output=True, text=True, check=False)
+            self.assertEqual(result.returncode, 1,
+                             f"EOF without --yes should decline; stderr={result.stderr}")
+            self.assertEqual(lockfile_pinned_at(project, "alpha"), old_pin,
+                             "EOF without --yes must NOT mutate")
 
 
 if __name__ == "__main__":

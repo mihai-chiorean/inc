@@ -254,7 +254,11 @@ def prompt_for_change(change: AgentChange, *, default_yes: bool, assume_yes: boo
     try:
         answer = input(prompt).strip().lower()
     except EOFError:
-        return default
+        # No interactive consent available (stdin closed). Treat as a
+        # decline rather than the prompt's default — a user who runs
+        # `staff sync < /dev/null` should NOT mutate files without
+        # explicit `--yes`.
+        return "skip"
 
     if not answer:
         return default
@@ -341,7 +345,7 @@ def plan_change(change: AgentChange, lock_entry: dict, paths: apply_mod.Paths,
         new_overlay = paths.overlays_dir / f"{canonical}.md"
         if old_overlay.exists():
             if new_overlay.exists():
-                # Codex flagged this: silent skip is wrong. Fail loudly.
+                # Silent skip would lose content. Fail loudly.
                 raise ValueError(
                     f"{change.lockfile_id}: overlay collision — both "
                     f"{old_overlay.relative_to(paths.project_root)} and "
@@ -357,28 +361,42 @@ def plan_change(change: AgentChange, lock_entry: dict, paths: apply_mod.Paths,
                 raise ValueError(
                     f"{change.lockfile_id}: overlay {old_overlay} could not be rewritten: {exc}"
                 ) from exc
-            # Write the rewritten overlay to a tmp path FIRST; the actual
-            # rename + compute happens in execute_planned_change.
             overlay_rewrite_path = new_overlay
             overlay_rewrite_content = rewritten
             overlay_remove_path = old_overlay
 
-    # Compute the generated file content. If we're renaming with an overlay,
-    # we need compute_agent to see the rewritten overlay at the new path.
-    # Workaround: temporarily place the rewritten overlay in memory by
-    # writing it to the new path before compute_agent reads it; we then
-    # roll back on failure. Cleaner alternative: stage in a temp directory.
-    #
-    # To keep phase 1 truly write-free, use a temp dir for overlay staging
-    # and pass it via a custom Paths-like object. But compute_agent reads
-    # from paths.overlays_dir directly, so we'd need to refactor it. For
-    # now: stage overlays at the new path during plan; if we abort later,
-    # restore the original. This is the smallest delta from apply's pattern.
+        # Refuse to clobber a generated file at the new canonical id that's
+        # NOT owned by an active lockfile entry — could be an orphan or
+        # manual file. Owned-by-this-rename case is fine: when we sync
+        # alias→canonical and the canonical lockfile entry doesn't exist,
+        # any file at .claude/agents/<canonical>.md is unexpected and
+        # should be reviewed by the human.
+        new_generated = paths.agents_dir / f"{canonical}.md"
+        if new_generated.exists():
+            raise ValueError(
+                f"{change.lockfile_id}: generated-file collision — "
+                f"{new_generated.relative_to(paths.project_root)} already exists "
+                f"(orphan or hand-written). Inspect and remove (or `staff add {canonical}` "
+                f"if it was already staffed elsewhere) before re-running sync."
+            )
+
+    # Stage the rewritten overlay BEFORE compute_agent reads it, AND record
+    # the staged path on the PlannedChange before any other code can fail.
+    # The aggregate rollback at main() iterates over plans and removes
+    # staged overlays — without this assignment, rollback can't see them.
+    plan = PlannedChange(
+        change=change,
+        canonical_id=canonical,
+        new_lock_entry=None,  # filled in below
+        generated_path=paths.agents_dir / f"{canonical}.md",  # filled in below
+        generated_content="",  # filled in below
+    )
+    if overlay_rewrite_path is not None:
+        plan.overlay_rewrite_path = overlay_rewrite_path
+
     staged = False
     try:
         if overlay_rewrite_path is not None and overlay_rewrite_content is not None:
-            # Stage at the new path so compute_agent reads the rewritten content.
-            # If sync aborts before phase 2, we must restore.
             apply_mod.atomic_write(overlay_rewrite_path, overlay_rewrite_content)
             staged = True
 
@@ -386,21 +404,14 @@ def plan_change(change: AgentChange, lock_entry: dict, paths: apply_mod.Paths,
             paths, canonical, hr_commit, manifest_entry,
         )
     except Exception:
-        # Roll back the staged overlay if compute fails
         if staged and overlay_rewrite_path is not None and overlay_rewrite_path.exists():
             overlay_rewrite_path.unlink()
         raise
 
-    # If we staged the overlay, compute_agent wrote it. We don't need to
-    # write it again in phase 2. But we DO need to remove the old overlay
-    # in phase 2 so the migration is observable.
-    plan = PlannedChange(
-        change=change,
-        canonical_id=canonical,
-        new_lock_entry=new_entry,
-        generated_path=out_path,
-        generated_content=merged,
-    )
+    plan.new_lock_entry = new_entry
+    plan.generated_path = out_path
+    plan.generated_content = merged
+
     if is_rename:
         plan.old_generated_path = paths.agents_dir / f"{change.lockfile_id}.md"
         plan.drop_lockfile_id = change.lockfile_id
@@ -438,6 +449,16 @@ def execute_plan(plan: PlannedChange, paths: apply_mod.Paths,
 
     # Lockfile re-key
     if plan.drop_lockfile_id is not None and plan.add_lockfile_id is not None:
+        # Refuse to silently overwrite an existing canonical entry. If both
+        # the alias key and the canonical key are in staffed, the lockfile
+        # is in an invalid state — surface it instead of clobbering.
+        if (plan.add_lockfile_id in staffed
+                and plan.add_lockfile_id != plan.drop_lockfile_id):
+            raise ValueError(
+                f"lockfile re-key collision: both alias {plan.drop_lockfile_id!r} "
+                f"and canonical {plan.add_lockfile_id!r} are in staffed[]. "
+                f"Hand-edit the lockfile to resolve before re-running sync."
+            )
         staffed.pop(plan.drop_lockfile_id, None)
         staffed[plan.add_lockfile_id] = plan.new_lock_entry  # type: ignore[assignment]
     else:
@@ -530,15 +551,18 @@ def main() -> int:
 
     if args.agents:
         unknown = [t for t in args.agents if t not in staffed]
-        if unknown and len(unknown) == len(args.agents):
+        if unknown:
+            # Any unknown id fails loudly. A targeted sync with mixed typos
+            # is more dangerous than helpful (operator typed `alpha aplha` and
+            # got a partial sync of `alpha` only). Force the user to fix the
+            # invocation.
             print(
-                f"error: none of the requested agents are in the lockfile: {', '.join(unknown)}\n"
-                f"hint: run `staff status` to see what's actually staffed.",
+                f"error: requested agents not in lockfile: {', '.join(unknown)}\n"
+                f"hint: run `staff status` to see what's actually staffed; "
+                f"`staff sync` (no --agents) covers everything.",
                 file=sys.stderr,
             )
             return 2
-        for u in unknown:
-            print(f"warning: {u!r} not in lockfile.staffed, skipping", file=sys.stderr)
 
     changes: list[tuple[AgentChange, dict]] = []  # (change, lock_entry)
     for lock_id in target_ids:
