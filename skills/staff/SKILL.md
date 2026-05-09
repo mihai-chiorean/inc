@@ -16,6 +16,7 @@ Selects which agents from the canonical HR repo (`claude-agents`) are staffed in
 | `/staff status` | **MIT-283 — implemented** | Show staffed/diff/overlay state vs HR HEAD |
 | `/staff add <id>` | **MIT-284 — implemented** | Add an agent to the staffed set |
 | `/staff remove <id>` | **MIT-284 — implemented** | Drop an agent |
+| `/staff audit` | **MIT-287 — implemented** | Scan multiple projects, identify retirement candidates in `~/.claude/agents/` |
 | `/staff sync` | MIT-290 (pending, v2) | Regenerate from HR HEAD; preserve overlays |
 
 ## /staff suggest
