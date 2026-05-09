@@ -32,6 +32,7 @@ Subcommands:
   add        Add agents to the staffed set
   remove     Drop agents from the staffed set
   audit      Scan multiple projects; identify retirement candidates
+  sync       Refresh staffed agents against HR HEAD (per-agent diff + accept)
   help       Show this message
 
 Each subcommand accepts -h for its own flags.
@@ -53,7 +54,7 @@ SUBCMD="$1"
 shift
 
 case "${SUBCMD}" in
-    suggest|apply|status|add|remove|audit)
+    suggest|apply|status|add|remove|audit|sync)
         exec python3 "${SCRIPT_DIR}/${SUBCMD}.py" "$@"
         ;;
     help|-h|--help)

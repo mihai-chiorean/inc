@@ -17,7 +17,7 @@ Selects which agents from the canonical HR repo (`claude-agents`) are staffed in
 | `/staff add <id>` | **MIT-284 — implemented** | Add an agent to the staffed set |
 | `/staff remove <id>` | **MIT-284 — implemented** | Drop an agent |
 | `/staff audit` | **MIT-287 — implemented** | Scan multiple projects, identify retirement candidates in `~/.claude/agents/` |
-| `/staff sync` | MIT-290 (pending, v2) | Regenerate from HR HEAD; preserve overlays |
+| `/staff sync` | **MIT-290 — implemented** | Refresh staffed agents against HR HEAD; per-agent diff + accept; preserves overlays; migrates alias renames; offers removal of agents retired upstream |
 
 ## /staff suggest
 
@@ -168,7 +168,7 @@ staff status --stale-overlay-days 30
 | 1 | Drift detected (HR-DRIFT, MANUAL-EDIT, OVERLAY-EDITED, OVERLAY-STALE, MISSING, ALIAS-RENAMED, ORPHAN-FILE) |
 | 2 | Invalid state or could not run — `ERROR` flag on any agent (malformed lockfile, missing required overlay frontmatter, alias collision, etc.) or missing lockfile/manifest |
 
-Hooks should treat exit 1 as "syncable" (run `/staff sync` once MIT-290 lands) and exit 2 as "needs human repair." Don't conflate them.
+Hooks should treat exit 1 as "syncable" (run `/staff sync`) and exit 2 as "needs human repair." Don't conflate them.
 
 ### HR repo discovery
 
@@ -198,7 +198,7 @@ staff remove go-engineer --dry-run
 | 2 | `agent-not-in-manifest` (unknown ID), no project, malformed config, etc. |
 | 4 | Dirty HR (`--allow-dirty-hr` overrides) |
 | 5 | One or more agents failed to compute (no files written) |
-| 6 | `agent-already-staffed` — use `/staff sync` (when MIT-290 lands) to refresh |
+| 6 | `agent-already-staffed` — use `/staff sync` to refresh |
 
 ### remove — exit codes
 
@@ -211,6 +211,53 @@ staff remove go-engineer --dry-run
 ### Overlay handling on remove
 
 `.claude/staff/overlays/<id>.md` is **never auto-deleted**. The overlay is project-owned content; if you genuinely don't want it anymore, delete it by hand. Remove warns when an overlay is being preserved so you don't forget.
+
+## /staff sync
+
+Refreshes staffed agents against HR HEAD. For each staffed agent it:
+
+1. Resolves through aliases (catches renames upstream)
+2. Compares pinned hashes to current HR HEAD
+3. Detects manual edits to the merged file
+4. Surfaces a per-agent unified diff (against `git show <pinned_at>:<file>`)
+5. Prompts you to accept / skip / remove (interactive by default; `--yes` for non-interactive)
+6. On accept: re-applies via `apply.compute_agent` + `atomic_write`
+7. On alias rename: migrates the lockfile key and overlay file to the new canonical id
+8. On retired agent (`MISSING`): drops the lockfile entry and the generated file
+
+### Invocation
+
+```bash
+# Interactive (default): per-agent prompt with diff
+staff sync
+
+# Non-interactive: accept everything
+staff sync --yes
+
+# Subset of staffed agents
+staff sync --agents go-engineer security-auditor
+
+# Show what would change; write nothing
+staff sync --dry-run
+
+# Bypass dirty-HR refusal (records HEAD as the new pin)
+staff sync --allow-dirty-hr
+```
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Clean sync (nothing to do, or all changes accepted and applied) |
+| 1 | One or more changes declined (informational) |
+| 2 | Could not run (no lockfile, dirty HR, malformed manifest, etc.) |
+| 5 | One or more agents failed to apply during the sync |
+
+### What sync does NOT do
+
+- **Not a three-way merge.** Sync replaces the HR base content. Manual edits to the merged file are detected (`MANUAL-EDIT` in the prompt) and overwritten only on explicit accept.
+- **Doesn't auto-add agents.** If HR has new agents the project doesn't currently staff, sync ignores them. Use `staff add` or `staff suggest` for that.
+- **Doesn't run an LLM.** Sync is deterministic: hash comparison + git show + atomic write.
 
 ## How matching works
 
