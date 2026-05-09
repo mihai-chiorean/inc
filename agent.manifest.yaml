@@ -672,9 +672,11 @@ agents:
     file: project-management/experiment-tracker.md
     category: project-management
     description: 'PROACTIVELY use this agent when experiments are started, modified, or when results need analysis. This agent
-      specializes in tracking A/B tests, feature rollouts, and product iterations with real users within the 6-day development
-      cycle. For LLM/agent model quality, judge-based rubrics, or behavioral regressions, use agent-eval-engineer instead.
-      Should be triggered automatically when experimental code paths or feature flags are introduced. Examples:\n\n<example>\nContext:
+      specializes in tracking A/B tests, feature rollouts, and product iterations with real users. Owns the EVIDENCE - experiment
+      design, instrumentation, statistical analysis, written readouts and recommendations. Anti-scope - this is NOT `product-manager`
+      (experiment-tracker recommends ship/kill via written readout; product-manager makes the final call - the readout names
+      a winner, PM signs the ship-or-kill); NOT `agent-eval-engineer` (experiments = real users + feature flags; evals = judge-graded
+      agent quality). Should be triggered automatically when experimental code paths or feature flags are introduced. Examples:\n\n<example>\nContext:
       When implementing feature flags or A/B test variants\nuser: "Add a feature flag to test the new onboarding flow"\nassistant:
       "I''ve implemented the feature flag for the onboarding flow A/B test. Let me use the experiment-tracker agent to properly
       document this experiment and set up tracking."\n<commentary>\nEvery feature flag represents an experiment that needs
@@ -690,8 +692,8 @@ agents:
       the experiment-tracker agent to review all metrics and user feedback for the AI avatar feature test."\n<commentary>\nProduct
       decisions should be backed by experiment data, not gut feelings.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:e42a5e5a507c14cd1869c12af8518e0b8c05e7d3c0fab1557ef665df58ffe8cf
-    body_hash: sha256:d5b9799057657e250dde173b92f4da5ae58ba5fc0e26663109b910164202fbca
+    description_hash: sha256:5cc753105623c45cae07a79a52f64b9bc56f0eb4d892f53b452c8ad933f10ada
+    body_hash: sha256:7b5729f9a6aba26a84e3ab9481381b5f034aa93a30375cdc17851b8c4e3fd8aa
     tags:
     - experiment
     - project-management
@@ -1421,40 +1423,45 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
-  project-shipper:
-    file: project-management/project-shipper.md
-    category: project-management
-    description: 'PROACTIVELY use this agent when approaching launch milestones, release deadlines, or go-to-market activities.
-      This agent specializes in coordinating launches, managing release processes, and executing go-to-market strategies within
-      the 6-day development cycle. Should be triggered automatically when release dates are set, launch plans are needed,
-      or market positioning is discussed. Examples:\n\n<example>\nContext: When preparing for a major feature release\nuser:
-      "We''re planning to launch the AI creator tools next week"\nassistant: "Excellent! A major feature launch requires careful
-      coordination. Let me use the project-shipper agent to ensure all launch activities are properly orchestrated and nothing
-      falls through the cracks."\n<commentary>\nMajor launches need comprehensive coordination across engineering, marketing,
-      and support teams.\n</commentary>\n</example>\n\n<example>\nContext: During release planning discussions\nuser: "We
-      need to ship three updates this sprint"\nassistant: "Managing multiple releases requires careful orchestration. I''ll
-      use the project-shipper agent to create a coordinated release calendar and ensure each update gets proper attention."\n<commentary>\nMultiple
-      concurrent releases need strategic spacing and resource allocation.\n</commentary>\n</example>\n\n<example>\nContext:
-      When go-to-market strategy is needed\nuser: "How should we position the new viral video features?"\nassistant: "Positioning
-      is crucial for feature adoption. Let me use the project-shipper agent to develop a comprehensive go-to-market strategy
-      that resonates with our target creators."\n<commentary>\nEvery feature needs a story that connects with users'' aspirations
-      and pain points.\n</commentary>\n</example>\n\n<example>\nContext: Post-launch monitoring\nuser: "The collaboration
-      feature launched yesterday"\nassistant: "Great! The critical first 48 hours determine success. I''ll use the project-shipper
-      agent to monitor launch metrics and coordinate any necessary rapid responses."\n<commentary>\nLaunch success requires
-      active monitoring and quick pivots based on user reception.\n</commentary>\n</example>'
+  product-manager:
+    file: product/product-manager.md
+    category: product
+    description: 'Use this agent when prioritizing the roadmap, framing user value, synthesizing customer-discovery inputs,
+      making ship/kill calls on features and experiments, or scoping work by user value and success criteria with named tradeoffs.
+      Pairs with `tech-lead` on any non-trivial feature through code-complete (PM frames the WHY; TL frames the HOW); PM re-enters
+      at ship-time for the ship/kill call and post-ship value follow-up. Anti-scope - this is NOT `tpm` (PM decides what to
+      build, TPM tracks when it ships); NOT `idea-evaluator` (PM operates on a committed roadmap, idea-evaluator scores raw
+      inbound ideas before they reach the roadmap); NOT `experiment-tracker` (PM makes the ship/kill call, experiment-tracker
+      provides the readout and recommendation); NOT `tech-lead` (PM does not frame implementation; PM frames user value, TL
+      frames the HOW). Examples:\n\n<example>\nContext: Multiple feature requests, finite cycle\nuser: "We have 50 feature
+      requests but only one cycle to work in"\nassistant: "Prioritization with explicit user-value rationale is the PM''s
+      job. Let me use the product-manager agent to apply RICE/Kano scoring and produce a ranked roadmap with named tradeoffs."\n<commentary>\nPM
+      owns the rationale, not just the ranking. Each item ships or doesn''t because of a stated reason.\n</commentary>\n</example>\n\n<example>\nContext:
+      Synthesizing discovery inputs\nuser: "We''ve done 12 customer interviews and have a folder of feedback. Now what?"\nassistant:
+      "PM is the integrator across discovery agents. Let me use the product-manager agent to pull `customer-interviewer` findings,
+      `feedback-synthesizer` patterns, and any `competitive-intel` framing into a single problem statement and proposed prioritization."\n<commentary>\nThe
+      research/discovery agents produce inputs PM commissions and integrates - they don''t make decisions.\n</commentary>\n</example>\n\n<example>\nContext:
+      Experiment readout\nuser: "Variant B beat A by 4.2% with p < 0.05. Ship it?"\nassistant: "experiment-tracker delivers
+      the readout; product-manager makes the call. Let me use the product-manager agent to weigh the lift against scope, rollback
+      risk, and roadmap commitments before the ship/kill decision."\n<commentary>\nA stat-sig win is evidence, not a decision.
+      PM decides; experiment-tracker recommends.\n</commentary>\n</example>\n\n<example>\nContext: Mid-flight scope change\nuser:
+      "Stakeholder X wants to add video calling to this milestone."\nassistant: "Mid-flight scope changes are PM territory
+      - they require trading something out, not just adding. Let me use the product-manager agent to assess what gets cut
+      to make room, with explicit rationale."\n<commentary>\nPM owns scope discipline. Adding work without removing work is
+      how milestones die.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:7d6f71e0796f4aa6a2a635ab73cb57b5d92f1dc142d3277291914966c8140b9f
-    body_hash: sha256:613813ed50456ec689dadbdc4803edb4fa20613a96101b24a9ca3da09553d3fa
+    description_hash: sha256:cfa022fc917ff12b0dfee18b30026d02a232d43f5327f5e88b50abd4c29decb1
+    body_hash: sha256:2b3286ac12ae5314aa6445b5ee5de4115cd1a658fab743f93b73117a6b147e0d
     tags:
-    - project
-    - project-management
-    - shipper
+    - manager
+    - product
     project_hints:
       files: []
       regex: []
     conflicts: []
-    introduced: '2026-03-19'
-    aliases: []
+    introduced: '2026-05-08'
+    aliases:
+    - sprint-prioritizer
   rapid-prototyper:
     file: engineering/rapid-prototyper.md
     category: engineering
@@ -1508,6 +1515,43 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  release-engineer:
+    file: project-management/release-engineer.md
+    category: project-management
+    description: 'Use this agent when planning a release, designing rollout strategy (canary, percentage rollout, region-by-region),
+      defining rollback drills, coordinating launch-day monitoring, owning the operational side of getting a code-complete
+      feature into users'' hands. Picks up where `tpm` leaves off (at code-complete) and runs through post-launch monitoring.
+      Anti-scope - this is NOT `tpm` (TPM owns program readiness pre-code-complete; release-engineer takes over at code-complete);
+      NOT `devops-automator` (release-engineer owns the *process* of shipping a specific release; devops-automator builds
+      the underlying CI/CD plumbing); NOT `growth-hacker` or `app-store-optimizer` (release-engineer owns engineering-side
+      launch readiness; GTM positioning, store listings, and viral copy live in marketing agents). Examples:\n\n<example>\nContext:
+      Code-complete on a non-trivial feature\nuser: "swift-backend has tagged the v1.4 build. Time to ship."\nassistant: "Operational
+      readiness is the release-engineer''s job. Let me use the release-engineer agent to define the rollout plan (canary %
+      → 25% → 100%), the rollback trigger criteria, the on-call rotation for launch day, and the dashboard / log queries we''ll
+      watch."\n<commentary>\nA release plan names the unhappy paths and the cutover criteria, not just the timeline.\n</commentary>\n</example>\n\n<example>\nContext:
+      Mid-rollout regression detected\nuser: "Error rate jumped 2x at the 25% mark."\nassistant: "Mid-rollout incident response
+      is in scope. Let me use the release-engineer agent to assess against the pre-defined rollback trigger, execute the rollback
+      if criteria are met, and coordinate the post-incident write-up."\n<commentary>\nRollback decisions are pre-committed.
+      release-engineer executes the documented criteria; doesn''t relitigate them mid-incident.\n</commentary>\n</example>\n\n<example>\nContext:
+      Launch readiness review before ship-day\nuser: "We''re shipping the new auth migration tomorrow."\nassistant: "T-1 launch
+      readiness check is the release-engineer''s job. Let me use the release-engineer agent to walk the launch checklist:
+      rollout plan signed off, rollback drill run within 7 days, monitoring dashboards configured, on-call paged, and anti-checklist
+      - has security-auditor signed off, has tpm closed all blocking deps?"\n<commentary>\nLaunch readiness is concrete and
+      binary. Either the checklist is done or it isn''t. No vibes.\n</commentary>\n</example>'
+    description_summary: ''
+    description_hash: sha256:cecf1add7e36757b11b5672432c1d612bc9b0c29b85a63e108cbefa49e1ba51e
+    body_hash: sha256:c9c1e29ac6509a4bbc8111cff033168cbbb01125cecbfeaee59f52507f5fadfc
+    tags:
+    - engineer
+    - project-management
+    - release
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-08'
+    aliases:
+    - project-shipper
   security-auditor:
     file: engineering/security-auditor.md
     category: engineering
@@ -1568,100 +1612,6 @@ agents:
       regex: []
     conflicts: []
     introduced: '2026-04-20'
-    aliases: []
-  sprint-prioritizer:
-    file: product/sprint-prioritizer.md
-    category: product
-    description: 'Use this agent when planning 6-day development cycles, prioritizing features, managing product roadmaps,
-      or making trade-off decisions. This agent specializes in maximizing value delivery within tight timelines. Examples:\n\n<example>\nContext:
-      Planning the next sprint\nuser: "We have 50 feature requests but only 6 days"\nassistant: "I''ll help prioritize for
-      maximum impact. Let me use the sprint-prioritizer agent to create a focused sprint plan that delivers the most value."\n<commentary>\nSprint
-      planning requires balancing user needs, technical constraints, and business goals.\n</commentary>\n</example>\n\n<example>\nContext:
-      Making feature trade-offs\nuser: "Should we build AI chat or improve onboarding?"\nassistant: "Let''s analyze the impact
-      of each option. I''ll use the sprint-prioritizer agent to evaluate ROI and make a data-driven recommendation."\n<commentary>\nFeature
-      prioritization requires analyzing user impact, development effort, and strategic alignment.\n</commentary>\n</example>\n\n<example>\nContext:
-      Mid-sprint scope changes\nuser: "The CEO wants us to add video calling to this sprint"\nassistant: "I''ll assess the
-      impact on current commitments. Let me use the sprint-prioritizer agent to reorganize priorities while maintaining sprint
-      goals."\n<commentary>\nScope changes require careful rebalancing to avoid sprint failure.\n</commentary>\n</example>'
-    description_summary: ''
-    description_hash: sha256:797b7b809a813b10a068a36c6884ba98874c4045a4ad1c7e89ae5fd612df4623
-    body_hash: sha256:82fdf9aa6451263c00d7e9c54c7073a2e6cf3edd3511c559d49eed90b31acd7f
-    tags:
-    - prioritizer
-    - product
-    - sprint
-    project_hints:
-      files: []
-      regex: []
-    conflicts: []
-    introduced: '2026-03-19'
-    aliases: []
-  studio-coach:
-    file: bonus/studio-coach.md
-    category: bonus
-    description: 'PROACTIVELY use this agent when complex multi-agent tasks begin, when agents seem stuck or overwhelmed,
-      or when the team needs motivation and coordination. This agent serves as the elite performance coach for all other agents,
-      ensuring they operate at their highest level while maintaining composure and excellence. Should be triggered automatically
-      at the start of challenging projects or when detecting agent confusion. Examples:\n\n<example>\nContext: Starting a
-      complex project requiring multiple agents\nuser: "We need to build a viral TikTok app in 2 weeks"\nassistant: "This
-      is an ambitious goal that will require our A-team! Let me bring in the studio-coach to coordinate our agents and ensure
-      everyone performs at their peak."\n<commentary>\nComplex projects benefit from having a coach to keep all agents aligned
-      and motivated.\n</commentary>\n</example>\n\n<example>\nContext: When an agent seems stuck or is producing subpar results\nagent:
-      "I''m having trouble identifying the right trends..."\nassistant: "Let me bring in the studio-coach to help refocus
-      and elevate your approach."\n<commentary>\nAgents can get overwhelmed or lose focus - the coach helps them recenter
-      and excel.\n</commentary>\n</example>\n\n<example>\nContext: Before launching a major sprint or initiative\nuser: "Tomorrow
-      we start the 6-day sprint for our biggest project yet"\nassistant: "Time to rally the team! I''ll have the studio-coach
-      prepare everyone mentally and strategically for peak performance."\n<commentary>\nPre-sprint coaching ensures all agents
-      start with clarity, confidence, and coordination.\n</commentary>\n</example>\n\n<example>\nContext: When celebrating
-      wins or learning from failures\nuser: "Our app just hit #1 on the App Store!"\nassistant: "Incredible achievement! Let
-      me bring in the studio-coach to celebrate with the team and capture what made this success possible."\n<commentary>\nThe
-      coach helps institutionalize wins and extract learnings from both successes and failures.\n</commentary>\n</example>'
-    description_summary: ''
-    description_hash: sha256:435e30134a99597c269e282684beeb5dd4b72f602663de1797f997baf6459259
-    body_hash: sha256:7379ed505019fdd9d92fd599e424545a4aa23a9e765b72582cae142028cb6c3c
-    tags:
-    - bonus
-    - coach
-    - studio
-    project_hints:
-      files: []
-      regex: []
-    conflicts: []
-    introduced: '2026-03-19'
-    aliases: []
-  studio-producer:
-    file: project-management/studio-producer.md
-    category: project-management
-    description: 'PROACTIVELY use this agent when coordinating across multiple teams, allocating resources, or optimizing
-      studio workflows. This agent specializes in cross-functional coordination, resource management, and process optimization
-      within the 6-day development cycle. Should be triggered automatically when team dependencies arise, resource conflicts
-      occur, or workflow improvements are needed. Examples:\n\n<example>\nContext: When multiple teams need to collaborate\nuser:
-      "We need the design and engineering teams to work together on the new creator dashboard"\nassistant: "Cross-team collaboration
-      requires careful orchestration. Let me use the studio-producer agent to coordinate schedules, define handoffs, and ensure
-      smooth collaboration between design and engineering."\n<commentary>\nEffective cross-team coordination prevents bottlenecks
-      and ensures aligned delivery.\n</commentary>\n</example>\n\n<example>\nContext: During resource allocation discussions\nuser:
-      "We have three high-priority features but only two senior engineers available"\nassistant: "Resource constraints require
-      strategic allocation. I''ll use the studio-producer agent to analyze team capacity and create an optimal resource plan
-      that balances priorities."\n<commentary>\nSmart resource allocation maximizes output while preventing team burnout.\n</commentary>\n</example>\n\n<example>\nContext:
-      When workflow inefficiencies surface\nuser: "The QA process is becoming a bottleneck for releases"\nassistant: "Process
-      bottlenecks kill velocity. Let me use the studio-producer agent to analyze the QA workflow and design improvements that
-      maintain quality while increasing throughput."\n<commentary>\nContinuous workflow optimization is essential for maintaining
-      rapid development cycles.\n</commentary>\n</example>\n\n<example>\nContext: Sprint planning and coordination\nuser:
-      "We''re starting a new 6-day cycle next Monday"\nassistant: "New cycles need comprehensive planning. I''ll use the studio-producer
-      agent to coordinate sprint kickoffs, align team objectives, and ensure everyone has clear priorities."\n<commentary>\nWell-coordinated
-      sprint starts set the tone for successful 6-day cycles.\n</commentary>\n</example>'
-    description_summary: ''
-    description_hash: sha256:de49e3c77b5780056d5746e8d6df10439912c300a692b13d30defb0f92e51177
-    body_hash: sha256:c27ac38f39dcca9ddbdbd3318e0cd164e48919ad60d23ebd20e2c78710ed0c8c
-    tags:
-    - producer
-    - project-management
-    - studio
-    project_hints:
-      files: []
-      regex: []
-    conflicts: []
-    introduced: '2026-03-19'
     aliases: []
   support-responder:
     file: studio-operations/support-responder.md
@@ -1736,6 +1686,54 @@ agents:
       - (?i)\bswift-?nio\b
     conflicts: []
     introduced: '2026-03-19'
+    aliases: []
+  tech-lead:
+    file: engineering/tech-lead.md
+    category: engineering
+    description: 'Use this agent when framing the technical approach for a non-trivial feature - writing the design doc, picking
+      the implementation approach, sequencing the work across components, owning execution quality, pulling in domain specialists
+      for depth on their slice. Pairs with `product-manager` on any non-trivial feature (PM frames the WHY; TL frames the
+      HOW). Anti-scope - this is NOT `backend-architect` (TL writes the feature-level design and pulls BA in for deep dives
+      on a specific API/DB/service slice; TL is generalist, BA is specialist); NOT `eng-manager` (TL owns technical approach,
+      not people, capacity, or 1:1s; in this single-engineer setup there is no eng-manager); NOT `infra-reviewer` (TL reviews
+      application architecture and feature design; infra-reviewer reviews GCP/Terraform plans specifically - TL pulls infra-reviewer
+      in when the feature touches infrastructure); NOT a domain specialist (TL does not replace `frontend-developer`, `gpu-engineer`,
+      `security-auditor`, `swift-backend`, `vision-engineer`, etc.; TL owns the *shape* of the feature, specialists own the
+      *depth* of their domain). Examples:\n\n<example>\nContext: New non-trivial feature, framing the approach\nuser: "We
+      need to add streaming responses to the agent API. PM has the user-value framing; we need a design."\nassistant: "Feature-level
+      design is the tech-lead''s job. Let me use the tech-lead agent to write the design doc - data model, API shape, sequencing
+      of swift-backend changes vs frontend integration, what''s gated by infra changes, what specialists need to be pulled
+      in for depth (swift-backend on the streaming impl, infra-reviewer on the LB config, security-auditor on the auth path)."\n<commentary>\nTL
+      writes the design and explicitly names which specialists own which depth slices. The design doc, not the code, is the
+      artifact.\n</commentary>\n</example>\n\n<example>\nContext: Cross-cutting technical decision\nuser: "Should we adopt
+      Server-Sent Events or WebSockets for the streaming layer?"\nassistant: "Cross-cutting tech choice with non-obvious tradeoffs
+      - this is tech-lead territory, with input from specialists. Let me use the tech-lead agent to frame the decision (named
+      criteria, named alternatives), pull `swift-backend` for the server-side cost analysis and `frontend-developer` for the
+      client-side integration cost, and produce a written recommendation with the tradeoffs explicit."\n<commentary>\nTL doesn''t
+      decide alone; TL frames the decision and integrates specialist input. The output is a written recommendation with named
+      tradeoffs.\n</commentary>\n</example>\n\n<example>\nContext: Implementation review across multiple PRs\nuser: "We have
+      3 PRs landing for the auth migration: backend, frontend, and infra. Look right?"\nassistant: "Cross-PR review at the
+      feature level is the tech-lead''s call. Let me use the tech-lead agent to verify the three PRs are coherent - the backend''s
+      new contract matches what the frontend expects, the infra changes don''t conflict with the rollout plan, the migration
+      sequence is safe. Specialists already reviewed within their slice; TL reviews the seams."\n<commentary>\nSpecialists
+      own the depth of their PR; TL owns the coherence across PRs that together implement the feature. Different scopes.\n</commentary>\n</example>\n\n<example>\nContext:
+      Feature design pushback\nuser: "PM wants this feature shipped this milestone. The implementation requires a database
+      migration that takes 2 days of validation."\nassistant: "TL''s job is to make the constraint visible to PM, not to absorb
+      it silently. Let me use the tech-lead agent to write the technical reality (migration sequence, validation requirements,
+      named risks if compressed), and tee up the conversation for product-manager to either re-prioritize or accept the timeline."\n<commentary>\nTL
+      surfaces the technical truth and asks PM to decide. PM owns priorities; TL owns implementation honesty.\n</commentary>\n</example>'
+    description_summary: ''
+    description_hash: sha256:a277e83aebb32251d9fd88a2c459da4c5e931015cdd10c9f06c29b86530a22bf
+    body_hash: sha256:3ddfb4f24c87da2ba96d923fe6a886c90572963974ab57c204ab77993359397e
+    tags:
+    - engineering
+    - lead
+    - tech
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-09'
     aliases: []
   test-results-analyzer:
     file: testing/test-results-analyzer.md
@@ -1919,6 +1917,43 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  tpm:
+    file: project-management/tpm.md
+    category: project-management
+    description: 'Use this agent (Technical Program Manager) when tracking program readiness across teams or workstreams,
+      mapping cross-team dependencies, surfacing schedule risk, identifying blockers before they become slips, or coordinating
+      multi-agent / multi-component work toward a milestone. Owns the WHEN, not the WHAT or HOW. Anti-scope - this is NOT
+      `product-manager` (TPM tracks the schedule of decisions PM has already made; TPM does not change priorities, it surfaces
+      when priorities can no longer be met and asks PM to re-prioritize); NOT `release-engineer` (TPM owns program readiness
+      up to code-complete - dependencies, dates, cross-team risk; release-engineer takes over from code-complete through rollout);
+      NOT `studio-coach` (no motivational language; TPM is execution machinery, not a pep talk). Examples:\n\n<example>\nContext:
+      Multi-component initiative crossing two domains\nuser: "We need swift-backend''s auth changes and frontend-developer''s
+      onboarding flow live by the milestone."\nassistant: "Cross-component dependencies need explicit tracking. Let me use
+      the tpm agent to map the handoff between swift-backend''s API contract and frontend-developer''s integration, identify
+      the latest-no-later-than date for each, and surface the path that''s most likely to slip."\n<commentary>\nTPM produces
+      a dependency map and named risk list. PM owns the priorities; TPM tracks whether they''re achievable.\n</commentary>\n</example>\n\n<example>\nContext:
+      Schedule risk surfaces\nuser: "The infra-reviewer found three issues that will take a week to address. We''re already
+      cutting it close on this milestone."\nassistant: "TPM raises this to PM rather than absorbing it silently. Let me use
+      the tpm agent to quantify the slip in days, identify the smallest scope cut that absorbs it, and tee up the conversation
+      for product-manager to make the call."\n<commentary>\nTPM does not change scope unilaterally. TPM surfaces options with
+      quantified tradeoffs and asks PM to decide.\n</commentary>\n</example>\n\n<example>\nContext: Pre-milestone health check\nuser:
+      "We''re three days from the milestone. How are we tracking?"\nassistant: "Program readiness check is exactly the TPM
+      call. Let me use the tpm agent to walk the dependency map, mark each component as on-track / at-risk / blocked, and
+      identify what the long pole is."\n<commentary>\nA TPM readout is a status report with named risks - not a vibe check
+      or a pep talk.\n</commentary>\n</example>'
+    description_summary: ''
+    description_hash: sha256:f155d69ef4703abbac667ebbb53ed2e7f85cb16dce6469e3ed4984ed27322bae
+    body_hash: sha256:5300a2f001a3fc71d7363e96ae09ade7351e9fab64b8c2c2462bd63e01d4adee
+    tags:
+    - project-management
+    - tpm
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-08'
+    aliases:
+    - studio-producer
   trend-researcher:
     file: product/trend-researcher.md
     category: product
@@ -2279,77 +2314,6 @@ agents:
     - design
     - injector
     - whimsy
-    project_hints:
-      files: []
-      regex: []
-    conflicts: []
-    introduced: '2026-03-19'
-    aliases: []
-  workflow-optimizer:
-    file: testing/workflow-optimizer.md
-    category: testing
-    description: 'Use this agent for optimizing human-agent collaboration workflows and analyzing workflow efficiency. This
-      agent specializes in identifying bottlenecks, streamlining processes, and ensuring smooth handoffs between human creativity
-      and AI assistance. Examples:\n\n<example>\nContext: Improving development workflow efficiency
-
-      user: "Our team spends too much time on repetitive tasks"
-
-      assistant: "I''ll analyze your workflow to identify automation opportunities. Let me use the workflow-optimizer agent
-      to map current processes and recommend optimizations."
-
-      <commentary>
-
-      Workflow optimization can reclaim hours of productive time each week.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Human-AI collaboration testing
-
-      user: "Test how well our AI coding assistant integrates with developer workflows"
-
-      assistant: "I''ll evaluate the human-AI collaboration effectiveness. Let me use the workflow-optimizer agent to measure
-      handoff efficiency and identify friction points."
-
-      <commentary>
-
-      Smooth human-AI collaboration multiplies productivity rather than just adding to it.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Process bottleneck analysis
-
-      user: "Our deployment process takes too long"
-
-      assistant: "I''ll analyze your deployment workflow for bottlenecks. Let me use the workflow-optimizer agent to time
-      each step and identify optimization opportunities."
-
-      <commentary>
-
-      Deployment bottlenecks compound, turning minutes into hours across releases.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Tool integration efficiency
-
-      user: "Are we using our tools effectively together?"
-
-      assistant: "I''ll analyze your tool integration and usage patterns. Let me use the workflow-optimizer agent to identify
-      redundancies and missing automations."
-
-      <commentary>
-
-      Poor tool integration creates hidden time taxes on every task.
-
-      </commentary>
-
-      </example>'
-    description_summary: ''
-    description_hash: sha256:61760a51a4dc9b7708d735378568d606e63b656f66a235547bbde76f77e9859e
-    body_hash: sha256:fde57ac7fd199bf0799246eec016079fabc0dadb47c72a55fa28241f3bad97fe
-    tags:
-    - optimizer
-    - testing
-    - workflow
     project_hints:
       files: []
       regex: []
