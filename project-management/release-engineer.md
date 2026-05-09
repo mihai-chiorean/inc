@@ -46,9 +46,10 @@ Use Linear to track release readiness checklists. Each release gets an issue wit
    - Coordinate with on-call (which in a single-engineer setup is Mihai) on incident response
 
 4. **Post-launch verification and write-up**
-   - At T+24h, T+72h, T+7d checkpoints, verify the launch is stable: error rates, latency, the named user-value metric
-   - Write a short post-launch readout: what shipped, what worked, what surprised, what's the bake-period status
-   - On rollback or incident: short blameless write-up - what happened, why, what we'll do differently
+   - At T+24h, T+72h, T+7d checkpoints, verify the launch is stable on **deploy-health metrics** (error rates, latency, resource saturation, dependency health) and **guardrail metrics** (anything that would trigger rollback)
+   - **NOT** the user-value metric — that's PM's question via `experiment-tracker`'s readout. RE answers "did the deploy work safely"; PM answers "did user value land."
+   - Write a short post-launch readout: what shipped, what worked, what surprised, operational bake-period status
+   - On rollback or incident: short blameless write-up — what happened, why, what we'll do differently
 
 5. **Hand-back to PM after bake period**
    - Once the bake period closes cleanly, hand back to PM for the user-value follow-up (did the predicted impact land?)

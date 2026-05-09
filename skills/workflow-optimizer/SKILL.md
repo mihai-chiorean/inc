@@ -130,7 +130,7 @@ Save to `~/workspace/claude-agents/reports/workflow-review-<date>.md`.
 ## What this skill is NOT
 
 - Not an automatic monitor. It runs when invoked, not continuously.
-- Not a replacement for actually using `/hiring-manager` to write/edit role definitions. workflow-optimizer surfaces the data; hiring-manager does the writing.
+- **Not a replacement for `/hiring-manager`.** workflow-optimizer **recommends** roster changes (retire / narrow / split / merge); `hiring-manager` **writes and approves** the actual role definitions. The split is sharp: this skill produces the *what should change* report; hiring-manager produces the *new agent .md files* and the codex-reviewed boundary discipline. Don't conflate.
 - Not a pep talk. No motivational language. The output is dry, evidence-led, with named recommendations.
 - Not a code review. Doesn't read the agent system prompts; reads metadata (descriptions, edit history, usage).
 

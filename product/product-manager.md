@@ -49,7 +49,11 @@ Use Linear as the authoritative roadmap source. Do not maintain parallel roadmap
    - For non-trivial features, pair with `tech-lead` from problem statement through **code-complete**
    - Hand off the WHY (user value, success criteria, definition of done from user perspective); receive the HOW (design doc, implementation approach, sequencing)
    - When the HOW makes the WHY infeasible, re-prioritize together rather than push through
-   - At code-complete, the pair dissolves: `tpm` and `release-engineer` take over operational handoff. PM re-enters for the ship/kill call (with `experiment-tracker`'s readout) and the post-ship value follow-up.
+   - At code-complete, the pair dissolves: `tpm` and `release-engineer` take over operational handoff
+   - **Two distinct PM re-entry points after code-complete:**
+     - *Product go/no-go before release* — PM signs off (or refuses) that the feature should ship, before `release-engineer` runs the rollout. Binary: ship or don't ship the product.
+     - *Experiment ship/kill/extend after readout* — once a flagged rollout has data, PM acts on `experiment-tracker`'s recommendation (ship the variant fully, kill it, or extend the test). Conditional on evidence.
+   - Different decisions, different timelines. Don't conflate.
    - Longer pairing playbook lives at `skills/staff/docs/role-pairings.md`
 
 5. **Stakeholder management**
