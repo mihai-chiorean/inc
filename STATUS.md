@@ -2,12 +2,12 @@
 status_version: 1
 current_objective: "Week 1 of the gstack-borrow initiative — ship the bootstrap loop (STATUS.md schema + thin CLAUDE.md + /sitrep v0)"
 active_branch: mit-343-week1-bootstrap-loop
-active_pr: null
+active_pr: "https://github.com/mihai-chiorean/claude-agents/pull/19"
 linear_issue: MIT-343
 linear_team: MIT
 linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-1-bootstrap-loop-edfc7c15d5d8
 blocked_on_user: []
-next_command: "Open PR against main; per-PR codex review is the house norm"
+next_command: "Merge PR #19 once green; then begin Week 2 (/work-breakdown)"
 last_verified_state: 2026-05-11T00:00:00Z
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
@@ -28,9 +28,9 @@ Three artifacts ship in one PR:
 
 ## What's next
 
-1. Open PR against `main` (per-PR codex review is the house norm — one round done in-branch already).
-2. Merge once green.
-3. Begin Week 2 (`/work-breakdown` — the adoption bridge for pain D). New branch, new Linear issue under the same initiative.
+1. Merge PR #19 once green.
+2. Begin Week 2 (`/work-breakdown` — the adoption bridge for pain D). New branch, new Linear issue under the same initiative.
+3. (Parallel) Resume Project B (MIT-294–302) with gstack eval mechanics folded in.
 
 ## Open items needing my attention
 
