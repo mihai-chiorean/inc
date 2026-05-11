@@ -59,6 +59,7 @@ links:
 | `active_branch` | string\|null | yes | Current working branch. `null` if on main with nothing in flight. |
 | `active_pr` | string\|null | yes | PR number or URL. `null` if no PR open. |
 | `linear_issue` | string\|null | yes | Issue ID (e.g. `MIT-343`) the active work corresponds to. |
+| `linear_team` | string\|null | no | Linear team key (e.g. `MIT`). Used by `/sitrep` when no `.linear.toml` is present. If omitted, `/sitrep` derives it from the `linear_issue` prefix. |
 | `linear_project` | string\|null | no | Linear project URL if the work is under one. |
 | `blocked_on_user` | list | yes | Things waiting on the human. Can be empty `[]`. Each item: `{item: string, since: ISO-date, link: URL\|null}`. |
 | `next_command` | string | yes | One sentence imperative. The thing to do next in this project. |

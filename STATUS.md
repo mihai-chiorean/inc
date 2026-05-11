@@ -4,9 +4,10 @@ current_objective: "Week 1 of the gstack-borrow initiative — ship the bootstra
 active_branch: mit-343-week1-bootstrap-loop
 active_pr: null
 linear_issue: MIT-343
+linear_team: MIT
 linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-1-bootstrap-loop-edfc7c15d5d8
 blocked_on_user: []
-next_command: "Build /sitrep v0 skill (after CLAUDE.md lands)"
+next_command: "Open PR against main; per-PR codex review is the house norm"
 last_verified_state: 2026-05-11T00:00:00Z
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
@@ -27,16 +28,18 @@ Three artifacts ship in one PR:
 
 ## What's next
 
-1. Land thin CLAUDE.md (3 rules: session-start, routing, Linear-as-inbox).
-2. Build `/sitrep v0` skill — reads STATUS.md, `linear issue mine`, `gh pr list`, recent commits; writes back updates.
-3. Manual test `/sitrep` in this repo end-to-end.
-4. Codex review (1 round).
-5. PR against `main`.
+1. Open PR against `main` (per-PR codex review is the house norm — one round done in-branch already).
+2. Merge once green.
+3. Begin Week 2 (`/work-breakdown` — the adoption bridge for pain D). New branch, new Linear issue under the same initiative.
 
 ## Open items needing my attention
 
-- [research/gstack-borrow-2026-05-11.md](research/gstack-borrow-2026-05-11.md) — handoff doc with codex-revised shortlist. Read before starting Week 2 (`/work-breakdown`).
-- Outstanding Project B work (MIT-294–302) — fold gstack eval mechanics (touchfile diff selection + tier system + extended EvalResult schema) when picked up.
+_None right now — `/sitrep` populates this section from live Linear/GitHub queries; static items belong in a future-work or backlog section._
+
+## Future work (not inbox)
+
+- [research/gstack-borrow-2026-05-11.md](research/gstack-borrow-2026-05-11.md) — handoff doc with the codex-revised shortlist. Reference for Week 2+.
+- Project B (MIT-294–302) — fold gstack eval mechanics (touchfile diff selection + tier system + extended EvalResult schema) when picked up. Parallel track.
 
 ## Decisions log (recent)
 

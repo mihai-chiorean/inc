@@ -63,18 +63,31 @@ git status --short && git branch --show-current
 # 2. Recent commits on the branch
 git log --oneline -10
 
-# 3. Linear issues assigned to user
-linear issue mine --no-pager
+# 3. Linear issues assigned to user.
+#    Resolve the team key in this order:
+#      a) .linear.toml at project root (if present)
+#      b) STATUS.md `linear_team:` field (if present)
+#      c) prefix of `linear_issue` in STATUS.md ("MIT-343" → "MIT")
+#      d) prompt the user
+#    The CLI command name also varies: v2.x uses `linear issue mine`,
+#    v1.x uses `linear issue list` and requires `--team` + `--sort`.
+#    Try v2 first, fall back to v1 with the resolved team.
+linear issue mine --no-pager --state triage --state backlog --state unstarted --state started 2>/dev/null \
+  || linear issue list --team "$TEAM" --no-pager --sort priority \
+       --state triage --state backlog --state unstarted --state started
 
 # 4. PRs awaiting user's review
 gh pr list --search 'review-requested:@me state:open' --json number,title,author,url,headRepository --limit 20
 
-# 5. User's own open PRs
-gh pr list --author @me --state open --json number,title,url,statusCheckRollup --limit 20
+# 5. User's own open PRs (workspace-wide)
+gh pr list --author @me --state open --json number,title,url,headRefName,statusCheckRollup --limit 20
 
-# 6. (Optional) Linear documents flagged for review
-# If the project uses Linear documents for design-doc review hand-off:
-linear document list --no-pager 2>/dev/null | head -30 || true
+# 6. Branch-specific PR (to reconcile STATUS.md's `active_pr`)
+gh pr list --author @me --state open --head "$(git branch --show-current)" --json number,url --limit 1
+
+# 7. (Optional) Linear documents flagged for review.
+#    `linear document list` has no --no-pager flag in v1.x; v2.x accepts it.
+linear document list 2>/dev/null | head -30 || true
 ```
 
 **Failure handling:**
@@ -91,7 +104,8 @@ Compare STATUS.md frontmatter against live state:
 | `active_branch: X` | git branch is X | Confirm. |
 | `active_branch: X` | git branch is Y | Flag in output: "STATUS.md is stale — on branch Y, STATUS says X." |
 | `linear_issue: MIT-N` | Linear shows MIT-N completed | Flag: "MIT-N is done. Time to advance `next_command`?" |
-| `active_pr: null` | `gh pr list --author @me --head <branch>` finds one | Flag: "PR opened since last sitrep — update STATUS.md." |
+| `active_pr: null` | Step 3 query #6 (`gh pr list --author @me --head <branch>`) finds one | Flag: "PR opened since last sitrep — update STATUS.md." Derive `active_pr` from that query's first result. |
+| `active_pr: #N` | Step 3 query #6 finds nothing for current branch | Flag: "STATUS.md `active_pr` is stale or wrong branch." |
 | `blocked_on_user` non-empty | Each item still relevant? | Ask user; clear resolved items. |
 
 ### Step 5 — Surface the landing page
