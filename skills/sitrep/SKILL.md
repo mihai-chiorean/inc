@@ -82,6 +82,7 @@ sitrep-linear docs | head -30
 **If `sitrep-linear` is not on `$PATH`:** the wrapper lives at `skills/sitrep/bin/sitrep-linear` in the claude-agents repo. Symlink it onto `$PATH`:
 
 ```bash
+mkdir -p ~/.local/bin
 ln -sf "$(git -C ~/workspace/claude-agents rev-parse --show-toplevel)/skills/sitrep/bin/sitrep-linear" ~/.local/bin/sitrep-linear
 ```
 

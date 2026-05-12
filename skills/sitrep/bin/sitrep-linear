@@ -29,8 +29,16 @@ require_linear() {
 }
 
 strip_ansi() {
-    # Strip both CSI escapes and color introducer sequences.
-    sed -r $'s/\x1b\\[[0-9;]*[A-Za-z]//g; s/\x1b\\([A-Z]//g'
+    # Strip:
+    #   - OSC-8 hyperlinks: ESC ] 8 ; ... ESC \   and shorter BEL terminator
+    #   - CSI sequences (incl. private modes ESC[?25l, colon true-color, intermediate bytes)
+    #   - charset designators ESC ( B
+    #   - CR-only lines from progress redraws
+    perl -pe '
+        s/\x1b\]8;[^\x07\x1b]*(?:\x07|\x1b\\)//g;
+        s/\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]//g;
+        s/\x1b\([A-Z]//g;
+    '
 }
 
 # Resolve the Linear team key for the current project.
@@ -39,13 +47,33 @@ strip_ansi() {
 #   2. $LINEAR_TEAM env var
 #   3. STATUS.md `linear_team:` field at git root
 #   4. Prefix of STATUS.md `linear_issue:` (e.g. "MIT-343" → "MIT")
+# Read a scalar field from STATUS.md frontmatter.
+# Strips wrapping single OR double quotes. Returns "" if not found.
+status_field() {
+    local file="$1"
+    local key="$2"
+    [[ -f "$file" ]] || return 0
+    awk -v key="$key" '
+        /^---$/ { n++; if (n==2) exit; next }
+        n==1 {
+            if (match($0, "^" key ":[[:space:]]*")) {
+                val = substr($0, RSTART + RLENGTH)
+                gsub(/^[\047"]|[\047"]$/, "", val)   # strip wrapping single/double quotes
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", val)
+                print val
+                exit
+            }
+        }
+    ' "$file"
+}
+
 resolve_team_key() {
     # 1. .linear.toml walk-up
     local dir="$PWD"
     while [[ "$dir" != "/" ]]; do
         if [[ -f "$dir/.linear.toml" ]]; then
             local team
-            team="$(grep -oE '^team_key[[:space:]]*=[[:space:]]*"?[A-Z][A-Z0-9_]*' "$dir/.linear.toml" 2>/dev/null \
+            team="$(grep -oE '^team_key[[:space:]]*=[[:space:]]*[\x27"]?[A-Z][A-Z0-9_]*' "$dir/.linear.toml" 2>/dev/null \
                 | head -1 \
                 | grep -oE '[A-Z][A-Z0-9_]*$' || true)"
             if [[ -n "$team" ]]; then echo "$team"; return 0; fi
@@ -59,21 +87,18 @@ resolve_team_key() {
     # 3 + 4. STATUS.md at git root
     local root
     root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
-    if [[ -f "$root/STATUS.md" ]]; then
+    local status_file="$root/STATUS.md"
+    if [[ -f "$status_file" ]]; then
         # linear_team: MIT
         local team
-        team="$(awk '
-            /^---$/ { n++; next }
-            n==1 && /^linear_team:/ { print $2; exit }
-        ' "$root/STATUS.md" 2>/dev/null | tr -d '"' || true)"
+        team="$(status_field "$status_file" linear_team)"
         if [[ -n "$team" ]]; then echo "$team"; return 0; fi
 
         # linear_issue: MIT-343  →  MIT
+        local issue
+        issue="$(status_field "$status_file" linear_issue)"
         local prefix
-        prefix="$(awk '
-            /^---$/ { n++; next }
-            n==1 && /^linear_issue:/ { print $2; exit }
-        ' "$root/STATUS.md" 2>/dev/null | tr -d '"' | grep -oE '^[A-Z]+' || true)"
+        prefix="$(printf '%s' "$issue" | grep -oE '^[A-Z]+' || true)"
         if [[ -n "$prefix" ]]; then echo "$prefix"; return 0; fi
     fi
 
@@ -90,23 +115,36 @@ cmd_inbox() {
         }
     fi
 
-    # Try v2.x (`issue mine`) first.
+    # Try v2.x (`issue mine`) first. Pass --team explicitly so we don't silently
+    # accept a different default team's inbox if the CLI is set up that way.
+    # The `if` test form is safe under `set -e`; a plain assignment from a
+    # failing substitution would otherwise abort the function.
     local out
-    if out="$(linear issue mine --no-pager \
+    if out="$(linear issue mine --team "$team" --no-pager \
                 --state triage --state backlog --state unstarted --state started 2>/dev/null)"; then
         printf '%s\n' "$out" | strip_ansi
         return 0
     fi
 
-    # Fall back to v1.x (`issue list` with --team --sort).
-    linear issue list --team "$team" --no-pager --sort priority \
-        --state triage --state backlog --state unstarted --state started 2>&1 | strip_ansi
+    # Fall back to v1.x (`issue list` with --team --sort). Translate any
+    # CLI error to exit code 3 to match the documented contract.
+    if ! out="$(linear issue list --team "$team" --no-pager --sort priority \
+                --state triage --state backlog --state unstarted --state started 2>&1)"; then
+        printf '%s\n' "$out" | strip_ansi >&2
+        return 3
+    fi
+    printf '%s\n' "$out" | strip_ansi
 }
 
 cmd_docs() {
     require_linear
     # Both v1 and v2 accept `linear document list`. v1 has no --no-pager flag.
-    linear document list 2>&1 | strip_ansi
+    local out
+    if ! out="$(linear document list 2>&1)"; then
+        printf '%s\n' "$out" | strip_ansi >&2
+        return 3
+    fi
+    printf '%s\n' "$out" | strip_ansi
 }
 
 cmd_team_key() {
