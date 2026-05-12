@@ -54,7 +54,7 @@ Once written, continue with Step 3.
 
 ### Step 3 — Gather live state in parallel
 
-Run these in a single batch (multiple `Bash` tool calls in one message):
+Run these in a single batch (multiple `Bash` tool calls in one message). All Linear queries go through the **`sitrep-linear` wrapper** (`skills/sitrep/bin/sitrep-linear`, symlinked to `~/.local/bin/sitrep-linear`) — it hides Linear CLI v1/v2 differences and team-key resolution so this SKILL.md doesn't have to. See [`bin/sitrep-linear --help`](bin/sitrep-linear) for the contract.
 
 ```bash
 # 1. Current branch + uncommitted state
@@ -63,18 +63,8 @@ git status --short && git branch --show-current
 # 2. Recent commits on the branch
 git log --oneline -10
 
-# 3. Linear issues assigned to user.
-#    Resolve the team key in this order:
-#      a) .linear.toml at project root (if present)
-#      b) STATUS.md `linear_team:` field (if present)
-#      c) prefix of `linear_issue` in STATUS.md ("MIT-343" → "MIT")
-#      d) prompt the user
-#    The CLI command name also varies: v2.x uses `linear issue mine`,
-#    v1.x uses `linear issue list` and requires `--team` + `--sort`.
-#    Try v2 first, fall back to v1 with the resolved team.
-linear issue mine --no-pager --state triage --state backlog --state unstarted --state started 2>/dev/null \
-  || linear issue list --team "$TEAM" --no-pager --sort priority \
-       --state triage --state backlog --state unstarted --state started
+# 3. Linear issues assigned to me (wrapper resolves team key + CLI version)
+sitrep-linear inbox
 
 # 4. PRs awaiting user's review
 gh pr list --search 'review-requested:@me state:open' --json number,title,author,url,headRepository --limit 20
@@ -85,10 +75,17 @@ gh pr list --author @me --state open --json number,title,url,headRefName,statusC
 # 6. Branch-specific PR (to reconcile STATUS.md's `active_pr`)
 gh pr list --author @me --state open --head "$(git branch --show-current)" --json number,url --limit 1
 
-# 7. (Optional) Linear documents flagged for review.
-#    `linear document list` has no --no-pager flag in v1.x; v2.x accepts it.
-linear document list 2>/dev/null | head -30 || true
+# 7. (Optional) Linear documents flagged for review
+sitrep-linear docs | head -30
 ```
+
+**If `sitrep-linear` is not on `$PATH`:** the wrapper lives at `skills/sitrep/bin/sitrep-linear` in the claude-agents repo. Symlink it onto `$PATH`:
+
+```bash
+ln -sf "$(git -C ~/workspace/claude-agents rev-parse --show-toplevel)/skills/sitrep/bin/sitrep-linear" ~/.local/bin/sitrep-linear
+```
+
+If the wrapper fails entirely (Linear CLI missing, no auth), fall back to surfacing what you have and noting the gap in the output's footer.
 
 **Failure handling:**
 - `gh` not authed or no GitHub remote → skip GitHub queries silently; note in output.
