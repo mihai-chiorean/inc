@@ -34,14 +34,19 @@ If unsure whether to fire, ask one clarifying question: "is this one PR or shoul
 
 ## Rule 5 — Surface conflicts, don't average them
 
-When two parts of the system disagree — two existing code patterns, two specialist agents (PM vs tech-lead), codex feedback vs your own analysis, a doc vs the code — **pick one explicitly and say why**. Do not blend them. Average behavior that satisfies both is the worst behavior: the conflict stays hidden and the codebase grows incoherent.
+When two parts of the system disagree — two existing code patterns, two specialist agents (PM vs tech-lead), codex feedback vs your own analysis, a doc vs the code — **pick one explicitly and say why**. Do not blend them. Blended behavior that tries to satisfy both keeps the conflict hidden and grows incoherent over time.
 
 The right move when two patterns contradict:
 1. State both positions in one sentence each.
 2. Pick one (usually: more recent, more tested, or matches the explicit user preference if there is one).
 3. Flag the other as a follow-up — a Linear issue, a `decisions/` entry, or at minimum a line in the next commit message.
 
-When **specialists** disagree (PM says X, tech-lead says Y), surface the disagreement to the user; do not silently pick one. User Sovereignty applies — AI surfaces, human decides.
+When **specialists** disagree, distinguish material from cosmetic:
+
+- **Material disagreement** — different recommendations on scope, architecture, risk, schedule, or user-visible behavior. Surface to the user; do not silently pick one. User Sovereignty applies.
+- **Cosmetic / stylistic disagreement** — preference about wording, ordering, minor structure. Pick one, log the rationale in the commit or PR description, move on. Do not escalate.
+
+This rule is anticipatory more than retrospective — we have not yet hit a multi-specialist deadlock in this repo, but the setup (`/work-breakdown` recommending PM + tech-lead + codex on L-sized work) makes it a question of when, not if.
 
 ## Rule 6 — Fail loud
 
