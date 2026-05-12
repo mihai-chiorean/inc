@@ -60,7 +60,8 @@ links:
 | `active_pr` | string\|null | yes | PR number or URL. `null` if no PR open. |
 | `linear_issue` | string\|null | yes | Issue ID (e.g. `MIT-343`) the active work corresponds to. |
 | `linear_team` | string\|null | no | Linear team key (e.g. `MIT`). Used by `/sitrep` when no `.linear.toml` is present. If omitted, `/sitrep` derives it from the `linear_issue` prefix. |
-| `linear_project` | string\|null | no | Linear project URL if the work is under one. |
+| `linear_project` | string\|null | no | Linear project URL for the **active** work (the project the current branch is under). Distinct from `linear_scope` below. |
+| `linear_scope` | list\|null | no | List of Linear project **names** (exact match) that count as "this repo's work." Used by `sitrep-linear inbox` to filter the team-wide inbox down to issues relevant to this repo. If omitted or empty, the inbox falls back to all-team behavior (backward compat). See *Scoping* below. |
 | `blocked_on_user` | list | yes | Things waiting on the human. Can be empty `[]`. Each item: `{item: string, since: ISO-date, link: URL\|null}`. |
 | `next_command` | string | yes | One sentence imperative. The thing to do next in this project. |
 | `last_verified_state` | ISO-8601 | yes | When `/sitrep` last ran end-to-end successfully. Stale value = trust the body sections less. |
@@ -101,9 +102,30 @@ links:
 4. On write, `/sitrep` should diff-update fields rather than rewriting the whole file — preserves human edits and trailing notes.
 5. `blocked_on_user` items survive `/sitrep` writes unless explicitly cleared by the user via prompt.
 
+## Scoping (`linear_scope`)
+
+Linear has no inherent "this issue belongs to this repo" link — one team, many repos. `linear_scope` is the bridge: a list of Linear project names that `sitrep-linear inbox` will filter by.
+
+```yaml
+linear_scope:
+  - "gstack borrow — Week 1: bootstrap loop"
+  - "Per-project agent staffing skill"
+  - "agent eval framework"
+```
+
+**Match rule:** exact-string match on project name. Order doesn't matter. Empty list / missing field = no filtering (all team issues, backward compat).
+
+**Caveat:** issues without a Linear project (e.g. orphan side-quests, untriaged items) are not surfaced. This is a known limitation of the project-based approach. The long-term direction is label-based scoping (e.g. a `repo:claude-agents` label on every relevant issue), which survives project moves and covers orphan issues — see the Future work entry in claude-agents/STATUS.md.
+
+**Migration path (project → label):** when the label-based scoping ships, `linear_scope` will accept a `labels:` key alongside `projects:`. Until then, the bare-list form means "projects."
+
 ## Versioning
 
 `status_version: 1`. If the schema changes:
 - Bump `status_version`.
 - Document the migration in this file.
 - `/sitrep` should detect lower versions and offer an in-place migration.
+
+### Changelog
+- v1 (initial): defined the schema.
+- v1.1 (2026-05-12): added optional `linear_scope` field. Backward-compatible — absent field falls back to all-team inbox behavior.
