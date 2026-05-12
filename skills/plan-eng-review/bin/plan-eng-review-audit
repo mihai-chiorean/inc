@@ -1,0 +1,925 @@
+#!/usr/bin/env python3
+"""
+plan-eng-review-audit — mechanical audit checks for a design doc.
+
+Wraps the deterministic gates of the /plan-eng-review skill (Week 3b of the
+gstack-borrow initiative). Implements the failure-modes table from
+decisions/0001-plan-eng-review-lift.md section 7. The qualitative review is
+done by the SKILL.md procedure on top of this wrapper's PASS result.
+
+Subcommands / flags:
+  plan-eng-review-audit <doc-path>           — full mechanical audit + (on PASS)
+                                                mutate frontmatter status,
+                                                snapshot to restore path,
+                                                append telemetry line.
+  plan-eng-review-audit <doc> --mechanical-only
+                                              — same checks, no mutation, no
+                                                restore, no telemetry. For CI.
+  plan-eng-review-audit <doc> --apply-fail-status
+                                              — on FAIL, also mutate
+                                                status to issues_open
+                                                (default: leave doc untouched
+                                                 on fail).
+
+Exit codes (per design doc section 7):
+  0  PASS — every mechanical check passed.
+  1  DocNotFound or other I/O error.
+  2  Bad arguments, frontmatter malformed, or illegal status transition.
+  3  Mechanical FAIL — at least one gap. Gap list printed on stdout.
+
+Output (CLAUDE.md Rule 6 — fail loud):
+  First line is scriptable. PASS prints "PASS: status=accepted" or similar.
+  FAIL prints "FAIL: N gaps" followed by one "- <FailureName>: <desc>" per gap.
+
+Telemetry/restore paths:
+  ~/.inc/projects/<slug>/telemetry.jsonl   — one JSON line per audit event.
+  ~/.inc/projects/<slug>/restore/<dt>-<basename>
+                                            — pre-mutation snapshot.
+  <slug> = basename of `git rev-parse --show-toplevel`, or "_orphan" if
+  the doc is outside a git repo (with stderr warning, per open question 4).
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterable
+
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+# The 8 required H2 headings, matched against the section title (after the
+# leading "N. " number). The values are human-friendly labels for gap output.
+REQUIRED_SECTIONS: list[tuple[int, str]] = [
+    (1, "Problem"),
+    (2, "Goals / Non-goals"),
+    (3, "Implementation alternatives"),
+    (4, "User flow diagram"),
+    (5, "State machine"),
+    (6, "Data flow diagram"),
+    (7, "Failure modes"),
+    (8, "Open questions"),
+]
+
+# Sections that MUST have a non-stub fenced code block (diagrams).
+DIAGRAM_SECTIONS: set[int] = {4, 5, 6}
+
+# Allowed status transitions: (current, on_pass_target).
+# - draft → accepted: first audit on a fresh doc passes; common path.
+# - in-review → accepted: standard.
+# - issues_open → accepted: re-audit cycle, user fixed the gaps. Tolerated
+#   even though the design doc's state diagram shows issues_open going through
+#   in-review first — users will likely re-run the audit while still tagged
+#   issues_open, and forcing them to edit frontmatter first is friction.
+# accepted/superseded are terminal-for-this-doc; trying to re-accept either
+# is an IllegalStatusTransition (exit 2).
+LEGAL_PASS_TRANSITIONS: dict[str, str] = {
+    "draft": "accepted",
+    "in-review": "accepted",
+    "issues_open": "accepted",
+}
+
+TERMINAL_STATUSES: set[str] = {"accepted", "superseded"}
+
+
+# ---------------------------------------------------------------------------
+# Data model
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class Gap:
+    name: str
+    description: str
+
+    def render(self) -> str:
+        return f"- {self.name}: {self.description}"
+
+
+@dataclass
+class Section:
+    number: int
+    title: str
+    heading_line: int  # 1-indexed line number of the `## N. Title` line
+    body_lines: list[str] = field(default_factory=list)
+    body_start: int = 0  # 1-indexed line number of first body line
+
+
+@dataclass
+class ParsedDoc:
+    path: Path
+    raw: str
+    frontmatter: dict[str, str]
+    frontmatter_end_line: int  # 1-indexed line number of closing `---`
+    body_start_line: int  # 1-indexed line number of first body line
+    sections: dict[int, Section]
+
+
+# ---------------------------------------------------------------------------
+# Frontmatter parsing (minimal, no pyyaml dependency)
+# ---------------------------------------------------------------------------
+
+
+class FrontmatterError(Exception):
+    def __init__(self, line: int, msg: str) -> None:
+        super().__init__(msg)
+        self.line = line
+
+
+def _parse_frontmatter(raw: str) -> tuple[dict[str, str], int, int]:
+    """Parse a minimal YAML frontmatter block.
+
+    Supports:
+      key: value
+      key: "quoted value"
+      key:
+        - "list item"
+        - another item
+
+    Returns (mapping_of_top_level_scalars, frontmatter_end_line, body_start_line).
+    Top-level lists are recorded as joined strings so we don't lose info, but
+    we don't actually need them for the audit. The only scalar we mutate is
+    `status`.
+
+    Raises FrontmatterError on malformed input.
+    """
+    lines = raw.splitlines()
+    if not lines or lines[0].strip() != "---":
+        raise FrontmatterError(1, "missing opening `---` frontmatter delimiter")
+    end_idx: int | None = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            end_idx = i
+            break
+    if end_idx is None:
+        raise FrontmatterError(len(lines), "missing closing `---` frontmatter delimiter")
+
+    out: dict[str, str] = {}
+    in_list_for: str | None = None
+    list_items: list[str] = []
+    for i in range(1, end_idx):
+        ln = lines[i]
+        if not ln.strip():
+            continue
+        # List continuation under previous key
+        if in_list_for is not None and ln.lstrip().startswith("-"):
+            item = ln.lstrip()[1:].strip()
+            list_items.append(_unquote_scalar(item, line_no=i + 1))
+            continue
+        # New key
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*:\s*(.*)$", ln)
+        if not m:
+            raise FrontmatterError(i + 1, f"unrecognized frontmatter line: {ln!r}")
+        # Flush any prior list
+        if in_list_for is not None:
+            out[in_list_for] = ", ".join(list_items)
+            in_list_for = None
+            list_items = []
+        key = m.group(1)
+        rest = m.group(2)
+        if rest == "":
+            in_list_for = key
+            continue
+        out[key] = _unquote_scalar(rest, line_no=i + 1)
+
+    if in_list_for is not None:
+        out[in_list_for] = ", ".join(list_items)
+
+    body_start = end_idx + 2  # 1-indexed line right after closing `---` and blank
+    if body_start > len(lines):
+        body_start = end_idx + 1
+    return out, end_idx + 1, body_start
+
+
+def _unquote_scalar(s: str, *, line_no: int) -> str:
+    s = s.strip()
+    if len(s) >= 2 and s[0] == '"' and s[-1] == '"':
+        body = s[1:-1]
+        return body.replace('\\"', '"').replace("\\\\", "\\")
+    if len(s) >= 2 and s[0] == "'" and s[-1] == "'":
+        return s[1:-1]
+    # bare scalar — strip trailing inline comments only if preceded by space
+    return re.sub(r"\s+#.*$", "", s).strip()
+
+
+# ---------------------------------------------------------------------------
+# Body parsing — sections + diagrams + tables
+# ---------------------------------------------------------------------------
+
+
+# Match `## N. Title` (allow leading whitespace; not inside code blocks).
+SECTION_HEADER_RE = re.compile(r"^##\s+(\d+)\.\s+(.+?)\s*$")
+
+
+def _parse_sections(raw: str, body_start_line: int) -> dict[int, Section]:
+    """Walk the body, tracking fenced-code-block state, and slice into
+    sections keyed by their 1..8 number.
+
+    Section headers inside fenced code blocks are ignored.
+    """
+    lines = raw.splitlines()
+    sections: dict[int, Section] = {}
+    in_fence = False
+    fence_marker: str | None = None
+    current: Section | None = None
+    for idx in range(body_start_line - 1, len(lines)):
+        ln = lines[idx]
+        stripped = ln.lstrip()
+        # Track fence state. We support ``` and ~~~ fences. A fence is a line
+        # whose first non-whitespace chars are 3+ of the marker char.
+        fence_match = re.match(r"^(```+|~~~+)", stripped)
+        if fence_match:
+            marker = fence_match.group(1)[:3]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = None
+            if current is not None:
+                current.body_lines.append(ln)
+            continue
+        if in_fence:
+            if current is not None:
+                current.body_lines.append(ln)
+            continue
+        m = SECTION_HEADER_RE.match(ln)
+        if m:
+            num = int(m.group(1))
+            title = m.group(2).strip()
+            # Strip parenthetical qualifiers like "(mandatory)".
+            title_canonical = re.sub(r"\s*\(.*?\)\s*$", "", title).strip()
+            current = Section(
+                number=num,
+                title=title_canonical,
+                heading_line=idx + 1,
+                body_start=idx + 2,
+            )
+            sections[num] = current
+            continue
+        if current is not None:
+            current.body_lines.append(ln)
+    return sections
+
+
+# ---------------------------------------------------------------------------
+# REPLACE-token detection
+# ---------------------------------------------------------------------------
+
+
+# Strip inline backtick code spans (single or double backticks). We do this
+# conservatively, line-by-line, so multi-line backticks (rare in markdown
+# prose) survive — but inside fenced code blocks we don't apply this.
+_BACKTICK_SPAN_RE = re.compile(r"`+[^`\n]*`+")
+
+
+def _strip_inline_code(line: str) -> str:
+    return _BACKTICK_SPAN_RE.sub("", line)
+
+
+# Patterns that constitute a "stub REPLACE" outside code blocks:
+#   1. line-start (optionally a list marker / heading marker / blockquote)
+#      then REPLACE as a whole word.
+#   2. a "label: REPLACE" line like "- **Summary:** REPLACE" or
+#      "Recommendation: REPLACE because ..."
+_STUB_REPLACE_LINE_RE = re.compile(
+    r"^\s*(?:[-*+]|>|#{1,6}|\d+\.)?\s*(?:\*+[^*]+\*+\s*[—:]\s*)?REPLACE\b"
+)
+# Heading-style stub: "### Approach A — REPLACE name"
+_STUB_REPLACE_HEADING_RE = re.compile(r"^\s*#{1,6}\s+.*?[—-]\s*REPLACE\b")
+
+
+def _line_is_replace_stub(line: str) -> bool:
+    stripped = _strip_inline_code(line)
+    if _STUB_REPLACE_LINE_RE.search(stripped):
+        return True
+    if _STUB_REPLACE_HEADING_RE.search(stripped):
+        return True
+    return False
+
+
+def _fenced_block_is_stub(block_text: str) -> bool:
+    """Decide whether a fenced code block is "stub-only".
+
+    Heuristic: a block is stub if its primary content is the template's
+    'REPLACE — example shape:' marker (case-sensitive), OR if every non-blank
+    line is either a placeholder (`[FOO]`, `???`, `<bar>`) or contains
+    REPLACE as its main token.
+
+    We don't want to false-positive on a real diagram that happens to mention
+    "REPLACE" in a comment (e.g. line 84 of the design doc itself, which is
+    inside section 4's filled-in diagram).
+    """
+    if not block_text.strip():
+        return True
+    lines = [ln for ln in block_text.splitlines() if ln.strip()]
+    if not lines:
+        return True
+    if any("REPLACE — example shape" in ln for ln in lines[:3]):
+        return True
+    # All non-blank lines look like placeholder template noise?
+    placeholder_re = re.compile(r"^\s*(REPLACE\b|\[[^\]]+\]|\?{2,}|<[^>]+>)")
+    non_placeholder = [ln for ln in lines if not placeholder_re.search(ln)]
+    # If ALL lines are placeholders AND REPLACE appears at least once, stub.
+    if not non_placeholder and any("REPLACE" in ln for ln in lines):
+        return True
+    return False
+
+
+def _section_replace_stubs(section: Section) -> list[int]:
+    """Return 1-indexed line numbers of REPLACE stubs in this section's body.
+
+    Walks the body lines, tracking fence state. Inside a fence we DO NOT
+    flag REPLACE per-line — that's handled by `_fenced_block_is_stub` for
+    diagram sections, and we don't penalize REPLACE-in-fence twice.
+    Outside fences, apply the stub detector.
+    """
+    hits: list[int] = []
+    in_fence = False
+    fence_marker: str | None = None
+    for i, ln in enumerate(section.body_lines):
+        stripped = ln.lstrip()
+        fence_match = re.match(r"^(```+|~~~+)", stripped)
+        if fence_match:
+            marker = fence_match.group(1)[:3]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = None
+            continue
+        if in_fence:
+            continue
+        if _line_is_replace_stub(ln):
+            hits.append(section.body_start + i)
+    return hits
+
+
+def _section_fenced_blocks(section: Section) -> list[str]:
+    """Extract the contents of fenced code blocks within a section as a list
+    of strings (one per block). Markers themselves are excluded.
+    """
+    blocks: list[str] = []
+    in_fence = False
+    fence_marker: str | None = None
+    cur: list[str] = []
+    for ln in section.body_lines:
+        stripped = ln.lstrip()
+        fence_match = re.match(r"^(```+|~~~+)", stripped)
+        if fence_match:
+            marker = fence_match.group(1)[:3]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+                cur = []
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = None
+                blocks.append("\n".join(cur))
+                cur = []
+            continue
+        if in_fence:
+            cur.append(ln)
+    return blocks
+
+
+# ---------------------------------------------------------------------------
+# Mechanical checks
+# ---------------------------------------------------------------------------
+
+
+def _section_title_matches(actual: str, expected: str) -> bool:
+    """Title equality check tolerant of whitespace, casing, and `/` vs ` / ` etc.
+
+    Examples accepted as a match for "Goals / Non-goals":
+      "Goals / Non-goals"
+      "Goals/Non-goals"
+      "Goals  /  Non-goals"
+      "Goals / non-goals"
+    Rejected:
+      "Banana"
+      "Goals only"
+    """
+    canon = lambda s: re.sub(r"\s+", " ", s.replace("/", " / ")).strip().lower()
+    return canon(actual) == canon(expected)
+
+
+def _check_sections_present(doc: ParsedDoc) -> list[Gap]:
+    """Verify each required section is present AND has the expected title.
+
+    Per codex round 1: just checking numeric keys lets `## 2. Banana` pass as
+    section 2. Validate the (number, title) pair.
+    """
+    gaps: list[Gap] = []
+    for num, label in REQUIRED_SECTIONS:
+        section = doc.sections.get(num)
+        if section is None:
+            gaps.append(
+                Gap(
+                    name="MissingSection",
+                    description=f'section {num} "{label}" missing',
+                )
+            )
+            continue
+        if not _section_title_matches(section.title, label):
+            gaps.append(
+                Gap(
+                    name="MissingSection",
+                    description=(
+                        f'section {num} title is "{section.title}", '
+                        f'expected "{label}"'
+                    ),
+                )
+            )
+    return gaps
+
+
+def _check_replace_tokens(doc: ParsedDoc) -> list[Gap]:
+    gaps: list[Gap] = []
+    for num, _label in REQUIRED_SECTIONS:
+        section = doc.sections.get(num)
+        if section is None:
+            continue
+        hits = _section_replace_stubs(section)
+        if hits:
+            line_list = ", ".join(str(h) for h in hits[:5])
+            more = "" if len(hits) <= 5 else f" (+{len(hits) - 5} more)"
+            gaps.append(
+                Gap(
+                    name="ReplaceTokenPresent",
+                    description=(
+                        f"section {num} contains stub REPLACE at line(s) {line_list}{more}"
+                    ),
+                )
+            )
+
+        # Per codex round 1: stub fenced blocks must be caught in ALL sections,
+        # not just diagram sections (4-6). A stub fenced example in section 3,
+        # 7, or 8 would otherwise pass silently. Diagram sections have their
+        # own _check_diagrams pass with section-specific N/A escape hatches.
+        if num not in DIAGRAM_SECTIONS:
+            for block in _section_fenced_blocks(section):
+                if _fenced_block_is_stub(block):
+                    gaps.append(
+                        Gap(
+                            name="ReplaceTokenPresent",
+                            description=(
+                                f"section {num} contains a stub-only fenced block"
+                            ),
+                        )
+                    )
+                    break  # one gap per section is enough; user fixes & re-runs
+    return gaps
+
+
+def _check_diagrams(doc: ParsedDoc) -> list[Gap]:
+    gaps: list[Gap] = []
+    for num in sorted(DIAGRAM_SECTIONS):
+        section = doc.sections.get(num)
+        if section is None:
+            continue  # MissingSection already covers this
+        blocks = _section_fenced_blocks(section)
+        # Section 5 ("State machine") may legitimately say "Not applicable"
+        # AND omit the diagram. Recognize that escape hatch only when there
+        # is no fenced block to evaluate — if the author kept the stub
+        # diagram, we still hold them to it.
+        if num == 5 and not blocks:
+            section_text = "\n".join(section.body_lines)
+            if re.search(
+                r"^\s*(?:>|-)?\s*[Nn]ot\s+applicable\b", section_text, re.MULTILINE
+            ):
+                continue
+        if not blocks:
+            gaps.append(
+                Gap(
+                    name="DiagramStubOnly",
+                    description=f"section {num} has no fenced diagram block",
+                )
+            )
+            continue
+        if all(_fenced_block_is_stub(b) for b in blocks):
+            gaps.append(
+                Gap(
+                    name="DiagramStubOnly",
+                    description=f"section {num} diagram is still a stub",
+                )
+            )
+    return gaps
+
+
+def _check_failure_modes_table(doc: ParsedDoc) -> list[Gap]:
+    section = doc.sections.get(7)
+    if section is None:
+        return []
+    # Find pipe-table data rows. A markdown table has a header row, then a
+    # separator like |---|---|, then >=1 data rows. We count data rows that
+    # are NOT the separator and NOT the header, and have non-trivial cell
+    # content.
+    rows: list[str] = []
+    in_fence = False
+    fence_marker: str | None = None
+    seen_separator = False
+    for ln in section.body_lines:
+        stripped = ln.lstrip()
+        fence_match = re.match(r"^(```+|~~~+)", stripped)
+        if fence_match:
+            marker = fence_match.group(1)[:3]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = None
+            continue
+        if in_fence:
+            continue
+        s = stripped.rstrip()
+        if not s.startswith("|"):
+            continue
+        if re.match(r"^\|[\s\-:|]+\|\s*$", s):
+            seen_separator = True
+            continue
+        if not seen_separator:
+            continue  # this is the header row
+        # data row
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        if any(cells) and not all(c == "" for c in cells):
+            # Reject template-placeholder rows: e.g. cells starting with `REPLACE`
+            # or being just `...`.
+            first = cells[0] if cells else ""
+            if first == "..." or first.startswith("REPLACE"):
+                continue
+            # Also reject if every cell starts with REPLACE — clearly a stub.
+            if all((not c) or c.startswith("REPLACE") or c == "..." for c in cells):
+                continue
+            rows.append(s)
+    if not rows:
+        return [
+            Gap(
+                name="FailureModesEmpty",
+                description="section 7 has no data rows in the failure-modes table",
+            )
+        ]
+    return []
+
+
+def _check_open_questions(doc: ParsedDoc) -> list[Gap]:
+    section = doc.sections.get(8)
+    if section is None:
+        return []
+    in_fence = False
+    fence_marker: str | None = None
+    item_count = 0
+    for ln in section.body_lines:
+        stripped = ln.lstrip()
+        fence_match = re.match(r"^(```+|~~~+)", stripped)
+        if fence_match:
+            marker = fence_match.group(1)[:3]
+            if not in_fence:
+                in_fence = True
+                fence_marker = marker
+            elif marker == fence_marker:
+                in_fence = False
+                fence_marker = None
+            continue
+        if in_fence:
+            continue
+        if re.match(r"^\s*[-*+]\s+\S", ln):
+            content = _strip_inline_code(ln.lstrip()[1:].strip())
+            if content.startswith("REPLACE"):
+                continue
+            item_count += 1
+    if item_count < 1:
+        return [
+            Gap(
+                name="OpenQuestionsEmpty",
+                description="section 8 has no list items",
+            )
+        ]
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Status transition + mutation
+# ---------------------------------------------------------------------------
+
+
+def _status_field_replace(raw: str, new_status: str) -> str:
+    """Replace the `status:` line inside the frontmatter only.
+
+    We deliberately operate on the raw text rather than re-serializing the
+    YAML, to preserve formatting of every other field.
+    """
+    lines = raw.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        raise SystemExit("plan-eng-review-audit: cannot rewrite — frontmatter missing")
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            break
+        m = re.match(r"^(\s*status\s*:\s*).*?(\s*(?:#.*)?)$", lines[i])
+        if m:
+            trailing_newline = "\n" if lines[i].endswith("\n") else ""
+            lines[i] = f"{m.group(1)}{new_status}{m.group(2).rstrip()}{trailing_newline}"
+            return "".join(lines)
+    raise SystemExit("plan-eng-review-audit: no `status:` field in frontmatter")
+
+
+# ---------------------------------------------------------------------------
+# Telemetry + restore path resolution
+# ---------------------------------------------------------------------------
+
+
+def _resolve_slug(doc_path: Path) -> tuple[str, bool]:
+    """Return (slug, is_orphan).
+
+    Slug = basename of `git rev-parse --show-toplevel` from the doc's directory.
+    Falls back to "_orphan" with is_orphan=True if not in a git repo.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=doc_path.parent,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return Path(result.stdout.strip()).name, False
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "_orphan", True
+
+
+def _project_dir(slug: str) -> Path:
+    return Path.home() / ".inc" / "projects" / slug
+
+
+def _append_telemetry(
+    slug: str,
+    *,
+    doc: Path,
+    repo: str,
+    event: str,
+    status: str,
+    gaps: list[Gap],
+    duration_ms: int,
+) -> Path | None:
+    """Append a JSON line to the telemetry file. Best-effort; on failure log
+    to stderr and return None.
+    """
+    proj = _project_dir(slug)
+    tele_path = proj / "telemetry.jsonl"
+    # Make doc path repo-relative when possible (per codex round 1: avoid
+    # leaking full local paths into the telemetry stream). Fall back to the
+    # absolute path only when the doc lives outside the git toplevel.
+    try:
+        toplevel = subprocess.run(
+            ["git", "-C", str(doc.parent), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True, timeout=2,
+        ).stdout.strip()
+        doc_repo_rel = str(doc.relative_to(toplevel)) if toplevel else str(doc)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, OSError):
+        doc_repo_rel = str(doc)
+
+    record = {
+        "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repo": repo,
+        "skill": "plan-eng-review",
+        "event": event,
+        "doc": doc_repo_rel,
+        "status": status,
+        "gaps": [{"name": g.name, "description": g.description} for g in gaps],
+        "duration_ms": duration_ms,
+    }
+    try:
+        proj.mkdir(parents=True, exist_ok=True)
+        with tele_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return tele_path
+    except OSError as e:
+        print(f"plan-eng-review-audit: telemetry write failed: {e}", file=sys.stderr)
+        return None
+
+
+class RestoreWriteError(Exception):
+    """Raised when the pre-mutation restore-point snapshot cannot be written.
+
+    Per codex review of round 1: restore-write failure must abort the audit
+    BEFORE mutation, since the goal "Pre-mutation restore point saved" (design
+    doc Section 2) is a precondition for the mutation. Telemetry remains
+    best-effort because it's an audit-trail concern, not a rollback concern.
+    """
+
+
+def _write_restore(slug: str, doc: Path) -> Path:
+    """Copy the doc to the restore directory pre-mutation.
+
+    Raises RestoreWriteError on any I/O failure — caller must abort before
+    mutating the doc.
+    """
+    proj = _project_dir(slug)
+    restore_dir = proj / "restore"
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+    dest = restore_dir / f"{stamp}-{doc.name}"
+    try:
+        restore_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(doc, dest)
+        return dest
+    except OSError as e:
+        raise RestoreWriteError(
+            f"could not write pre-mutation restore point to {dest}: {e}"
+        ) from e
+
+
+# ---------------------------------------------------------------------------
+# Audit driver
+# ---------------------------------------------------------------------------
+
+
+def _run_mechanical_checks(doc: ParsedDoc) -> list[Gap]:
+    gaps: list[Gap] = []
+    gaps.extend(_check_sections_present(doc))
+    gaps.extend(_check_replace_tokens(doc))
+    gaps.extend(_check_diagrams(doc))
+    gaps.extend(_check_failure_modes_table(doc))
+    gaps.extend(_check_open_questions(doc))
+    return gaps
+
+
+def _load_doc(path: Path) -> ParsedDoc:
+    raw = path.read_text(encoding="utf-8")
+    fm, fm_end, body_start = _parse_frontmatter(raw)
+    sections = _parse_sections(raw, body_start)
+    return ParsedDoc(
+        path=path,
+        raw=raw,
+        frontmatter=fm,
+        frontmatter_end_line=fm_end,
+        body_start_line=body_start,
+        sections=sections,
+    )
+
+
+def _print_gaps(gaps: list[Gap]) -> None:
+    print(f"FAIL: {len(gaps)} gap{'s' if len(gaps) != 1 else ''}")
+    for g in gaps:
+        print(g.render())
+
+
+def main(argv: Iterable[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="plan-eng-review-audit",
+        description=(
+            "Mechanical audit of a design doc. Exits 0 on PASS, 3 on FAIL "
+            "(mechanical gap), 2 on bad args/frontmatter/illegal transition, "
+            "1 on missing file."
+        ),
+    )
+    parser.add_argument("doc", help="Path to the design doc (e.g. decisions/NNNN-foo.md)")
+    parser.add_argument(
+        "--mechanical-only",
+        action="store_true",
+        help="Run mechanical checks only; do not mutate, snapshot, or log telemetry.",
+    )
+    parser.add_argument(
+        "--apply-fail-status",
+        action="store_true",
+        help="On FAIL, also mutate status to issues_open (default: leave doc untouched).",
+    )
+    args = parser.parse_args(list(argv) if argv is not None else None)
+
+    started = time.monotonic()
+
+    doc_path = Path(args.doc).expanduser().resolve()
+    if not doc_path.exists():
+        print(f"plan-eng-review-audit: doc not found at {doc_path}", file=sys.stderr)
+        return 1
+    if not doc_path.is_file():
+        print(f"plan-eng-review-audit: not a regular file: {doc_path}", file=sys.stderr)
+        return 1
+
+    # Frontmatter parse.
+    try:
+        doc = _load_doc(doc_path)
+    except FrontmatterError as e:
+        print(
+            f"plan-eng-review-audit: frontmatter parse error at line {e.line}: {e}",
+            file=sys.stderr,
+        )
+        return 2
+
+    current_status = doc.frontmatter.get("status", "").strip() or "draft"
+
+    slug, is_orphan = _resolve_slug(doc_path)
+    if is_orphan:
+        print(
+            "plan-eng-review-audit: doc is outside a git repo; writing telemetry to ~/.inc/projects/_orphan/",
+            file=sys.stderr,
+        )
+
+    # Run checks.
+    gaps = _run_mechanical_checks(doc)
+    duration_ms = int((time.monotonic() - started) * 1000)
+
+    if gaps:
+        _print_gaps(gaps)
+        new_status = "issues_open" if args.apply_fail_status else current_status
+        if not args.mechanical_only:
+            if args.apply_fail_status and current_status not in TERMINAL_STATUSES:
+                try:
+                    rewritten = _status_field_replace(doc.raw, "issues_open")
+                    doc_path.write_text(rewritten, encoding="utf-8")
+                except OSError as e:
+                    print(
+                        f"plan-eng-review-audit: failed to write status=issues_open: {e}",
+                        file=sys.stderr,
+                    )
+            _append_telemetry(
+                slug,
+                doc=doc_path,
+                repo=slug,
+                event="audit",
+                status="fail",
+                gaps=gaps,
+                duration_ms=duration_ms,
+            )
+        return 3
+
+    # PASS path.
+    if current_status in TERMINAL_STATUSES:
+        print(
+            f"plan-eng-review-audit: cannot transition {current_status} → accepted; "
+            "create a new design doc instead (use status: superseded on this one).",
+            file=sys.stderr,
+        )
+        return 2
+
+    if current_status not in LEGAL_PASS_TRANSITIONS:
+        print(
+            f"plan-eng-review-audit: unknown current status {current_status!r}; "
+            f"expected one of {sorted(LEGAL_PASS_TRANSITIONS)}",
+            file=sys.stderr,
+        )
+        return 2
+
+    target_status = LEGAL_PASS_TRANSITIONS[current_status]
+
+    if args.mechanical_only:
+        print(f"PASS: status={current_status} (mechanical-only; no mutation)")
+        return 0
+
+    # Snapshot BEFORE mutation. Per codex round 1: this is required, not
+    # best-effort. If we can't take a snapshot, abort cleanly — better to
+    # refuse acceptance than to mutate with no rollback path.
+    try:
+        restore_path = _write_restore(slug, doc_path)
+    except RestoreWriteError as e:
+        print(f"plan-eng-review-audit: {e}", file=sys.stderr)
+        print(
+            "plan-eng-review-audit: refusing to mutate without a restore point; "
+            "fix the storage layer and re-run",
+            file=sys.stderr,
+        )
+        return 1
+
+    # Mutate frontmatter.
+    try:
+        rewritten = _status_field_replace(doc.raw, target_status)
+        doc_path.write_text(rewritten, encoding="utf-8")
+    except OSError as e:
+        print(
+            f"plan-eng-review-audit: failed to write status={target_status}: {e}",
+            file=sys.stderr,
+        )
+        return 1
+
+    tele_path = _append_telemetry(
+        slug,
+        doc=doc_path,
+        repo=slug,
+        event="audit",
+        status="pass",
+        gaps=[],
+        duration_ms=duration_ms,
+    )
+
+    print(f"PASS: status={target_status}")
+    if restore_path is not None:
+        print(f"restore: {restore_path}")
+    if tele_path is not None:
+        print(f"telemetry: {tele_path}")
+    print(f"duration_ms: {duration_ms}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
