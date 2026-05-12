@@ -1,14 +1,14 @@
 ---
 status_version: 1
-current_objective: "Rebrand claude-agents → inc. Phase 1 (text replacements) is this PR; Phase 2 (GitHub rename + local dir rename + symlink fixes + branch protection) happens at merge time."
-active_branch: mit-363-rebrand-inc
+current_objective: "Week 3b — plan-eng-review skill lift. Design doc filled in this commit; next session builds SKILL.md + plan-eng-review-audit wrapper + telemetry/restore-point infrastructure. Manual test = recursively audit decisions/0001-plan-eng-review-lift.md."
+active_branch: mit-348-plan-eng-review
 active_pr: null
-linear_issue: MIT-363
+linear_issue: MIT-348
 linear_team: MIT
-linear_project: null
+linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-3-planning-discipline-bba4630036be
 blocked_on_user: []
-next_command: "Codex review the rebrand PR; then merge; then execute Phase 2 (gh repo rename + local mv + symlink fixes + branch protection); then begin Week 3b"
-last_verified_state: 2026-05-12T22:00:00Z
+next_command: "Build skills/plan-eng-review/SKILL.md + bin/plan-eng-review-audit per the design doc; recursive test by auditing decisions/0001-plan-eng-review-lift.md"
+last_verified_state: 2026-05-12T22:30:00Z
 linear_scope:
   - "gstack borrow — Week 1: bootstrap loop"
   - "gstack borrow — Week 2: /work-breakdown"
@@ -27,26 +27,23 @@ links:
 
 ## Current objective
 
-Rebrand `claude-agents` → `inc`. The repo, the workspace dir, and the planned operational-state path-root (`~/.inc/projects/<slug>/` instead of `~/.claude-agents/...`) all switch. Aligns with the company-shape framing we adopted during the product-roster refactor (PM/TPM/tech-lead) — the agent setup is a small company; the repo is `inc`.
+Week 3b of gstack-borrow — `plan-eng-review` skill lift. The auditor that hard-gates design docs against missing diagrams + REPLACE stubs + empty failure-modes tables, mutating `status: draft → accepted` on pass.
 
-Week 3b (`plan-eng-review` lift) ships under the new name immediately after.
+**Design doc filled in this commit** (`decisions/0001-plan-eng-review-lift.md`, 284 lines). Specifies: Approach B (hybrid Python wrapper + SKILL.md), telemetry to `~/.inc/projects/<slug>/telemetry.jsonl`, pre-mutation restore points, 11 named failure modes with exit codes, REPLACE-detection precision (parser, not regex).
+
+Next session implements per that design.
 
 ## What's next
 
-1. Codex review the rebrand PR (mostly text replacements + path updates).
-2. Merge.
-3. Phase 2 — execute the live ops:
-   - `gh repo rename inc`
-   - `mv ~/workspace/claude-agents ~/workspace/inc`
-   - `git remote set-url origin git@github.com:mihai-chiorean/inc.git`
-   - Re-point all symlinks (`~/.claude/skills/*` and `~/.local/bin/{sitrep-linear,design-doc-scaffold}`)
-   - Set branch protection on `main` (block force push + deletion; no PR-required; admin-overridable)
-4. Verify: `sitrep-linear scope`, `design-doc-scaffold --help`, `/sitrep` end-to-end.
-5. Begin Week 3b: `plan-eng-review` lift from gstack — strip plumbing per the scope list user approved (keep telemetry, knowledge-base path `~/.inc/projects/<slug>/`, restore points, and the Confidence Calibration sub-pattern).
+1. Build `skills/plan-eng-review/bin/plan-eng-review-audit` (Python wrapper, ~300 LOC). Mechanical checks per the failure-modes table; YAML frontmatter parse; section/diagram/table/list inspection; REPLACE-detection with backtick-span awareness; telemetry + restore-point write; exit-code contract 0/1/2/3.
+2. Build `skills/plan-eng-review/SKILL.md` (procedural overlay for qualitative review).
+3. Recursive manual test — audit `decisions/0001-plan-eng-review-lift.md` itself. Expected: PASS (doc is filled).
+4. Codex review.
+5. PR.
 
 ## Open items needing my attention
 
-- [decisions/0001-plan-eng-review-lift.md](decisions/0001-plan-eng-review-lift.md) — design-doc scaffold for Week 3b. All 8 sections are stubs; fill before starting Week 3b implementation.
+- [decisions/0001-plan-eng-review-lift.md](decisions/0001-plan-eng-review-lift.md) — design doc for Week 3b, **now filled in** (284 lines). Awaiting the auditor (Week 3b implementation) before status can move from `draft` to `accepted`.
 - [MIT-345 — /sitrep --all for cross-project rollup](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup) — side-quest from the /work-breakdown manual test. S-sized. Picks up after Week 3 ships if no higher-priority work appears.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
@@ -58,6 +55,9 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 - **Label-based scoping for `/sitrep` (long-term direction).** v0 (MIT-362) uses Linear project names in `linear_scope`. Project-based misses orphan issues (no project assigned) and breaks if a project gets renamed or split. Long-term: every repo-relevant issue gets a label like `repo:inc` and `linear_scope` accepts a `labels:` key. Survives project moves and covers orphan/triage items. Defer until v0 friction is observed.
 
 ## Decisions log (recent)
+
+- 2026-05-12 — Filled in design doc for Week 3b (`decisions/0001-plan-eng-review-lift.md`, 284 lines). Chose Approach B (hybrid wrapper + SKILL.md). Surfaced one design refinement while writing: REPLACE-detection needs a parser (not a regex), since this doc itself contains 8 meta-references to the literal token `REPLACE` in backtick-quoted prose. Captured as open question + updated failure-mode row.
+- 2026-05-12 — Rebrand complete (MIT-363). Phase 1 PR #24 merged; Phase 2 (gh repo rename → inc, mv workspace dir, 25 symlinks repointed, branch protection on main) executed live. enforce_admins=false, allow_force_pushes=false, allow_deletions=false.
 
 - 2026-05-12 — Rebrand: `claude-agents` → `inc`. Storage-path-root: `~/.inc/projects/<slug>/`. `agent.manifest.yaml` keeps `source_repo: claude-agents` as a stable logical identifier (backward compat with lab-control's lockfile; migrate separately if/when needed).
 - 2026-05-12 — Revised Week 3b strip-list after pushback: KEEP telemetry (adapted to write `~/.inc/projects/<slug>/telemetry.jsonl`), KEEP the non-git knowledge-base pattern, KEEP restore points, lift the Confidence Calibration sub-pattern from gstack's Voice section. Strip the rest of Voice + Writing Style + Question Tuning + gstack-specific Outside Voice + review-log + telemetry binary.
