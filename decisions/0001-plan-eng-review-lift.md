@@ -2,7 +2,7 @@
 doc_version: 1
 title: "plan-eng-review skill lift (audits design docs)"
 linear_issue: "MIT-348"
-status: draft
+status: accepted
 created: "2026-05-12T06:00:49Z"
 authors:
   - "Mihai Chiorean"
