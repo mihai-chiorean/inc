@@ -16,7 +16,7 @@ Walks four layers of evidence and produces a written report:
 3. **Aggregate usage** — which agents are wanted across projects vs. which are dead weight (the audit's retirement-candidates output)
 4. **Self-reflection prompts** — handoff friction the user notices subjectively (asked, not measured)
 
-Output is a markdown report at `~/workspace/claude-agents/reports/workflow-review-<date>.md` with:
+Output is a markdown report at `~/workspace/inc/reports/workflow-review-<date>.md` with:
 
 - **Roster health summary** — N agents in HR, M actually staffed somewhere, K never wanted
 - **Friction patterns** — handoffs that cost time, prompts the user keeps editing, agents that "almost work" but need rephrasing each time
@@ -45,7 +45,7 @@ When invoked, you walk these four layers in order. Don't skip steps; the report'
 ### Layer 1: Recent edits
 
 ```bash
-cd $STAFF_HR_REPO   # or ~/workspace/claude-agents
+cd $STAFF_HR_REPO   # or ~/workspace/inc
 git log --since="3 months ago" --oneline -- engineering/ product/ project-management/ \
     testing/ design/ marketing/ studio-operations/ writing/ bonus/ | head -40
 ```
@@ -119,7 +119,7 @@ Listen carefully to the answers. The aggregate-usage data is honest but lossy; s
 [3-5 judgment calls the report can't make alone]
 ```
 
-Save to `~/workspace/claude-agents/reports/workflow-review-<date>.md`.
+Save to `~/workspace/inc/reports/workflow-review-<date>.md`.
 
 ## Pairing with adjacent agents/skills
 

@@ -42,14 +42,14 @@ Two minor operations:
 
 ```bash
 # Clone HR
-git clone <claude-agents-repo> ~/workspace/claude-agents
-cd ~/workspace/claude-agents
+git clone git@github.com:mihai-chiorean/inc.git ~/workspace/inc
+cd ~/workspace/inc
 
 # Install skills (and the staff CLI on PATH)
 ./install.sh --link --skills-only
 
 # Tell `staff` where HR lives
-echo 'export STAFF_HR_REPO=$HOME/workspace/claude-agents' >> ~/.zshrc
+echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
 source ~/.zshrc
 ```
 
@@ -354,7 +354,7 @@ If you've never run staff before on this machine, set `STAFF_HR_REPO` first.
 ### "HR has updated. Bring my project up to date."
 
 ```bash
-cd ~/workspace/claude-agents && git pull   # update HR
+cd ~/workspace/inc && git pull   # update HR
 cd ~/workspace/<project>
 staff status                                # see HR-DRIFT flags
 staff apply --agents <id1> <id2> --force    # re-pin specific agents
@@ -431,5 +431,5 @@ staff suggest                                # uses local LLM
 - `schemas.md` — exact YAML/markdown shapes for manifest, lockfile, overlay, merged file
 - `SKILL.md` — usage in Claude Code via `/staff <subcommand>`
 - `examples/` — sample lockfile, overlay, project config
-- Source: [github.com/mihai-chiorean/claude-agents](https://github.com/mihai-chiorean/claude-agents)
+- Source: [github.com/mihai-chiorean/inc](https://github.com/mihai-chiorean/inc)
 - Linear: [Per-project agent staffing skill project](https://linear.app/mitzoku/project/per-project-agent-staffing-skill-b7691b903726)

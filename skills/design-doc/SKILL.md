@@ -14,7 +14,7 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion
 
 You scaffold a markdown design doc with all the required sections present (even if empty stubs). The user fills them in afterwards. The audit gate (Week 3b `plan-eng-review`) is what enforces that the sections are non-empty before code lands.
 
-The template lives at `skills/design-doc/templates/design-doc.md.tmpl` in the claude-agents repo (resolve via the symlink at `~/.claude/skills/design-doc/templates/design-doc.md.tmpl`).
+The template lives at `skills/design-doc/templates/design-doc.md.tmpl` in the inc repo (resolve via the symlink at `~/.claude/skills/design-doc/templates/design-doc.md.tmpl`).
 
 ---
 
@@ -89,7 +89,7 @@ Exit codes: `0` success, `1` template/IO error, `2` bad args, `3` would overwrit
 
 ```bash
 mkdir -p ~/.local/bin
-ln -sf "$(git -C ~/workspace/claude-agents rev-parse --show-toplevel)/skills/design-doc/bin/design-doc-scaffold" ~/.local/bin/design-doc-scaffold
+ln -sf "$(git -C ~/workspace/inc rev-parse --show-toplevel)/skills/design-doc/bin/design-doc-scaffold" ~/.local/bin/design-doc-scaffold
 ```
 
 ### Step 4 — (handled by the script in Step 3)

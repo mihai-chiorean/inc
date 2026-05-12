@@ -4,7 +4,7 @@ schema_version: 1
 
 # Path to the canonical HR repo. Local file URL today; could be a git remote
 # in the future. Only one HR source per project.
-hr_repo: file:///home/mihai/workspace/claude-agents
+hr_repo: file:///home/mihai/workspace/inc
 
 # How many days before /staff status warns about a stale overlay.
 # Default 90.

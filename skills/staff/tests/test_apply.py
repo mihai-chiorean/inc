@@ -228,7 +228,7 @@ def test_dirty_hr_with_allow_flag(root: Path) -> None:
 def test_suggest_to_apply_pipeline(root: Path) -> None:
     """End-to-end: suggest --json | apply --from-suggest -, against the real HR repo.
 
-    Uses the real claude-agents repo at REPO_ROOT and a project with a Go file."""
+    Uses the real inc repo at REPO_ROOT and a project with a Go file."""
     print("test_suggest_to_apply_pipeline")
     project = root / "proj-pipeline"
     project.mkdir()
@@ -243,7 +243,7 @@ def test_suggest_to_apply_pipeline(root: Path) -> None:
     payload = json.loads(suggest.stdout)
     expect(any(p["id"] == "go-engineer" for p in payload["suggested"]),
            "suggest finds go-engineer for go.mod project")
-    # Pass --allow-dirty-hr because this test runs against the real claude-agents
+    # Pass --allow-dirty-hr because this test runs against the real inc
     # repo, which often has uncommitted changes when this test executes. The
     # dedicated dirty-HR test (test_dirty_hr_is_refused) covers the refusal path.
     apply = subprocess.run(

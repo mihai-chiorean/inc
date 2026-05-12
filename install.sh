@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install claude-agents + skills into ~/.claude/{agents,skills}/
+# Install inc agents + skills into ~/.claude/{agents,skills}/
 #
 # Usage: ./install.sh [--link] [--dry-run] [--skills-only]
 #   --link         Symlink instead of copy (keeps repo as source of truth)

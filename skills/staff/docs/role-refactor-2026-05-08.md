@@ -120,7 +120,7 @@ A single `CHANGELOG.md` entry under "2026-05-08 — Roster refactor: studio -> p
 5. Delete `bonus/studio-coach.md` and `testing/workflow-optimizer.md`.
 6. Hand-edit `agent.manifest.yaml` to add `aliases:` entries before regenerating.
 7. Run `python3 scripts/generate-manifest.py` (or whatever the current entrypoint is).
-8. Run `~/workspace/claude-agents/install.sh --link` to refresh symlinks.
+8. Run `~/workspace/inc/install.sh --link` to refresh symlinks.
 9. Write `skills/staff/docs/role-pairings.md` (PM+TL playbook).
 10. Add `CHANGELOG` entry.
 

@@ -1,3 +1,7 @@
+# source_repo is intentionally kept as `claude-agents` even after the
+# 2026-05-12 repo rename to `inc` — it's a stable logical identifier
+# that downstream lockfiles (e.g. lab-control's) depend on. See
+# skills/staff/docs/schemas.md and the MIT-363 commit message.
 schema_version: 1
 generated_by: scripts/generate-manifest.py
 source_repo: claude-agents

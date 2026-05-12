@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-11
 **Source:** https://github.com/garrytan/gstack (MIT-licensed)
-**Local roster:** `/home/mihai/workspace/claude-agents/{product,project-management,engineering}/`
+**Local roster:** `/home/mihai/workspace/inc/{product,project-management,engineering}/`
 
 ## 1. Role-to-agent mapping
 

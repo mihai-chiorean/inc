@@ -12,7 +12,7 @@ allowed-tools: Bash, Read, Edit, Write, Glob, Grep
 
 You are the read+write client for `STATUS.md`. Your job is to surface a single one-page answer to "where am I right now and what do I do next" — using `STATUS.md` as the persistent contract.
 
-The schema is documented at `skills/sitrep/docs/status-schema.md` in the claude-agents repo. Read it once if you have not — it specifies the fields you read and write.
+The schema is documented at `skills/sitrep/docs/status-schema.md` in the inc repo. Read it once if you have not — it specifies the fields you read and write.
 
 ---
 
@@ -79,11 +79,11 @@ gh pr list --author @me --state open --head "$(git branch --show-current)" --jso
 sitrep-linear docs | head -30
 ```
 
-**If `sitrep-linear` is not on `$PATH`:** the wrapper lives at `skills/sitrep/bin/sitrep-linear` in the claude-agents repo. Symlink it onto `$PATH`:
+**If `sitrep-linear` is not on `$PATH`:** the wrapper lives at `skills/sitrep/bin/sitrep-linear` in the inc repo. Symlink it onto `$PATH`:
 
 ```bash
 mkdir -p ~/.local/bin
-ln -sf "$(git -C ~/workspace/claude-agents rev-parse --show-toplevel)/skills/sitrep/bin/sitrep-linear" ~/.local/bin/sitrep-linear
+ln -sf "$(git -C ~/workspace/inc rev-parse --show-toplevel)/skills/sitrep/bin/sitrep-linear" ~/.local/bin/sitrep-linear
 ```
 
 If the wrapper fails entirely (Linear CLI missing, no auth), fall back to surfacing what you have and noting the gap in the output's footer.
@@ -176,7 +176,7 @@ These are deferred to v1+ based on whether v0 is actually used.
 **Example A — clean state, mid-project**
 
 ```
-=== sitrep: claude-agents ===
+=== sitrep: inc ===
 Branch:    mit-343-week1-bootstrap-loop  →  MIT-343 [started]
 PR:        none
 Objective: Week 1 of gstack-borrow — ship the bootstrap loop
@@ -208,7 +208,7 @@ No STATUS.md found at repo root.
 I can bootstrap one. Current state I can see:
   • git branch: mit-343-week1-bootstrap-loop
   • inferred Linear issue: MIT-343
-  • git remote: github.com/mihai-chiorean/claude-agents
+  • git remote: github.com/mihai-chiorean/inc
 
 What's the current_objective for this project? (one sentence)
 ```
@@ -216,7 +216,7 @@ What's the current_objective for this project? (one sentence)
 **Example C — stale frontmatter**
 
 ```
-=== sitrep: claude-agents ===
+=== sitrep: inc ===
 ⚠ STATUS.md is stale.
   • active_branch says "mit-340-...", but git is on "mit-343-week1-...".
   • last_verified_state is 6 days ago.
