@@ -20,8 +20,8 @@ projects:
       hardened agent loopback, containerd app deploy, GitHub Actions CI.
       ai-engineer is borderline (talks about agents but not building AI features).
 
-  - name: claude-agents (this repo)
-    path: /home/mihai/workspace/claude-agents
+  - name: inc (this repo)
+    path: /home/mihai/workspace/inc
     expected:
       - agent-eval-engineer
       - hiring-manager

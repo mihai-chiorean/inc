@@ -125,7 +125,7 @@ linear_scope:
 - If some — but not all — scoped projects fail (e.g. one project name has a typo, the rest are valid) → the inbox shows the partial results and prints a stderr warning listing the failed project names. Per CLAUDE.md Rule 6 (fail loud), partial-success-disguised-as-success is the failure mode we explicitly refuse.
 - If every scoped project query fails → exit 3 with the failed-project list and the last CLI error.
 
-**Long-term direction (label-based):** project-based scoping misses orphan issues and breaks when projects are renamed or split. Eventually `linear_scope` will accept a `labels:` key alongside `projects:` so a `repo:claude-agents` label on every relevant issue covers the orphan case. Blocker: linear CLI v1.11.1 has `--project` but no `--label` on `issue list`; either a CLI upgrade, a GraphQL-via-`linear api` path, or post-fetch filtering is needed. Defer until v0 friction is observed.
+**Long-term direction (label-based):** project-based scoping misses orphan issues and breaks when projects are renamed or split. Eventually `linear_scope` will accept a `labels:` key alongside `projects:` so a `repo:inc` label on every relevant issue covers the orphan case. Blocker: linear CLI v1.11.1 has `--project` but no `--label` on `issue list`; either a CLI upgrade, a GraphQL-via-`linear api` path, or post-fetch filtering is needed. Defer until v0 friction is observed.
 
 ## Versioning
 

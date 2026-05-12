@@ -10,11 +10,11 @@ This repo is the canonical home for agents and skills. Use `install.sh` to wire 
 
 ```bash
 git clone <this-repo>
-cd claude-agents
+cd inc
 ./install.sh --link --skills-only
 
 # Set this in ~/.zshrc so `staff` knows where HR lives:
-echo 'export STAFF_HR_REPO=$HOME/workspace/claude-agents' >> ~/.zshrc
+echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
 ```
 
 This installs only the skills (including `/staff`) and leaves `~/.claude/agents/` empty. Each skill that ships executables under its `bin/` dir is symlinked into `~/.local/bin/` — for the staff skill that means `staff suggest`, `staff apply`, `staff status`, etc. work as plain commands from any project.

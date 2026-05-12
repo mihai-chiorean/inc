@@ -1,11 +1,11 @@
 ---
 name: staff
-description: 'Per-project agent staffing for Claude Code. Use when: (1) a project needs a curated subset of agents from the HR repo (claude-agents) instead of loading all user-scope agents, (2) "staff this project" / "what agents should this project use" is asked, (3) re-syncing project-level .claude/agents/ after the HR repo has been updated, (4) adding or removing an agent from a project, (5) inspecting which agents are staffed and whether they''re drifting from HR HEAD. Operates on .claude/staff/ for state and .claude/agents/ for generated agent files Claude Code loads.'
+description: 'Per-project agent staffing for Claude Code. Use when: (1) a project needs a curated subset of agents from the HR repo (inc) instead of loading all user-scope agents, (2) "staff this project" / "what agents should this project use" is asked, (3) re-syncing project-level .claude/agents/ after the HR repo has been updated, (4) adding or removing an agent from a project, (5) inspecting which agents are staffed and whether they''re drifting from HR HEAD. Operates on .claude/staff/ for state and .claude/agents/ for generated agent files Claude Code loads.'
 ---
 
 # /staff — per-project agent staffing
 
-Selects which agents from the canonical HR repo (`claude-agents`) are staffed in the current project. Replaces the "load every agent into every session" pattern with a curated per-project roster via Claude Code's native `.claude/agents/` scope.
+Selects which agents from the canonical HR repo (`inc`) are staffed in the current project. Replaces the "load every agent into every session" pattern with a curated per-project roster via Claude Code's native `.claude/agents/` scope.
 
 ## Operations
 
@@ -34,7 +34,7 @@ staff suggest
 # Explicit project + HR repo
 staff suggest \
     --project-root /home/mihai/workspace/wendy-cloud \
-    --hr-repo /home/mihai/workspace/claude-agents
+    --hr-repo /home/mihai/workspace/inc
 
 # JSON output (for piping to /staff apply later)
 staff suggest --json
@@ -52,7 +52,7 @@ If none are set, the script exits with a clear error.
 
 ```
 project: /home/mihai/workspace/wendy-cloud
-hr_repo: /home/mihai/workspace/claude-agents
+hr_repo: /home/mihai/workspace/inc
 manifest: 56 agents, 5 match
 
 [engineering]

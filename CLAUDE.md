@@ -1,4 +1,4 @@
-# claude-agents — operating rules
+# inc — operating rules
 
 This file is auto-loaded by Claude Code at session start. It is **deliberately minimal**: every rule has earned its place by closing a failure mode observed in this repo. Other discipline (codex-review-before-merge, coverage gates, ETHOS philosophy) lives elsewhere and gets promoted into this file only if its absence costs real time.
 

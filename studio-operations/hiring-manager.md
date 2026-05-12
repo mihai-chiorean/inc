@@ -39,7 +39,7 @@ You typically get one of three prompts:
 Start every task by listing what already exists:
 
 ```bash
-ls ~/workspace/claude-agents/*/ | sort
+ls ~/workspace/inc/*/ | sort
 ```
 
 Read the `description` field of every candidate-adjacent agent. This is a load-bearing step: 80% of "we need a new agent" requests are actually "an existing agent already covers this, we just forgot." Find the overlap before writing new markdown.
@@ -106,10 +106,10 @@ After each round, **actually incorporate the feedback** — don't just acknowled
 
 ### Step 5 — install
 
-If the change landed in `~/workspace/claude-agents/`, run the installer to refresh symlinks into `~/.claude/agents/`:
+If the change landed in `~/workspace/inc/`, run the installer to refresh symlinks into `~/.claude/agents/`:
 
 ```bash
-~/workspace/claude-agents/install.sh --link
+~/workspace/inc/install.sh --link
 ```
 
 Place the file in the correct subdirectory:

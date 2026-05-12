@@ -54,7 +54,7 @@ The "what new agents do we need overall" question is a separate audit, owed but 
 ### Migration
 
 ```bash
-cd ~/workspace/claude-agents
+cd ~/workspace/inc
 python3 scripts/generate-manifest.py    # picks up renames and new agent
 ./install.sh --link --skills-only        # symlinks new skill into ~/.claude/skills/
 ```
