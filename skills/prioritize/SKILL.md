@@ -21,7 +21,7 @@ This skill is **procedural-only** (no wrapper). It consumes `sitrep-linear inbox
 ## When to fire
 
 - "What should I work on next?" / "/prioritize" / "rank the inbox" / "what's most important right now"
-- After a PR merges, especially the last PR of an initiative — natural decision point.
+- After the **last** PR of an initiative merges AND `STATUS.md.next_command` is no longer specific (i.e. you genuinely need to pick a new thread). Do NOT fire after every PR merge — most merges have a clear next step already.
 - After a `/sitrep` shows a large inbox (≥ 6 items) and the user says "this is a lot."
 - User feels stuck or context-switching between too many threads.
 
@@ -51,14 +51,15 @@ If `current_objective` and `next_command` are already specific and the inbox isn
 
 ### Step 2 — Identify the candidate set
 
-Not every backlog item needs scoring. Filter to:
+Filter rules (additive — every check below contributes; deduplicate at the end):
 
 - All in-progress items (Linear state: started, or marked active via STATUS.md `linear_issue` matching).
 - All P1 + P2 backlog items.
-- Top 5 P3 backlog items by recency (most recently updated first).
+- All **open PRs you authored** — these belong in the prioritization. A PR with a stalled CI or a stale review-requested is often the highest-value next-action, not a new task.
 - Anything explicitly blocked-on-user from STATUS.md.
+- Top 5 P3 backlog items by recency (most recently updated first). **And** ask the user: "Any P3 you want included that I might have filtered out? — e.g. one with an external deadline, customer blocker, or PR dependency I can't see from Linear alone." This ask is the only way deadline/blocker info enters the filter for stale P3s, since the wrapper doesn't have visibility there.
 
-Drop everything else from the prioritization pass. State the cut-off so the user can override if they want a P3 considered.
+State the cut-off explicitly so the user can override. Recency is a weak proxy — name it as such and offer the override.
 
 ### Step 3 — Score each candidate
 
@@ -71,24 +72,44 @@ For each candidate, the user has up to 4 inputs:
 | **Blocker** | "Does this block other work? Is this blocked by something else?" | Items that unblock get a multiplier; items that are themselves blocked get deprioritized until the blocker resolves |
 | **Deadline** | "External deadline? (date or 'no')" | Date-pressure multiplier — within 7 days = 2×, 14 days = 1.5×, >30 days or no deadline = 1× |
 
-**How to ask:** in batches via AskUserQuestion when the candidate set is small (≤ 4). For larger sets, ask only about the top-priority ambiguous items and infer the rest from Linear state + recency. **Never** ask 16 questions in a row.
+**Question budget — hard cap of 8 questions per `/prioritize` invocation.** Concrete rules:
 
-**Heuristic shortcuts:**
-- P1 with a deadline this week → top of list, no questioning needed.
-- Stale P3 with no recent updates (> 30 days) → either retire or surface to user. Default: bottom of list with a "consider closing" suggestion.
-- An item that blocks ≥ 2 other items → bump up regardless of priority.
+- For each candidate, ask at most ONE consolidated question (effort + impact + blocker + deadline combined in a single AskUserQuestion with structured response, OR 4 quick free-form lines).
+- If the candidate set is ≤ 4, ask each.
+- If the candidate set is 5-8, ask only items where Linear state is ambiguous (P1/P2, or in-progress for > 14 days, or "important?" by your read). Infer the rest from Linear + recency.
+- If > 8, ask only the top 4 by priority + recency; surface the remaining tail with `(inferred — confirm if wrong)` tags in Step 5.
+- A user's "stop asking" reply ends the question pass — score the rest from defaults.
 
-### Step 4 — Score
+**Default inferences** (when not asking):
+- Effort: M for backlog items with no recent activity; S for in-flight items.
+- Impact: medium.
+- Blocker: none unless STATUS.md `blocked_on_user` or Linear comments say otherwise.
+- Deadline: none unless the issue title or description names a date.
 
-Score = `priority_weight × impact_multiplier × deadline_multiplier × blocker_multiplier / effort_units`
+**Heuristic shortcuts** (override scoring entirely):
+- **P1 with a deadline within 7 days** → guaranteed top of list. Skip scoring; surface as "tier 1 (urgent)".
+- **Item that blocks ≥ 2 other items** → guaranteed top 3 regardless of priority. Skip scoring; surface as "tier 1 (unblocks others)".
+- **Stale P3 (> 30 days updated)** with no blocker / no deadline → bottom with a "consider closing" suggestion.
 
-- `priority_weight`: P1=8, P2=4, P3=2, P4=1 (or unscored=2).
-- `impact_multiplier`: high=3, medium=2, low=1 (your read; user can override).
-- `deadline_multiplier`: within 7 days=2, 14 days=1.5, otherwise=1.
-- `blocker_multiplier`: unblocks 2+ items=1.5, blocks me=0.5 (deprioritize until resolved), else=1.
-- `effort_units`: S=1, M=4, L=12, XL=40.
+### Step 4 — Score, in tiers
 
-The exact numbers aren't sacred — what matters is the relative ordering. **State your scoring inline** so the user can challenge a specific item if your read of impact/blocker is wrong.
+**Tier-first, then score within tier.** This prevents the degenerate "P1 XL loses to P3 S" inversion that a multiplicative formula creates when effort spread is wide.
+
+**Hard tiers (auto-placed; no scoring):**
+- **Tier 1 (urgent)** — P1 with deadline ≤ 7 days, OR blocks ≥ 2 other items, OR blocked-on-user from STATUS.md. Order within tier by deadline-proximity then priority.
+- **Tier 4 (deprioritize / consider closing)** — stale P3 (> 30 days no update) with no blocker, no deadline.
+
+**Soft tiers (score within tier):**
+- **Tier 2 (high priority)** — P1 + P2 not already in Tier 1.
+- **Tier 3 (normal)** — P3 + in-flight items not already escalated.
+
+**Within-tier score** = `impact_multiplier × deadline_multiplier × blocker_multiplier / effort_units`
+- `impact_multiplier`: high=3, medium=2, low=1.
+- `deadline_multiplier`: ≤7d=2, ≤14d=1.5, ≤30d=1.2, otherwise=1.
+- `blocker_multiplier`: unblocks=1.5, blocked-by=0.5, else=1.
+- `effort_units`: S=1, M=2, L=3, XL=4. **Gentle spread** — effort is a tiebreaker, not a dominant axis. (Codex round-1 fix: original 1/4/12/40 spread inverted priorities.)
+
+**State your scoring inline** in Step 5 output so the user can challenge a specific item if your read of impact/blocker is wrong. Per CLAUDE.md Rule 6 (fail loud): tag each item's confidence as `(confirmed)` if the user provided the inputs or `(inferred)` if you defaulted.
 
 ### Step 5 — Surface the ranked list
 
@@ -97,37 +118,37 @@ Print in this format:
 ```
 === /prioritize ===
 Active focus: <current_objective from STATUS.md>
-Candidate set: <N> items (<X> in-flight, <Y> backlog)
+Candidate set: <N> items (<X> in-flight, <Y> backlog, <Z> open PRs)
+Questions asked: <K> of 8 budget
 
-▎ TOP 3 — do these next, in this order
+▎ TIER 1 (urgent — auto-placed, no scoring)
 
-1. MIT-XXX — <title>  [P<n>, <effort>, <state>]
-   Why first: <one-line rationale: impact + deadline + blocker math>
-   Effort: <S/M/L/XL>  Impact: <high/med/low>  Deadline: <date or none>
+1. MIT-XXX — <title>  [P<n>, <effort>, <state>]  (confirmed | inferred)
+   Why tier 1: deadline 2026-05-15 (3 days) / unblocks MIT-AAA + MIT-BBB / blocked-on-user since X
+   Effort: <S/M/L/XL>  Impact: <high/med/low>
 
-2. MIT-YYY — <title>  [P<n>, <effort>, <state>]
-   Why second: ...
+▎ TIER 2 (high priority — P1/P2)
 
-3. MIT-ZZZ — <title>  [P<n>, <effort>, <state>]
-   Why third: ...
+2. MIT-YYY — <title>  [P<n>, <effort>, <state>]  (confirmed | inferred)
+   Why second: <score = 3.0; impact high, no deadline pressure, S effort>
 
-▎ ALSO RECOMMENDED (in order)
+▎ TIER 3 (normal)
 
-4. MIT-AAA — <title>  (brief rationale)
-5. MIT-BBB — <title>  (brief rationale)
-...
+3. PR #N — <title>  [in-review, S]  (confirmed)
+   Why third: open PR with stale review-requested; closing the loop unblocks merge.
 
-▎ CONSIDER CLOSING / DEPRIORITIZING
+(If two items tie in score, list them as `2a / 2b` and surface the tradeoff per CLAUDE.md Rule 5 — do NOT pick one.)
 
-- MIT-CCC — last updated 45 days ago, no blocker, no deadline. Either close as obsolete or schedule.
-- MIT-DDD — blocked by MIT-EEE which is itself stale. Address the blocker first.
+▎ TIER 4 (consider closing / deprioritize)
+
+- MIT-CCC — last updated 45 days ago, no blocker, no deadline. Close as obsolete or schedule a session.
 
 ▎ BLOCKED ON YOU
 
-- <items from STATUS.md blocked_on_user — call out separately, these need a human decision not a rerank>
+- <items from STATUS.md blocked_on_user — needs a human decision, not a rerank>
 
 Next command suggestion:
-  → Start MIT-XXX (top of list)
+  → Start MIT-XXX (top of tier 1)
 ```
 
 ### Step 6 — Confirm and (optionally) update STATUS.md
@@ -149,7 +170,8 @@ On no: leave STATUS.md untouched. The ranking is advisory.
 - **Persistent priority cache.** Each run starts from scratch — by design. Caching priorities means stale priorities; the user's intuition shifts session-to-session.
 - **Auto-rerank.** Manual invocation only. No hooks, no scheduled runs.
 - **Effort/impact estimation.** The user provides these. Asking the LLM to estimate "impact" without context produces marketing fluff.
-- **Closing items automatically.** The "consider closing" section is a recommendation; the user runs `linear issue update <id> -s canceled` themselves.
+- **Mutate Linear.** No auto-close, no auto-priority change, no auto-state-transition, no auto-assignee change. The "consider closing" section is a recommendation; the user runs `linear issue update <id> -s canceled` themselves. The ONLY mutation is to STATUS.md `next_command` + decisions log, and only on explicit user confirmation.
+- **Auto-pick between ties.** When two items score within 10% of each other, surface them as a tie with the tradeoff named per CLAUDE.md Rule 5 — do NOT silently pick.
 
 ---
 
