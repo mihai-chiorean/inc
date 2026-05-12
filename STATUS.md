@@ -1,13 +1,13 @@
 ---
 status_version: 1
-current_objective: "Promote 2 rules to CLAUDE.md (Surface conflicts + Fail loud) — small detour before Week 3"
-active_branch: mit-346-claudemd-rules
+current_objective: "Week 3a of the gstack-borrow initiative — build /design-doc skill that scaffolds a doc with three mandatory diagrams (user-flow + state-machine + data-flow). plan-eng-review (the auditor) ships as Week 3b."
+active_branch: mit-347-design-doc
 active_pr: null
-linear_issue: MIT-346
+linear_issue: MIT-347
 linear_team: MIT
-linear_project: null
+linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-3-planning-discipline-bba4630036be
 blocked_on_user: []
-next_command: "Open PR for MIT-346, merge, then begin Week 3 (/design-doc + plan-eng-review lift)"
+next_command: "Draft skills/design-doc/SKILL.md + a template file with all 8 required sections"
 last_verified_state: 2026-05-11T00:00:00Z
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
@@ -19,18 +19,21 @@ links:
 
 ## Current objective
 
-Small detour from the gstack-borrow week sequence: promote two CLAUDE.md rules (Surface conflicts + Fail loud) cherry-picked from the Forrest-Chang 12-rule template. Other 10 explicitly skipped per our "rules earn their place via observed failures" stance.
+Week 3a of the **gstack-borrow** initiative — `/design-doc` skill. Scaffolds a design doc with three mandatory diagram sections (user-flow + state-machine + data-flow) so the "did I include all the diagrams?" cognitive load goes to zero.
 
-Week 2 (`/work-breakdown`) merged as [PR #20](https://github.com/mihai-chiorean/claude-agents/pull/20) earlier today. Week 3 is next once this small PR lands.
+Per codex review of the shortlist: `/design-doc` creates, `plan-eng-review` audits. Two separate skills, two separate PRs. This is Week 3a (creator). Week 3b (auditor + hard gate) is the follow-up.
 
 ## What's next
 
-1. Open PR for MIT-346 against `main`.
-2. Merge.
-3. Begin Week 3: `/design-doc` skill (creates, 3 mandatory diagrams) + `plan-eng-review` lift (audits, hard gate). Adopt informally on the next non-trivial plan; don't wait for Week 3 to formalize.
+1. Draft `skills/design-doc/SKILL.md` with the 8-section template + 3 mandatory diagram stubs.
+2. Manual test: scaffold the design doc for the upcoming `plan-eng-review` lift (Week 3b). That doc then becomes Week 3b's input.
+3. Codex review.
+4. PR against `main`.
+5. Move to Week 3b: `plan-eng-review` lift from gstack (strip plumbing, hard gate on missing diagrams).
 
 ## Open items needing my attention
 
+- [decisions/0001-plan-eng-review-lift.md](decisions/0001-plan-eng-review-lift.md) — design-doc scaffold for Week 3b. All 8 sections are stubs; fill before starting Week 3b implementation.
 - [MIT-345 — /sitrep --all for cross-project rollup](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup) — side-quest from the /work-breakdown manual test. S-sized. Picks up after Week 3 ships if no higher-priority work appears.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
@@ -42,6 +45,8 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 ## Decisions log (recent)
 
+- 2026-05-11 — Ran `/design-doc` manual test by scaffolding the Week 3b doc itself (`decisions/0001-plan-eng-review-lift.md`). 8 sections + 3 diagram stubs created cleanly via template substitution. Recursive setup: the design doc for plan-eng-review will eventually be audited BY plan-eng-review.
+- 2026-05-11 — Established `decisions/` as the canonical location for design docs (ADR-numbered format `NNNN-<slug>.md`). `research/` reserved for research handoffs / external-source notes.
 - 2026-05-11 — Evaluated the Forrest-Chang 12-rule CLAUDE.md template (karpathy-thread-derived). Cherry-picked 2 rules (Surface conflicts + Fail loud). Rejected 10: Simplicity-First contradicts boil-the-lake; token-budgets are unenforceable from CLAUDE.md; several others duplicate Claude Code defaults. MIT-346 captures the promotion + rationale.
 - 2026-05-11 — Week 2 merged (PR #20, MIT-344). `/work-breakdown` skill shipped + CLAUDE.md rule 4 (invoke before non-trivial work). Manual test produced MIT-345.
 - 2026-05-11 — Ran `/work-breakdown` manual test on the `/sitrep --all` idea. Classified S; created MIT-345. Applied Step-7 Case B (side quest). Confirms the skill produces useful Linear artifacts and the side-quest test fires correctly.
