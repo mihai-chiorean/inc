@@ -63,22 +63,36 @@ Allow the user to override:
 
 If the user-provided path already exists, **refuse to overwrite** — ask for a new slug or `--force` (explicit, surfaced).
 
-### Step 3 — Substitute the template
+### Step 3 — Scaffold via `design-doc-scaffold`
 
-Read `skills/design-doc/templates/design-doc.md.tmpl`. Substitute placeholders:
+Steps 2-4 (path resolution, substitution, write) are all handled by the wrapper script:
 
-| Placeholder | Source |
-|---|---|
-| `{{TITLE}}` | Step 1 |
-| `{{LINEAR_ISSUE}}` | Step 1 (default from STATUS.md) |
-| `{{CREATED}}` | `date -u +%Y-%m-%dT%H:%M:%SZ` |
-| `{{AUTHOR}}` | `git config user.name` (fall back to `$USER`) |
+```bash
+design-doc-scaffold \
+  --title "<title>" \
+  --linear-issue "<MIT-XXX>" \
+  --slug "<slug>"                # optional; derived from title if omitted
+  # --path "<override>"          # optional; default is decisions/NNNN-<slug>.md
+  # --force                      # optional; required to overwrite an existing file
+```
 
-Substitute via straightforward `sed -e "s|{{TITLE}}|...|g"` calls. Do not regex-escape unnecessarily; titles with `|` or `&` are rare enough that prompting the user to re-enter beats baroque escaping.
+The script lives at `skills/design-doc/bin/design-doc-scaffold` (symlinked to `~/.local/bin/design-doc-scaffold`). It handles:
 
-### Step 4 — Write the doc
+- Resolving the next ADR-style number for `decisions/NNNN-<slug>.md`
+- YAML-safe quoting of `title` / `linear_issue` / `author` (so pipes, ampersands, quotes, backslashes don't corrupt the frontmatter — see `design-doc-scaffold --help` for exit-code contract)
+- Refusing to overwrite an existing file unless `--force` is passed (and being loud about it when it is)
+- Rejecting newline characters in single-line fields
 
-Write the substituted template to `$DOC_PATH`. Use the `Write` tool with absolute path.
+Exit codes: `0` success, `1` template/IO error, `2` bad args, `3` would overwrite without `--force`. The script prints the relative path of the created file on stdout.
+
+**If `design-doc-scaffold` is not on `$PATH`:**
+
+```bash
+mkdir -p ~/.local/bin
+ln -sf "$(git -C ~/workspace/claude-agents rev-parse --show-toplevel)/skills/design-doc/bin/design-doc-scaffold" ~/.local/bin/design-doc-scaffold
+```
+
+### Step 4 — (handled by the script in Step 3)
 
 ### Step 5 — Surface a checklist
 

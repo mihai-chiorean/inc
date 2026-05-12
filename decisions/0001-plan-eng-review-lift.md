@@ -3,14 +3,14 @@ doc_version: 1
 title: "plan-eng-review skill lift (audits design docs)"
 linear_issue: "MIT-348"
 status: draft
-created: "2026-05-12T05:57:19Z"
+created: "2026-05-12T06:00:49Z"
 authors:
   - "Mihai Chiorean"
 ---
 
 # plan-eng-review skill lift (audits design docs)
 
-> **Status:** draft &middot; **Linear:** MIT-348 &middot; **Created:** 2026-05-12T05:57:19Z
+> **Status:** draft &middot; **Linear:** MIT-348 &middot; **Created:** 2026-05-12T06:00:49Z
 >
 > This doc is in draft. All sections must be filled before requesting review (see Week 3b `plan-eng-review` when it lands; until then audit by inspection against this template).
 
@@ -35,6 +35,12 @@ REPLACE: state the problem in 2-5 sentences. Be specific about what hurts and wh
 ### Non-goals
 - REPLACE: explicit thing this design will NOT do. Naming non-goals prevents scope creep later.
 - REPLACE: another non-goal.
+
+### Verification
+How will we know the goals are met? Acceptance criteria, manual tests, automated tests, observed metrics, or a specific user-visible outcome. The failure-modes table (section 7) covers what's tested for bad inputs; this covers happy-path validation.
+
+- REPLACE: how we'll verify goal 1 (e.g., manual test on X / automated test in Y / metric Z reaches threshold N).
+- REPLACE: how we'll verify goal 2.
 
 ## 3. Implementation alternatives
 
@@ -96,7 +102,9 @@ REPLACE — example shape:
 
 ## 6. Data flow diagram (mandatory)
 
-Per gstack `plan-ceo-review` Prime Directive #3: every data flow has **four paths**. Diagram all four explicitly.
+Per gstack `plan-ceo-review` Prime Directive #3: **every** data flow has four paths. **Repeat the block below for each distinct source/sink pair in the design.** If there's truly only one data flow, state that explicitly so a reader doesn't wonder if you forgot the others.
+
+### Flow A — REPLACE name (e.g., "user input → STATUS.md write")
 
 ```text
 REPLACE — example shape:
@@ -115,6 +123,10 @@ REPLACE — example shape:
 ```
 
 For each non-happy path, state what catches it and what the user sees.
+
+### Flow B — REPLACE name (or remove this block if only one flow)
+
+Repeat the structure above.
 
 ## 7. Failure modes
 

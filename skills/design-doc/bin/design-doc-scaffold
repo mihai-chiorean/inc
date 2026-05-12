@@ -1,0 +1,173 @@
+#!/usr/bin/env python3
+"""
+design-doc-scaffold — scaffold a design doc from skills/design-doc/templates/design-doc.md.tmpl
+
+Wraps the template-substitution step of the /design-doc skill. Reasons it
+exists rather than inlining sed in SKILL.md:
+
+  - `&` in titles/authors expands to the matched placeholder in sed.
+  - Pipe `|` in titles breaks the chosen sed delimiter.
+  - Double quotes in YAML frontmatter values break the document silently.
+  - Backslash handling differs across sed implementations.
+
+This script does YAML-safe quoting and treats template placeholders as
+plain string replacements (no regex), so the SKILL.md does not have to
+encode escaping rules.
+
+Exit codes:
+  0  success
+  1  template not found, or other I/O error
+  2  bad arguments
+  3  output path already exists (use --force to overwrite, loudly)
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Iterable
+
+
+REPO_ROOT_MARKER = ".git"
+
+
+def repo_root(start: Path) -> Path:
+    cur = start.resolve()
+    while cur != cur.parent:
+        if (cur / REPO_ROOT_MARKER).exists():
+            return cur
+        cur = cur.parent
+    raise SystemExit("design-doc-scaffold: not inside a git repository")
+
+
+def yaml_double_quote(s: str) -> str:
+    """Quote a string for safe inclusion inside YAML double quotes.
+
+    Escapes backslashes and double quotes. Newlines are rejected (the
+    placeholders are single-line fields).
+    """
+    if "\n" in s or "\r" in s:
+        raise SystemExit(
+            f"design-doc-scaffold: refusing newline in field value: {s!r}"
+        )
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def slugify(title: str) -> str:
+    s = title.lower().strip()
+    s = re.sub(r"[^a-z0-9]+", "-", s)
+    s = s.strip("-")
+    return s or "untitled"
+
+
+def next_decision_number(decisions_dir: Path) -> str:
+    if not decisions_dir.exists():
+        return "0001"
+    nums = []
+    for p in decisions_dir.iterdir():
+        m = re.match(r"^(\d{4})-.+\.md$", p.name)
+        if m:
+            nums.append(int(m.group(1)))
+    return f"{(max(nums) + 1) if nums else 1:04d}"
+
+
+def resolve_path(root: Path, slug: str, override: str | None) -> Path:
+    if override:
+        # Allow paths relative to root or absolute.
+        p = Path(override)
+        if not p.is_absolute():
+            p = root / p
+        return p
+    decisions = root / "decisions"
+    decisions.mkdir(exist_ok=True)
+    num = next_decision_number(decisions)
+    return decisions / f"{num}-{slug}.md"
+
+
+def substitute(template: str, mapping: dict[str, str]) -> str:
+    """Replace each `{{KEY}}` literally — no regex, no escape semantics.
+
+    YAML-sensitive values are pre-quoted by the caller.
+    """
+    out = template
+    for key, val in mapping.items():
+        out = out.replace("{{" + key + "}}", val)
+    return out
+
+
+def main(argv: Iterable[str] | None = None) -> int:
+    p = argparse.ArgumentParser(
+        prog="design-doc-scaffold",
+        description="Scaffold a design doc from the /design-doc template.",
+    )
+    p.add_argument("--title", required=True, help="One-line title")
+    p.add_argument(
+        "--linear-issue",
+        default="",
+        help="Linear issue ID (e.g. MIT-348). Empty for none.",
+    )
+    p.add_argument("--slug", default="", help="Path slug (default: derived from title)")
+    p.add_argument("--path", default="", help="Override the output path")
+    p.add_argument("--author", default="", help="Author name (default: git user.name or $USER)")
+    p.add_argument("--force", action="store_true", help="Overwrite if the file exists")
+    p.add_argument(
+        "--template",
+        default="",
+        help="Override template path (default: skills/design-doc/templates/design-doc.md.tmpl)",
+    )
+    args = p.parse_args(list(argv) if argv is not None else None)
+
+    if not args.title.strip():
+        print("design-doc-scaffold: --title is required and non-empty", file=sys.stderr)
+        return 2
+
+    root = repo_root(Path.cwd())
+    template_path = (
+        Path(args.template).resolve()
+        if args.template
+        else root / "skills/design-doc/templates/design-doc.md.tmpl"
+    )
+    if not template_path.is_file():
+        print(f"design-doc-scaffold: template not found at {template_path}", file=sys.stderr)
+        return 1
+
+    # Validate inputs BEFORE any path resolution or overwrite-message side effects.
+    author = (
+        args.author.strip()
+        or os.popen("git config user.name 2>/dev/null").read().strip()
+        or os.environ.get("USER", "unknown")
+    )
+    mapping = {
+        "TITLE": yaml_double_quote(args.title.strip()),
+        "LINEAR_ISSUE": yaml_double_quote(args.linear_issue.strip()),
+        "CREATED": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "AUTHOR": yaml_double_quote(author),
+    }
+
+    slug = args.slug.strip() or slugify(args.title)
+    out_path = resolve_path(root, slug, args.path or None)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists() and not args.force:
+        print(
+            f"design-doc-scaffold: refusing to overwrite {out_path}.\n"
+            f"  Pick a new slug, or pass --force to overwrite (will be loud).",
+            file=sys.stderr,
+        )
+        return 3
+    if out_path.exists() and args.force:
+        print(f"design-doc-scaffold: --force in effect; overwriting {out_path}", file=sys.stderr)
+
+    template = template_path.read_text(encoding="utf-8")
+    rendered = substitute(template, mapping)
+    out_path.write_text(rendered, encoding="utf-8")
+
+    rel = out_path.relative_to(root) if root in out_path.parents or out_path.parent == root else out_path
+    print(str(rel))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
