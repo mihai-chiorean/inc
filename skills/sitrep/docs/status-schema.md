@@ -115,9 +115,17 @@ linear_scope:
 
 **Match rule:** exact-string match on project name. Order doesn't matter. Empty list / missing field = no filtering (all team issues, backward compat).
 
-**Caveat:** issues without a Linear project (e.g. orphan side-quests, untriaged items) are not surfaced. This is a known limitation of the project-based approach. The long-term direction is label-based scoping (e.g. a `repo:claude-agents` label on every relevant issue), which survives project moves and covers orphan issues — see the Future work entry in claude-agents/STATUS.md.
+**Caveats:**
+- Issues without a Linear project (e.g. orphan side-quests, untriaged items) are not surfaced. Known limitation of the project-based approach.
+- YAML comments in items are not supported (bare scalars strip a trailing ` # comment`; quoted strings keep all characters verbatim).
+- Block scalars and multi-line values are not supported.
 
-**Migration path (project → label):** when the label-based scoping ships, `linear_scope` will accept a `labels:` key alongside `projects:`. Until then, the bare-list form means "projects."
+**Loud failure modes:**
+- If `linear_scope` is present but parses to zero project names (malformed YAML, empty list, all items quoted as empty strings) → `sitrep-linear inbox` falls back to all-team behavior **and** prints a warning to stderr so a typo doesn't silently reintroduce cross-repo leakage.
+- If some — but not all — scoped projects fail (e.g. one project name has a typo, the rest are valid) → the inbox shows the partial results and prints a stderr warning listing the failed project names. Per CLAUDE.md Rule 6 (fail loud), partial-success-disguised-as-success is the failure mode we explicitly refuse.
+- If every scoped project query fails → exit 3 with the failed-project list and the last CLI error.
+
+**Long-term direction (label-based):** project-based scoping misses orphan issues and breaks when projects are renamed or split. Eventually `linear_scope` will accept a `labels:` key alongside `projects:` so a `repo:claude-agents` label on every relevant issue covers the orphan case. Blocker: linear CLI v1.11.1 has `--project` but no `--label` on `issue list`; either a CLI upgrade, a GraphQL-via-`linear api` path, or post-fetch filtering is needed. Defer until v0 friction is observed.
 
 ## Versioning
 

@@ -109,39 +109,64 @@ resolve_team_key() {
 }
 
 # Read STATUS.md `linear_scope:` as one project name per stdout line.
-# Empty output if the field is missing/empty. Supports both quoted and bare
-# scalars on the same flat-list form:
 #
-#   linear_scope:
-#     - "Project name with spaces"
-#     - 'single quoted ok too'
-#     - bare-scalar-no-special-chars
+# Exit codes:
+#   0  field present AND at least one project emitted on stdout
+#   1  field absent (or STATUS.md missing) — caller runs unscoped silently
+#   2  field present but yielded no items (likely malformed) — caller should
+#      warn so a typo doesn't silently reintroduce cross-repo leakage
 #
-# Stops at the next top-level YAML field or the closing frontmatter fence.
+# Supports quoted and bare scalars on the same flat-list form. Limitations:
+# block scalars and multi-line values not supported; YAML comments mid-quote
+# are kept verbatim; bare scalars strip a trailing  ` # comment` only.
 read_linear_scope() {
     local status_file="$1"
-    [[ -f "$status_file" ]] || return 0
-    awk '
-        BEGIN { n=0; in_scope=0 }
-        /^---$/ { n++; if (n==2) exit; next }
+    [[ -f "$status_file" ]] || return 1
+
+    # awk writes the marker flag on its last line (prefixed with __M:) so we
+    # can distinguish "field never appeared" from "field appeared, no items."
+    local raw
+    raw="$(awk '
+        BEGIN { n=0; in_scope=0; saw_marker=0 }
+        /^---$/ { n++; if (n==2) { print "__M:" saw_marker; exit } next }
         n==1 {
-            if ($0 ~ /^linear_scope:[[:space:]]*$/) { in_scope=1; next }
+            if ($0 ~ /^linear_scope:[[:space:]]*$/) {
+                in_scope=1; saw_marker=1
+                next
+            }
             if (in_scope) {
                 # List item:   "  - value"
                 if (match($0, /^[[:space:]]*-[[:space:]]+/)) {
                     val = substr($0, RLENGTH + 1)
-                    # Strip wrapping single or double quotes.
                     if (match(val, /^"(.*)"[[:space:]]*$/, m)) { val = m[1] }
                     else if (match(val, /^\047(.*)\047[[:space:]]*$/, m)) { val = m[1] }
-                    else { sub(/[[:space:]]+$/, "", val) }
+                    else {
+                        sub(/[[:space:]]+#.*$/, "", val)   # trailing comment
+                        sub(/[[:space:]]+$/, "", val)
+                    }
                     if (val != "") print val
                     next
                 }
-                # Next top-level field (no leading whitespace) ends the scope block.
+                # Next top-level field (no leading whitespace) ends the block.
                 if ($0 ~ /^[A-Za-z_]/) { in_scope=0 }
             }
         }
-    ' "$status_file"
+        END { print "__M:" saw_marker }
+    ' "$status_file")"
+
+    # Split items from the trailing __M: marker.
+    local marker items
+    marker="$(printf '%s\n' "$raw" | awk '/^__M:/ {print substr($0,5); exit}')"
+    items="$(printf '%s\n' "$raw" | awk '!/^__M:/ {print}')"
+    printf '%s' "$items"
+
+    if [[ "$marker" != "1" ]]; then
+        return 1                       # field absent
+    fi
+    if [[ -z "$items" ]]; then
+        return 2                       # field present but yielded nothing
+    fi
+    return 0
 }
 
 # Run one `linear issue list` call for a given project. Returns the raw output
@@ -166,12 +191,17 @@ cmd_inbox() {
 
     local root
     root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
-    local scope
-    scope="$(read_linear_scope "$root/STATUS.md")"
+    local scope scope_rc
+    scope="$(read_linear_scope "$root/STATUS.md")" && scope_rc=0 || scope_rc=$?
 
-    # Unscoped path — backward compat. Try v2 (`issue mine`) first, fall back
-    # to v1 (`issue list` team-wide).
-    if [[ -z "$scope" ]]; then
+    # rc 1 = field absent → unscoped, silent (backward compat).
+    # rc 2 = field present but no items extracted → unscoped, with a warning
+    #        (likely malformed YAML or empty list; user should fix or remove).
+    # rc 0 = scoped path.
+    if [[ $scope_rc -ne 0 ]]; then
+        if [[ $scope_rc -eq 2 ]]; then
+            echo "sitrep-linear: warning — linear_scope is present in STATUS.md but no project names were parsed. Showing all team issues. Check the YAML or remove the field." >&2
+        fi
         local out
         if out="$(linear issue mine --team "$team" --no-pager \
                     --state triage --state backlog --state unstarted --state started 2>/dev/null)"; then
@@ -193,11 +223,13 @@ cmd_inbox() {
     # headers automatically (column 2 is "ID" on every header → dedupes to one).
     local all_output=""
     local any_success=0
+    local failed_projects=()
     local last_err=""
     while IFS= read -r project; do
         [[ -z "$project" ]] && continue
         local raw
         if ! raw="$(_inbox_one_project "$team" "$project")"; then
+            failed_projects+=("$project")
             last_err="$raw"
             continue
         fi
@@ -206,8 +238,12 @@ cmd_inbox() {
     done <<< "$scope"
 
     if [[ $any_success -eq 0 ]]; then
-        echo "sitrep-linear: every scoped project query failed (scope projects may not exist or be misspelled)" >&2
-        [[ -n "$last_err" ]] && printf '%s\n' "$last_err" | strip_ansi >&2
+        echo "sitrep-linear: every scoped project query failed. The projects in linear_scope may not exist or may be misspelled. Failed:" >&2
+        printf '  - %s\n' "${failed_projects[@]}" >&2
+        [[ -n "$last_err" ]] && {
+            echo "  Last CLI error:" >&2
+            printf '%s\n' "$last_err" | strip_ansi | sed 's/^/    /' >&2
+        }
         return 3
     fi
 
@@ -215,9 +251,21 @@ cmd_inbox() {
     #   - drop empty lines
     #   - dedup by ID column ($2)
     #   - keep only header rows (col2="ID") and real issue rows (col2 matches
-    #     <TEAM>-<NUM>). Drops "No issues found." and any other CLI chatter.
+    #     <TEAM>-<NUM> where TEAM is letters + digits + underscore — matches
+    #     resolve_team_key's allowed shape, so issues from teams like OPS2
+    #     are not dropped). Drops "No issues found." and other CLI chatter.
     printf '%s' "$all_output" \
-        | awk 'NF > 0 && ($2 == "ID" || $2 ~ /^[A-Z]+-[0-9]+$/) && !seen[$2]++ { print }'
+        | awk 'NF > 0 && ($2 == "ID" || $2 ~ /^[A-Z][A-Z0-9_]*-[0-9]+$/) && !seen[$2]++ { print }'
+
+    # Fail-loud (CLAUDE.md Rule 6): if some — but not all — projects failed,
+    # the user just saw a partial inbox. Surface which projects we missed so
+    # they can fix the scope OR confirm the project name.
+    if [[ ${#failed_projects[@]} -gt 0 ]]; then
+        echo "" >&2
+        echo "sitrep-linear: warning — ${#failed_projects[@]} project(s) in linear_scope failed and were silently excluded from the inbox above:" >&2
+        printf '  - %s\n' "${failed_projects[@]}" >&2
+        echo "  (typo? renamed? deleted? Run 'sitrep-linear scope' to compare against 'linear project list'.)" >&2
+    fi
     return 0
 }
 
