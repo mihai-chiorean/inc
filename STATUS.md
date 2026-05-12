@@ -1,14 +1,14 @@
 ---
 status_version: 1
-current_objective: "Week 3b — plan-eng-review skill lift. Design doc filled in this commit; next session builds SKILL.md + plan-eng-review-audit wrapper + telemetry/restore-point infrastructure. Manual test = recursively audit decisions/0001-plan-eng-review-lift.md."
-active_branch: mit-348-plan-eng-review
+current_objective: "gstack-borrow initiative complete (Weeks 1-4 all merged). On main. Next: smoke-test by retrofitting lab-control with the inc stack, OR pick up the Project B parallel track (MIT-294-302 + folded gstack eval mechanics)."
+active_branch: main
 active_pr: null
-linear_issue: MIT-348
+linear_issue: null
 linear_team: MIT
-linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-3-planning-discipline-bba4630036be
+linear_project: null
 blocked_on_user: []
-next_command: "Build skills/plan-eng-review/SKILL.md + bin/plan-eng-review-audit per the design doc; recursive test by auditing decisions/0001-plan-eng-review-lift.md"
-last_verified_state: 2026-05-12T22:30:00Z
+next_command: "Run /sitrep at session start; then /prioritize against the post-gstack-borrow backlog to pick next thread (lab-control retrofit vs Project B vs MIT-345 /sitrep --all)"
+last_verified_state: 2026-05-13T00:30:00Z
 linear_scope:
   - "gstack borrow — Week 1: bootstrap loop"
   - "gstack borrow — Week 2: /work-breakdown"
@@ -58,6 +58,7 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 ## Decisions log (recent)
 
+- 2026-05-12 — **gstack-borrow initiative complete.** All four weeks merged today: Week 3b (PR #25, /plan-eng-review + audit wrapper, recursive v0 test passed), workflow + onboarding docs (PR #26, MIT-364/365/366), Week 4 (PR #27, /prioritize). Plus the rebrand to `inc` (PR #24 + Phase-2 live ops). Six PRs merged, six skills shipped total. 24 skills now in the catalog. Pipeline composes end-to-end: /sitrep → /work-breakdown → /design-doc → /plan-eng-review → code → /prioritize → repeat.
 - 2026-05-12 — Applied `/work-breakdown` to the "document the workflow" ask. Classified M. Created Linear project "gstack borrow — workflow & onboarding docs" + 3 issues (MIT-364/365/366). Sequenced AFTER Week 3b ships per user preference — Week 3b finishing means the docs can describe a complete skill set + use the recursive plan-eng-review-audits-its-own-doc story as a worked example. Audience: future-me 6-months-out + outside getting-started reader.
 - 2026-05-12 — Filled in design doc for Week 3b (`decisions/0001-plan-eng-review-lift.md`, 284 lines). Chose Approach B (hybrid wrapper + SKILL.md). Surfaced one design refinement while writing: REPLACE-detection needs a parser (not a regex), since this doc itself contains 8 meta-references to the literal token `REPLACE` in backtick-quoted prose. Captured as open question + updated failure-mode row.
 - 2026-05-12 — Rebrand complete (MIT-363). Phase 1 PR #24 merged; Phase 2 (gh repo rename → inc, mv workspace dir, 25 symlinks repointed, branch protection on main) executed live. enforce_admins=false, allow_force_pushes=false, allow_deletions=false.
