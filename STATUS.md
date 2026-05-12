@@ -1,13 +1,13 @@
 ---
 status_version: 1
-current_objective: "Week 2 of the gstack-borrow initiative — build /work-breakdown skill as the adoption bridge for pain D (work-breakdown procedure lives in head, not codified)"
-active_branch: mit-344-week2-work-breakdown
+current_objective: "Promote 2 rules to CLAUDE.md (Surface conflicts + Fail loud) — small detour before Week 3"
+active_branch: mit-346-claudemd-rules
 active_pr: null
-linear_issue: MIT-344
+linear_issue: MIT-346
 linear_team: MIT
-linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-2-work-breakdown-e7a410fbafb8
+linear_project: null
 blocked_on_user: []
-next_command: "Address codex round 1 on /work-breakdown; then open PR"
+next_command: "Open PR for MIT-346, merge, then begin Week 3 (/design-doc + plan-eng-review lift)"
 last_verified_state: 2026-05-11T00:00:00Z
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
@@ -19,19 +19,19 @@ links:
 
 ## Current objective
 
-Week 2 of the **gstack-borrow** initiative: build the `/work-breakdown` skill — the adoption bridge for pain D (multi-step work-breakdown procedure lives in user's head, not codified).
+Small detour from the gstack-borrow week sequence: promote two CLAUDE.md rules (Surface conflicts + Fail loud) cherry-picked from the Forrest-Chang 12-rule template. Other 10 explicitly skipped per our "rules earn their place via observed failures" stance.
 
-Per codex review: this is narrower than `/autoplan`. Just the breakdown decision + Linear orchestration. PM → tech-lead → TPM full coordinator orchestration is deferred until one real use shows the seams.
+Week 2 (`/work-breakdown`) merged as [PR #20](https://github.com/mihai-chiorean/claude-agents/pull/20) earlier today. Week 3 is next once this small PR lands.
 
 ## What's next
 
-1. Apply codex round-1 findings on `/work-breakdown` (blocker: broken shell example; non-blockers: propose-then-confirm classification, sharper specialist table, CLAUDE.md rule 4, side-quest test).
-2. Manual test on one real small idea end-to-end.
-3. Open PR against `main`.
+1. Open PR for MIT-346 against `main`.
+2. Merge.
+3. Begin Week 3: `/design-doc` skill (creates, 3 mandatory diagrams) + `plan-eng-review` lift (audits, hard gate). Adopt informally on the next non-trivial plan; don't wait for Week 3 to formalize.
 
 ## Open items needing my attention
 
-- [MIT-345 — /sitrep --all for cross-project rollup](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup) — side-quest issue created during the /work-breakdown manual test. S-sized. Picks up after Week 2 ships if no higher-priority work appears.
+- [MIT-345 — /sitrep --all for cross-project rollup](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup) — side-quest from the /work-breakdown manual test. S-sized. Picks up after Week 3 ships if no higher-priority work appears.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
 
@@ -42,7 +42,9 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 ## Decisions log (recent)
 
-- 2026-05-11 — Ran `/work-breakdown` manual test on the `/sitrep --all` idea. Classified S; created MIT-345. Applied Step-7 Case B (side quest) — did not change `current_objective`. Confirms the skill produces useful Linear artifacts and the side-quest test fires correctly.
+- 2026-05-11 — Evaluated the Forrest-Chang 12-rule CLAUDE.md template (karpathy-thread-derived). Cherry-picked 2 rules (Surface conflicts + Fail loud). Rejected 10: Simplicity-First contradicts boil-the-lake; token-budgets are unenforceable from CLAUDE.md; several others duplicate Claude Code defaults. MIT-346 captures the promotion + rationale.
+- 2026-05-11 — Week 2 merged (PR #20, MIT-344). `/work-breakdown` skill shipped + CLAUDE.md rule 4 (invoke before non-trivial work). Manual test produced MIT-345.
+- 2026-05-11 — Ran `/work-breakdown` manual test on the `/sitrep --all` idea. Classified S; created MIT-345. Applied Step-7 Case B (side quest). Confirms the skill produces useful Linear artifacts and the side-quest test fires correctly.
 - 2026-05-11 — Week 1 merged (PR #19, MIT-343). Bootstrap loop shipped: STATUS.md schema v1 + thin CLAUDE.md + /sitrep v0 + sitrep-linear wrapper.
 - 2026-05-11 — Per user feedback on PR #19: wrap CLI in a tool, don't bury CLI version handling in skill prose. Pattern: `skills/<skill>/bin/<wrapper>` symlinked to `~/.local/bin/`.
 - 2026-05-11 — Adopted boil-the-lake the gstack way (full adoption, including feature scope). Folded into the Week 1 stance: build the complete useful version of `/sitrep`, not a "recent commits" stub. Recorded in handoff.
