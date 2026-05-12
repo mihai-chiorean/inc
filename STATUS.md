@@ -15,6 +15,7 @@ linear_scope:
   - "gstack borrow — Week 3: planning discipline"
   - "gstack borrow — Week 4: /prioritize"
   - "gstack borrow — eval mechanics (parallel to Project B)"
+  - "gstack borrow — workflow & onboarding docs"
   - "Per-project agent staffing skill"
   - "Agent roster eval framework"
 links:
@@ -52,10 +53,12 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 - [research/gstack-borrow-2026-05-11.md](research/gstack-borrow-2026-05-11.md) — handoff doc. Reference for Week 3+ (`/design-doc`, `plan-eng-review`) and Week 4 (`/prioritize`).
 - Project B (MIT-294–302) — fold gstack eval mechanics (touchfile diff selection + tier system + extended EvalResult schema) when picked up. Parallel track.
+- **Workflow & onboarding docs** ([project](https://linear.app/mitzoku/project/gstack-borrow-workflow-and-onboarding-docs-074488a4d805)) — three issues queued for after Week 3b ships: MIT-364 (workflow walkthrough), MIT-365 (project bootstrap), MIT-366 (skill catalog). Audience: future-me 6-months-out + outside reader getting-started. Lives in `docs/` (probably `docs/getting-started/{workflow,bootstrap}.md` + `docs/reference/skills.md`). Specialist: plan-devex-review will review the developer-experience side.
 - **Label-based scoping for `/sitrep` (long-term direction).** v0 (MIT-362) uses Linear project names in `linear_scope`. Project-based misses orphan issues (no project assigned) and breaks if a project gets renamed or split. Long-term: every repo-relevant issue gets a label like `repo:inc` and `linear_scope` accepts a `labels:` key. Survives project moves and covers orphan/triage items. Defer until v0 friction is observed.
 
 ## Decisions log (recent)
 
+- 2026-05-12 — Applied `/work-breakdown` to the "document the workflow" ask. Classified M. Created Linear project "gstack borrow — workflow & onboarding docs" + 3 issues (MIT-364/365/366). Sequenced AFTER Week 3b ships per user preference — Week 3b finishing means the docs can describe a complete skill set + use the recursive plan-eng-review-audits-its-own-doc story as a worked example. Audience: future-me 6-months-out + outside getting-started reader.
 - 2026-05-12 — Filled in design doc for Week 3b (`decisions/0001-plan-eng-review-lift.md`, 284 lines). Chose Approach B (hybrid wrapper + SKILL.md). Surfaced one design refinement while writing: REPLACE-detection needs a parser (not a regex), since this doc itself contains 8 meta-references to the literal token `REPLACE` in backtick-quoted prose. Captured as open question + updated failure-mode row.
 - 2026-05-12 — Rebrand complete (MIT-363). Phase 1 PR #24 merged; Phase 2 (gh repo rename → inc, mv workspace dir, 25 symlinks repointed, branch protection on main) executed live. enforce_admins=false, allow_force_pushes=false, allow_deletions=false.
 
