@@ -25,6 +25,7 @@ This sets up `inc` as the **HR repo** for your machine: the single source of tru
 | Tool | Why | Install check |
 |---|---|---|
 | [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) | Where the skills and agents run | `claude --version` |
+| [`codex` CLI](https://github.com/openai/codex) | `staff suggest` defaults to LLM-based matching with `STAFF_LLM=codex`. Also used for per-PR codex review × N rounds. Without it, fall back to `staff suggest --no-llm` (regex-only) | `codex --version` |
 | [`gh`](https://cli.github.com/) | Used by `/sitrep` for PR queries; needed for `gh auth login` and PR creation | `gh --version` |
 | [`linear` CLI](https://github.com/schpet/linear-cli) v1.x or v2.x | Used by `sitrep-linear` for the inbox; needed for issue creation in `/work-breakdown` | `linear --version` |
 | `git`, `bash` (≥4), `python3` (≥3.9), `perl` | Used by `install.sh`, `staff`, and `sitrep-linear` | usually preinstalled |
@@ -50,7 +51,7 @@ Expected output:
 Installing skills only to /home/<you>/.claude/skills (mode: link)
 Skipping agents. Use /staff suggest in projects to populate .claude/agents/ per project.
 
-Summary: 25 skill dirs + 3 bins processed (28 linked, 0 copied, 0 already in place, 0 skipped)
+Summary: 24 skill dirs + 4 bins processed (28 linked, 0 copied, 0 already in place, 0 skipped)
 Done.
 ```
 
@@ -144,7 +145,7 @@ cd ~/workspace/<your-project>
 staff suggest
 ```
 
-`staff suggest` is read-only. It scans the project for hints (file presence and regex matches in `CLAUDE.md`/`README.md`/`AGENTS.md`) and prints which agents from the HR manifest match.
+`staff suggest` is read-only. By default it uses an LLM (defaults to `STAFF_LLM=codex`, configurable to `claude` or a local provider) to match project hints — file presence, regex matches in `CLAUDE.md`/`README.md`/`AGENTS.md`, and surface signals — against the HR manifest. Pass `--no-llm` to force deterministic regex-only matching (faster, no codex dependency, less accurate on novel repos).
 
 Sample output:
 
@@ -188,8 +189,7 @@ staff apply --agents go-engineer security-auditor
 Expected effect:
 
 - `.claude/agents/<id>.md` created for each agent (this is what Claude Code loads).
-- `.claude/staff/lock.yaml` written with pinned content hashes per agent.
-- `.claude/staff/config.yaml` written if it doesn't exist.
+- `.claude/staff/lock.yaml` written with pinned content hashes per agent (records `hr_repo` URI so subsequent `staff sync` / `staff status` knows where the canonical source lives).
 
 `staff apply` refuses if the HR repo has uncommitted changes (exit 4) or if the HR commit has moved since `staff suggest` ran (exit 3). Override with `--allow-dirty-hr` or `--force` respectively — both surface what they're bypassing.
 
@@ -260,7 +260,7 @@ linear_scope:
 
 **Caveats** (from the [schema doc](../../skills/sitrep/docs/status-schema.md#scoping-linear_scope)):
 
-- Issues without a Linear project are not surfaced. Triage and orphan issues leak through unless you remember to put them in a project.
+- Issues without a Linear project are **not surfaced** by `sitrep-linear inbox` when `linear_scope` is set. Triage and orphan issues are silently dropped — you only see them if you go to Linear directly. Put new issues in a project (any project in `linear_scope`) for them to show up.
 - Missing or empty field falls back to all-team behavior. Useful as an escape hatch but easy to forget — the wrapper prints a stderr warning if `linear_scope` is present but parses to zero items.
 - If some project names are typos, you'll see a partial inbox plus a stderr warning listing the failed names. Run `sitrep-linear scope` against `linear project list` to compare.
 
@@ -464,7 +464,14 @@ cd /tmp/inc && ./install.sh --link --skills-only --dry-run
 
 `--dry-run` prints what `install.sh` would do without writing anything. Read the output, decide if you want the symlinks in your `~/.claude/skills/`, then re-run without `--dry-run`.
 
-If you decide it's not for you, the skills are symlinks — `rm ~/.claude/skills/*` removes them cleanly. Agents weren't installed (because of `--skills-only`), so nothing to clean up there.
+If you decide it's not for you, the skills are symlinks — remove **only the ones pointing into your inc clone**:
+
+```bash
+find ~/.claude/skills -maxdepth 1 -type l -lname "$HOME/workspace/inc/skills/*" -delete
+find ~/.local/bin     -maxdepth 1 -type l -lname "$HOME/workspace/inc/skills/*" -delete
+```
+
+Do **not** `rm ~/.claude/skills/*` — that wipes every Claude Code skill on the machine (Anthropic-shipped, plugin-shipped, your other repos), not just the inc ones. The installer creates symlinks into `~/.claude/skills/` by skill name, so this targeted command only removes the ones originating from this clone. Agents weren't installed (because of `--skills-only`), so nothing to clean up there.
 
 ---
 

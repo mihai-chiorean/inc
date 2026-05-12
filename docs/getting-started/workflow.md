@@ -4,7 +4,7 @@
 >
 > This doc is the **narrative**. For the per-skill reference, see the [skill catalog](../reference/skills.md). For first-machine setup, see the [bootstrap guide](./bootstrap.md).
 
-The shortest possible summary: every session starts with `/sitrep`, every non-trivial idea goes through `/work-breakdown`, every M+ piece of work gets a design doc audited by `/plan-eng-review` before any code lands, every PR is one Linear issue, and `STATUS.md` is the contract that survives between sessions. The rest of this document is why those moves exist in that order, and what each one actually does for you on a Tuesday morning.
+The shortest possible summary: every session starts with `/sitrep`, every non-trivial idea goes through `/work-breakdown`, M-sized work *recommends* a design doc audited by `/plan-eng-review` (L+ *requires* both), every PR is one Linear issue, and `STATUS.md` is the contract that survives between sessions. The rest of this document is why those moves exist in that order, and what each one actually does for you on a Tuesday morning.
 
 ---
 
@@ -252,7 +252,7 @@ The skill applies a three-question test: (1) is the new ask unrelated to `curren
 
 MIT-345 (the `/sitrep --all` ask above) is the canonical side quest example — it was Case B, surfaced during a `/work-breakdown` manual test, parked in Open Items, current objective (Week 2 ship) untouched.
 
-> **Next action:** the next time you say "let's build X" out loud or in chat, fire `/work-breakdown`. Even if X turns out to be S, the skill produces a useful single issue and the side-quest test fires correctly. When in doubt, fire.
+> **Next action:** the next time you say "let's build X" out loud or in chat, fire `/work-breakdown`. Even if X turns out to be S, the skill produces a useful single issue and the side-quest test fires correctly. When the signal is ambiguous (planning intent vs. immediate execution), ask one clarifying question first ("is this one PR or should we break it down?") per CLAUDE.md Rule 4 — do NOT default to firing on every implementation request.
 
 ---
 
@@ -483,9 +483,9 @@ linear_scope:
 
 Failure modes are explicit and loud (per Rule 6):
 
-- All scoped projects fail to resolve → fallback to all-team behavior with a stderr warning. A typo cannot silently reintroduce cross-repo leakage.
-- Some — but not all — projects fail → partial results plus a stderr warning naming the failed projects.
-- Every project query errors → exit 3 with the failed-project list.
+- `linear_scope` field present but parses to zero items (malformed YAML, empty list) → fallback to all-team behavior with a stderr warning. A typo on the field-name level cannot silently reintroduce cross-repo leakage.
+- Some — but not all — listed projects fail to query (typo on a project name) → partial results plus a stderr warning naming the failed projects.
+- **Every** listed project query fails → exit 3 with the failed-project list. No fallback — the inbox would be wrong, so the wrapper refuses rather than misleading you.
 
 ### `~/.inc/projects/<slug>/` for telemetry + restore points
 
