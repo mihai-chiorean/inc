@@ -27,13 +27,17 @@ Linear artifacts go through the `linear` CLI (extend `skills/sitrep/bin/sitrep-l
 
 Trigger heuristics (this is the skill's `description` field at the top — Claude Code matches it):
 
-- User says "let's build X", "we should X", "I want to X" and X is more than a one-line fix.
-- User says "how do we break this down", "where do we start", "this is going to be big."
-- User describes scope spanning **more than 3 paragraphs**.
-- The ask **visibly spans multiple files, areas, or repos**.
+- User is **planning or queuing work**, not asking for immediate implementation. The phrasing signals deliberation: "let's build", "we should", "I want to start on", "how do we break this down", "where do we start", "this is going to be big."
+- User describes scope spanning more than 3 paragraphs.
+- The ask visibly spans multiple files, areas, or repos.
 - User mentions multiple deliverables, multiple repos, or "phases."
 
-**When in doubt, fire.** Classifying as S still produces a single useful issue; the cost of mis-firing on a small ask is low. The cost of NOT firing on a large ask is the procedure stays in the user's head — which is the pain we're fixing.
+**Do NOT fire** when:
+- The user is asking you to do the work right now ("fix this", "implement X", "ship it", "go", "just do it").
+- The ask is clearly a single change with no breakdown needed (typo fix, dependency bump, single function refactor).
+- The user has already broken the work down themselves and is asking for execution.
+
+When the signal is ambiguous (e.g. "let's add Y" where Y could be one PR or three), **ask one clarifying question** before firing: "Is this one PR or should we break it down?" — fire only if they signal multi-PR.
 
 ---
 
@@ -50,25 +54,31 @@ Four sizes. Each maps to a specific Linear shape and a specific minimum gate set
 
 ### How to choose
 
-Ask up front, do not guess. The user almost always has a better intuition than you about scope. Present the four options with brief consequences (use AskUserQuestion):
+**Propose a default size with a one-line justification.** Then ask the user to confirm or override. Do not make the user classify from scratch — you have read the ask, you have a hypothesis.
 
-> What size is this work?
-> - **S** — one PR, one issue. (Bug fix, small feature, refactor.)
-> - **M** — project with several PRs in one area. (New skill, new endpoint, new module.)
-> - **L** — initiative with multiple projects. Cross-cutting. (Like the gstack-borrow initiative itself.)
-> - **XL** — multi-repo or multi-initiative. (Touches lab-control + claude-agents + cloud, or several big initiatives.)
+Apply the tie-breakers below to your hypothesis. Output looks like:
+
+> I think this is **M** — touches the `/sitrep` skill plus its wrapper, no other repos, no schema change. Two or three PRs. Confirm, or pick: **S** / **L** / **XL**.
 
 If the user pushes back ("just create an issue"), do that. User Sovereignty applies — recommend, don't decide.
 
-### Tie-breakers
+### Tie-breakers (apply to your hypothesis)
 
-If the user says "I'm not sure," ask which of these apply:
-- Does it touch more than one repo? → at least M, probably L or XL.
-- Will there be more than 5 PRs? → at least M, probably L.
-- Is the user-facing surface new? → at least M; add PM to the recommended specialists.
-- Does it cross more than one of {backend, frontend, infra, embedded}? → at least M; add tech-lead.
-- Are multiple people likely to coordinate? → at least L; add TPM.
-- Is there a known deadline or external dependency? → bump up one size for safety.
+Bump up one size if **any** of these is true and not already accounted for:
+
+- **Multi-repo dependency.** Touches > 1 repo with order-sensitive changes. (A trivial dependency bump across two repos is still M, not XL.)
+- **Public API / schema change.** Adds or alters a public surface (CLI flag, library API, DB schema, on-disk schema, gRPC proto).
+- **Data migration or backcompat.** Existing data needs to be migrated, or older clients must keep working.
+- **Security / privacy risk.** Touches auth, secrets, sensitive paths, or new external network surface.
+- **Production rollout / rollback.** Needs phased rollout, feature flag, or named rollback path.
+- **Ambiguity / discovery scope.** Significant unknowns mean part of the work is *figuring out what the work is*. Often pushes M → L.
+- **Multiple specialists needed.** Engineering + product + cross-team coordination required.
+- **External deadline or dependency.** Coordination cost adds a size band.
+
+Tie-breakers that do **not** bump size by themselves:
+- Number of PRs alone (5 small PRs in one area is M, not L).
+- Multi-repo alone (a dependency bump or version bump in two repos is M).
+- "Feels big" without a concrete tie-breaker.
 
 ---
 
@@ -78,9 +88,9 @@ If the user says "I'm not sure," ask which of these apply:
 
 In one sentence, restate the user's idea back to them. This is the **premise check**. If the user disagrees with your restatement, you have not understood the ask; do not proceed until you do.
 
-### Step 2 — Classify
+### Step 2 — Classify (propose, then confirm)
 
-Use AskUserQuestion (one question, single-select) with the four options above. Capture the choice.
+State your hypothesis size + one-line justification + which tie-breakers (if any) apply. Then offer the four options with AskUserQuestion, marking your proposed size as recommended. Capture the user's choice.
 
 If S, jump to Step 5.
 
@@ -95,83 +105,126 @@ Confirm with the user before creating.
 
 ### Step 4 — Specialist recommendations
 
-For M+ work, recommend which specialist agents should weigh in **before** issues get created. This is a recommendation, not auto-routing.
+For M+ work, recommend which specialist agents should weigh in **before** issues get created. Recommendation, not auto-routing.
 
-| Specialist | Call when |
+| Specialist | Call when (sharp criteria) |
 |---|---|
-| **product-manager** | New user-facing surface, business-model question, feature priority unclear, or success-metric not yet defined. |
-| **tech-lead** | Architecture decision, performance bet, cross-cutting refactor, or M+ engineering scope. |
-| **tpm** (technical-product-manager) | Cross-team / cross-repo coordination. Always for XL. |
+| **product-manager** | The user's *intended end-user* is a **non-developer human** AND the change affects what they see or do. (NOT for dev-tool / internal-CLI / engineering-only work — those use plan-devex-review instead.) |
+| **plan-devex-review** (skill) | Developer-facing surface — CLI flag, library API, SDK, framework, skill, dev tool. Most of our work falls here. |
+| **tech-lead** | Architecture decision with **named tradeoffs** (two or more credible approaches), performance bet, or cross-cutting refactor. Not "M means call tech-lead." |
+| **tpm** (technical-product-manager) | Cross-team or cross-repo coordination. Always for XL. |
 
-For S work, no specialists called. For M, usually one (whichever lens dominates). For L, usually both PM + tech-lead. For XL, all three.
+Volume rule of thumb:
+- **S:** none.
+- **M:** zero or one (whichever lens dominates; often `plan-devex-review` alone for skill work, often none for refactors).
+- **L:** one or two (the named-tradeoff lens + the end-user lens).
+- **XL:** TPM always, plus the L set.
 
-Tell the user **which specialists you'd call and why**. Let them choose.
+Tell the user **which specialists you'd call and why**. Let them choose. If you're recommending none, say so explicitly — silent zero feels like an omission.
 
 ### Step 5 — Create Linear artifacts
 
-Use the `linear` CLI directly for creates (commands are stable; no need for a wrapper at v0). Reads still go through `sitrep-linear` per the established pattern.
+Use the `linear` CLI directly for creates (commands are stable; no need for a wrapper at v0). Reads still go through `sitrep-linear`.
+
+**Preflight (do this once, before any create):**
+
+```bash
+# 0a. Linear CLI is installed and authed
+linear --version >/dev/null || { echo "install @schpet/linear-cli"; exit 1; }
+linear auth whoami >/dev/null 2>&1 || { echo "run: linear auth login"; exit 1; }
+
+# 0b. Resolve the team key (same resolution order as sitrep-linear)
+TEAM_KEY="$(sitrep-linear team-key)"
+# Or, when sitrep-linear is not installed, derive manually from STATUS.md:
+#   TEAM_KEY="$(awk '/^---$/{n++;next} n==1 && /^linear_team:/{print $2; exit}' STATUS.md | tr -d '"')"
+[[ -n "$TEAM_KEY" ]] || { echo "cannot resolve team key — set linear_team in STATUS.md"; exit 1; }
+```
+
+For each create command, **capture the created artifact's URL** for the summary in Step 8. `--json` makes this reliable.
 
 **S — single issue:**
 
 ```bash
-linear issue create \
+# Write the body to a real file (not <(...) — Linear CLI is picky about heredocs).
+ISSUE_BODY="$(mktemp)"; cat > "$ISSUE_BODY" <<'BODY'
+<markdown body>
+BODY
+
+ISSUE_URL="$(linear issue create \
   --team "$TEAM_KEY" \
   -t "<one-line title>" \
-  --description-file <(echo "<body in markdown>") \
+  --description-file "$ISSUE_BODY" \
   -a self \
   -p <priority 1-4, default 3> \
   -s backlog \
-  --no-interactive
+  --no-interactive 2>&1 | grep -oE 'https://linear.app/[^[:space:]]+' | head -1)"
+rm -f "$ISSUE_BODY"
+echo "Issue: $ISSUE_URL"
 ```
 
-If the user has an active project context (from `STATUS.md` or just-created via this skill), pass `--project "<project name>"`.
+If a project context already exists (from `STATUS.md` or just-created), add `--project "<project name>"` to the issue create.
 
 **M — project + issues:**
 
 ```bash
-# 1. Create the project
-linear project create \
+# 1. Project. --initiative is optional; pass only if M is under an existing initiative.
+INITIATIVE_NAME=""   # set to "" if standalone, else e.g. "gstack borrow"
+PROJECT_JSON="$(linear project create \
   --team "$TEAM_KEY" \
   -n "<name>" \
   -d "<one-line description, ≤ 255 chars>" \
-  --initiative "<initiative name>" \   # if M is under an existing initiative
+  ${INITIATIVE_NAME:+--initiative "$INITIATIVE_NAME"} \
   -l @me \
   -s planned \
   --target-date <YYYY-MM-DD> \
-  --json
+  --json)"
+PROJECT_URL="$(printf '%s' "$PROJECT_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["url"])')"
+PROJECT_NAME="$(printf '%s' "$PROJECT_JSON" | python3 -c 'import sys,json; print(json.load(sys.stdin)["name"])')"
+echo "Project: $PROJECT_URL"
 
-# 2. Create issues under it (one per anticipated PR)
-linear issue create \
-  --team "$TEAM_KEY" \
-  --project "<project name>" \
-  -t "<issue title>" \
-  --description-file <path> \
-  -a self -p <p> -s backlog \
-  --no-interactive
+# 2. Issues under it (one per anticipated PR). Capture each URL.
+for title in "issue-1 title" "issue-2 title" "issue-3 title"; do
+    body_file="$(mktemp)"; printf '<body for %s>\n' "$title" > "$body_file"
+    url="$(linear issue create \
+        --team "$TEAM_KEY" \
+        --project "$PROJECT_NAME" \
+        -t "$title" \
+        --description-file "$body_file" \
+        -a self -p 3 -s backlog \
+        --no-interactive 2>&1 | grep -oE 'https://linear.app/[^[:space:]]+' | head -1)"
+    rm -f "$body_file"
+    echo "Issue: $url"
+done
 ```
 
 **L — initiative + projects + issues:**
 
 ```bash
 # 1. Initiative
-linear initiative create \
+INIT_OUT="$(linear initiative create \
   -n "<name>" \
   -d "<≤ 255 chars>" \
   -o @me \
   -s active \
-  --target-date <YYYY-MM-DD>
+  --target-date <YYYY-MM-DD> 2>&1)"
+INIT_URL="$(printf '%s' "$INIT_OUT" | grep -oE 'https://linear.app/[^[:space:]]+' | head -1)"
+INIT_NAME="<name>"   # same string you just passed to -n
+echo "Initiative: $INIT_URL"
 
-# 2. Projects per phase or per area (typically 3-6)
-# 3. Issues per project (one per PR)
+# 2. Projects per phase or per area (typically 3-6) — see M-shape, with --initiative "$INIT_NAME"
+# 3. Issues per project (one per PR) — see M-shape
 ```
 
 **XL — same as L plus:**
 
-- Create a coordination doc (a Linear document or a `research/<name>-coordination.md` in the lead repo) that:
-  - Lists every repo touched
-  - Names the order of changes (which repo lands first, which depends on which)
-  - Names the rollback path if any repo fails mid-rollout
-- Reference the coordination doc from every initiative/project description.
+- Create a coordination doc:
+  - Linear document via `linear document create -t "<name> coordination" --content-file <path>`, **OR**
+  - `research/<name>-coordination.md` in the lead repo (preferred when version-controlled history matters).
+- The doc must name:
+  - Every repo touched.
+  - The order of changes (which repo lands first, which depends on which).
+  - The rollback path if any repo fails mid-rollout.
+- Reference the coordination doc URL from every initiative/project description.
 
 ### Step 6 — Gates
 
@@ -185,15 +238,28 @@ For M+, **state explicitly** what gates the work must pass before any code lands
 
 ### Step 7 — Update STATUS.md
 
-If the ask is the new active focus for the project, update STATUS.md:
+Two cases, decide before editing:
+
+**Case A — new active focus.** The ask becomes the project's main thread. Replace these fields:
 - `current_objective` → new initiative/project's one-liner
 - `linear_issue` → first issue created (if S/M) or the initiative's top-level tracker
 - `linear_project` → new project URL
 - `next_command` → first thing to do (often "kick off design-doc for X")
+- Append a dated entry to "Decisions log (recent)".
+
+**Case B — side quest.** Do NOT replace `current_objective`. Instead:
+- Append the new artifact's URL to "Open items needing my attention" with a one-line context.
+- Append a dated entry to "Decisions log (recent)".
+- Leave `active_branch`, `active_pr`, `current_objective`, and `next_command` untouched.
+
+**Test for side quest** (apply all three):
+1. Is the new ask **unrelated** to `current_objective`? (Or only loosely related — follow-up, cleanup, parallel track.)
+2. Is the user **not** asking you to switch to it right now? (No phrasing like "let's pivot" or "drop the current thing.")
+3. Would changing `next_command` for the active branch be **wrong** because it'd lose the current thread?
+
+If all three are yes → side quest, Case B. Else → Case A.
 
 Use the diff-update pattern from `skills/sitrep/SKILL.md` Step 6 — preserve other fields.
-
-If the ask is **side-quest-shaped** (e.g., a Week 2 user files a Week 1 follow-up), DO NOT replace `current_objective`. Just add to "Open items" or note it in Decisions log.
 
 ### Step 8 — Summary output
 

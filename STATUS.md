@@ -7,7 +7,7 @@ linear_issue: MIT-344
 linear_team: MIT
 linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-2-work-breakdown-e7a410fbafb8
 blocked_on_user: []
-next_command: "Draft /work-breakdown SKILL.md with S/M/L/XL classification + specialist routing thresholds"
+next_command: "Address codex round 1 on /work-breakdown; then open PR"
 last_verified_state: 2026-05-11T00:00:00Z
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
@@ -25,10 +25,9 @@ Per codex review: this is narrower than `/autoplan`. Just the breakdown decision
 
 ## What's next
 
-1. Draft `skills/work-breakdown/SKILL.md` with explicit S/M/L/XL classification thresholds + specialist-routing rules.
-2. Manual test on one real small idea end-to-end (`/sitrep --all` cross-project rollup is the leading candidate).
-3. Codex review.
-4. PR against `main`.
+1. Apply codex round-1 findings on `/work-breakdown` (blocker: broken shell example; non-blockers: propose-then-confirm classification, sharper specialist table, CLAUDE.md rule 4, side-quest test).
+2. Manual test on one real small idea end-to-end.
+3. Open PR against `main`.
 
 ## Open items needing my attention
 

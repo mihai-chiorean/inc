@@ -22,7 +22,15 @@ Specialists own depth. Skills own procedure. If a procedure is needed (codex rev
 
 Linear is the queue and the history. The **inbox** is anything assigned to the user, any open PR awaiting their review, and any design doc flagged for review. `/sitrep` surfaces all three. Agents that produce review-worthy artifacts should create or update Linear items assigned back to the user (with a link), not leave them in chat or as wandering files.
 
-When the user asks "what's on my plate" or "what needs my attention," go to Linear (via `linear issue mine`) and open PRs (via `gh pr list --search 'review-requested:@me'`), not to a chat-history reconstruction.
+When the user asks "what's on my plate" or "what needs my attention," go to Linear (via `sitrep-linear inbox`) and open PRs (via `gh pr list --search 'review-requested:@me'`), not to a chat-history reconstruction.
+
+## Rule 4 — Break down non-trivial work before doing it
+
+When the user **plans or queues new work** that is more than a one-line fix — phrases like "let's build", "we should ship", "I want to start on", "how do we break this down" — **invoke `/work-breakdown`** before writing code. The skill classifies size (S/M/L/XL), creates the right Linear artifacts (issue / project + issues / initiative + projects), recommends specialist agents to bring in, and names the required planning gates.
+
+Do **not** invoke when the user is asking for immediate execution of an already-scoped change ("fix this", "implement X now", "just do it"). The trigger is *planning intent*, not size alone.
+
+If unsure whether to fire, ask one clarifying question: "is this one PR or should we break it down?"
 
 ---
 
