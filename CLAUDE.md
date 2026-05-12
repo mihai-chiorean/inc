@@ -1,8 +1,8 @@
 # claude-agents — operating rules
 
-This file is auto-loaded by Claude Code at session start. It is **deliberately thin**: three operational rules only. Other discipline (codex-review-before-merge, coverage gates, ETHOS philosophy) lives elsewhere and gets promoted into this file only if its absence costs real time.
+This file is auto-loaded by Claude Code at session start. It is **deliberately minimal**: every rule has earned its place by closing a failure mode observed in this repo. Other discipline (codex-review-before-merge, coverage gates, ETHOS philosophy) lives elsewhere and gets promoted into this file only if its absence costs real time.
 
-The current scope is informed by the gstack-borrow Week 1 review — see `research/gstack-borrow-2026-05-11.md`.
+The current scope is informed by the gstack-borrow review — see `research/gstack-borrow-2026-05-11.md`.
 
 ---
 
@@ -31,6 +31,30 @@ When the user **plans or queues new work** that is more than a one-line fix — 
 Do **not** invoke when the user is asking for immediate execution of an already-scoped change ("fix this", "implement X now", "just do it"). The trigger is *planning intent*, not size alone.
 
 If unsure whether to fire, ask one clarifying question: "is this one PR or should we break it down?"
+
+## Rule 5 — Surface conflicts, don't average them
+
+When two parts of the system disagree — two existing code patterns, two specialist agents (PM vs tech-lead), codex feedback vs your own analysis, a doc vs the code — **pick one explicitly and say why**. Do not blend them. Average behavior that satisfies both is the worst behavior: the conflict stays hidden and the codebase grows incoherent.
+
+The right move when two patterns contradict:
+1. State both positions in one sentence each.
+2. Pick one (usually: more recent, more tested, or matches the explicit user preference if there is one).
+3. Flag the other as a follow-up — a Linear issue, a `decisions/` entry, or at minimum a line in the next commit message.
+
+When **specialists** disagree (PM says X, tech-lead says Y), surface the disagreement to the user; do not silently pick one. User Sovereignty applies — AI surfaces, human decides.
+
+## Rule 6 — Fail loud
+
+Default to surfacing uncertainty, not hiding it. Specifically:
+
+- **"Completed"** is wrong if anything was silently skipped, deferred, or stubbed. Name what was skipped and why.
+- **"Tests pass"** is wrong if any tests were skipped, xfail'd, or removed. Report the skip count.
+- **"Works"** is wrong if you did not verify the edge case the user asked about. Name the verified path and the unverified one.
+- **"Migration ran"** is wrong if records hit constraint violations and were silently dropped. Always report a count.
+
+When you cannot verify something worked, **say so explicitly in the same sentence as the claim of success**. Burying caveats in a long paragraph is functionally the same as silent failure — the user reads "done" and moves on.
+
+This rule has teeth because codex review caught silent-skip behavior twice during Week 1 of the gstack-borrow initiative. Promoting it from "we happen to catch this" to "expected default."
 
 ---
 
