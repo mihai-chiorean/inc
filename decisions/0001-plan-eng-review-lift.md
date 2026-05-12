@@ -103,18 +103,19 @@ Pain bucket A (procedural discipline) only converts to actual discipline when th
    ▼         ▼
  PASS      FAIL (qualitative)
    │         │
-   ▼         ▼
- mutate    print qualitative gaps;
- status:   exit 3; no mutation
- draft →
- accepted
+   │         ▼
+   │       print qualitative gaps;
+   │       exit 3; no mutation
+   ▼
+ write restore point (pre-mutation snapshot) ← REQUIRED;
+   │                                           audit aborts (exit 1)
+   │                                           if this fails
+   ▼
+ mutate status: draft → accepted
    │
    ▼
- write telemetry entry
-   │
-   ▼
- write restore point (pre-mutation snapshot)
-   │
+ write telemetry entry (best-effort; stderr warning on failure;
+   │                    audit still PASSes)
    ▼
  exit 0  →  doc is now "accepted"; coding may begin
 ```
@@ -151,11 +152,24 @@ The design doc's frontmatter `status` field is the stateful object the auditor m
             │ superseded  │
             └─────────────┘
 
-Invalid transitions (prevented by wrapper):
-  - draft → accepted directly (must go through in-review/audit)
-  - issues_open → accepted directly (must re-audit and pass)
-  - accepted → draft / in-review (use superseded instead; this is a different doc)
-  - any → error (error is only emitted, never targeted)
+Legal transitions enforced by the wrapper:
+  - draft → accepted              (audit PASS on a fresh, never-audited doc)
+  - in-review → accepted          (audit PASS on a doc explicitly tagged in-review)
+  - issues_open → accepted        (audit PASS after fixing prior gaps;
+                                   pragmatic re-audit path)
+  - any non-terminal → issues_open (audit FAIL; only when --apply-fail-status)
+
+Invalid transitions (refused with exit code 2):
+  - accepted → accepted            (terminal; create a new design doc to supersede)
+  - superseded → accepted          (terminal; same)
+  - accepted → draft / in-review   (would re-open; not supported, use superseded)
+  - any → error                    (error is only emitted, never targeted)
+
+In-review is the conceptual "audit is happening right now" state. The wrapper
+does not require the user to set status: in-review before running the audit;
+draft and issues_open can transition directly to accepted on PASS. (Initial
+spec required the in-review intermediate write; the relaxation matches the
+pragmatic re-audit loop and avoids gratuitous frontmatter churn.)
 ```
 
 The wrapper enforces these by reading the *current* status and only allowing legal next-states. Any illegal write is refused with a clear error and exit code 2.
@@ -226,16 +240,27 @@ This flow doesn't ship in Week 3b — it's documented here so the telemetry form
 
 ## 7. Failure modes
 
+Two classes. **Audit gates** (rows 1-8 below) fail the audit with a non-zero exit and prevent mutation. **Side-effect warnings** (rows 9-10) are NOT failure modes for the audit itself — they emit a stderr warning but the audit continues — EXCEPT for restore-write failure, which DOES fail the audit (per codex round 1: a missing restore point means no rollback, and acceptance without rollback is unsafe).
+
+### Audit gates
+
 | Failure | Triggered by | Caught by | User sees | Tested? |
 |---|---|---|---|---|
 | `DocNotFound` | path doesn't exist | wrapper `Path.exists()` check | `plan-eng-review-audit: doc not found at <path>` + exit 1 | yes (manual) |
-| `FrontmatterMalformed` | invalid YAML in `---` block | wrapper `yaml.safe_load` exception | `plan-eng-review-audit: frontmatter parse error at line N: <error>` + exit 2 | yes (manual, with crafted invalid doc) |
-| `MissingSection` | required H2 absent | wrapper section-presence check | gap list entry: `Section "<title>" missing` + exit 3 | yes (manual, against scaffolded-but-not-filled doc) |
-| `ReplaceTokenPresent` | `REPLACE` appears in body **as actual stub content**, NOT as meta-reference in backtick-quoted prose | wrapper regex scan with detection rule (see open question 5) | gap list entry per section: `REPLACE token in section <N>` + exit 3 | yes (manual, against scaffolded doc) |
-| `DiagramStubOnly` | diagram code block contains only stub content (`REPLACE` or empty) | wrapper diagram-content check | gap list entry: `Diagram <N> is still a stub` + exit 3 | yes (manual) |
+| `FrontmatterMalformed` | invalid YAML in `---` block | wrapper `_parse_frontmatter` exception | `plan-eng-review-audit: frontmatter parse error at line N: <error>` + exit 2 | yes (manual, with crafted invalid doc) |
+| `MissingSection` | required H2 absent OR title doesn't match expected | wrapper section-presence + title check | gap list entry: `Section "<title>" missing` OR `section N title is "X", expected "Y"` + exit 3 | yes (manual, against scaffolded-but-not-filled doc) |
+| `ReplaceTokenPresent` | `REPLACE` appears as actual stub content (NOT in backtick-quoted prose); also fires for stub-only fenced blocks in ANY section | wrapper regex scan + per-block stub detector (see open question 5) | gap list entry per section: `section <N> contains stub REPLACE at line(s) ...` OR `section <N> contains a stub-only fenced block` + exit 3 | yes (manual, against scaffolded doc) |
+| `DiagramStubOnly` | diagram code block (sections 4/5/6) contains only stub content (`REPLACE` or empty) | wrapper diagram-content check | gap list entry: `Diagram <N> is still a stub` + exit 3 | yes (manual) |
 | `FailureModesEmpty` | section 7 has 0 data rows in the table | wrapper table-parser check | gap list entry: `Failure modes table has no entries` + exit 3 | yes (manual) |
 | `OpenQuestionsEmpty` | section 8 has 0 list items | wrapper section-content check | gap list entry: `Open questions section is empty` + exit 3 | yes (manual) |
 | `IllegalStatusTransition` | trying to accept a doc with frontmatter status: superseded or already accepted | wrapper status-machine check | `cannot transition <X> → accepted; create a new design doc instead` + exit 2 | yes (manual) |
+| `RestoreWriteFailed` | `~/.inc/projects/<slug>/restore/` unwritable | wrapper `_write_restore` raises `RestoreWriteError` | stderr: `could not write pre-mutation restore point ...` + exit 1; **no mutation** | no (defer until storage layer exists) |
+
+### Side-effect warnings (non-blocking)
+
+| Failure | Triggered by | Caught by | User sees | Tested? |
+|---|---|---|---|---|
+| `TelemetryWriteFailed` | `~/.inc/projects/<slug>/telemetry.jsonl` append fails (disk full, permission denied, etc.) | wrapper try/except around append | stderr warning; **audit still PASSes**, exit 0 | no (defer) |
 | `TelemetryWriteFailed` | `~/.inc/projects/...` unwritable | wrapper try/except around append | stderr warning: `telemetry write failed: <reason>`; audit continues + exit 0 | no (defer until storage layer exists) |
 | `RestoreWriteFailed` | restore dir unwritable | wrapper try/except | stderr warning; audit continues + exit 0 | no (defer) |
 | `QualitativeGap` (judgment) | SKILL.md procedure finds e.g. an unreachable state in the state-machine, or a data-flow path that contradicts the failure-modes table | SKILL.md output | the qualitative gap list is appended below the mechanical pass; user must address before re-audit | no (procedural; not unit-testable) |

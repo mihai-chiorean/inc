@@ -399,14 +399,47 @@ def _section_fenced_blocks(section: Section) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def _section_title_matches(actual: str, expected: str) -> bool:
+    """Title equality check tolerant of whitespace, casing, and `/` vs ` / ` etc.
+
+    Examples accepted as a match for "Goals / Non-goals":
+      "Goals / Non-goals"
+      "Goals/Non-goals"
+      "Goals  /  Non-goals"
+      "Goals / non-goals"
+    Rejected:
+      "Banana"
+      "Goals only"
+    """
+    canon = lambda s: re.sub(r"\s+", " ", s.replace("/", " / ")).strip().lower()
+    return canon(actual) == canon(expected)
+
+
 def _check_sections_present(doc: ParsedDoc) -> list[Gap]:
+    """Verify each required section is present AND has the expected title.
+
+    Per codex round 1: just checking numeric keys lets `## 2. Banana` pass as
+    section 2. Validate the (number, title) pair.
+    """
     gaps: list[Gap] = []
     for num, label in REQUIRED_SECTIONS:
-        if num not in doc.sections:
+        section = doc.sections.get(num)
+        if section is None:
             gaps.append(
                 Gap(
                     name="MissingSection",
                     description=f'section {num} "{label}" missing',
+                )
+            )
+            continue
+        if not _section_title_matches(section.title, label):
+            gaps.append(
+                Gap(
+                    name="MissingSection",
+                    description=(
+                        f'section {num} title is "{section.title}", '
+                        f'expected "{label}"'
+                    ),
                 )
             )
     return gaps
@@ -430,6 +463,23 @@ def _check_replace_tokens(doc: ParsedDoc) -> list[Gap]:
                     ),
                 )
             )
+
+        # Per codex round 1: stub fenced blocks must be caught in ALL sections,
+        # not just diagram sections (4-6). A stub fenced example in section 3,
+        # 7, or 8 would otherwise pass silently. Diagram sections have their
+        # own _check_diagrams pass with section-specific N/A escape hatches.
+        if num not in DIAGRAM_SECTIONS:
+            for block in _section_fenced_blocks(section):
+                if _fenced_block_is_stub(block):
+                    gaps.append(
+                        Gap(
+                            name="ReplaceTokenPresent",
+                            description=(
+                                f"section {num} contains a stub-only fenced block"
+                            ),
+                        )
+                    )
+                    break  # one gap per section is enough; user fixes & re-runs
     return gaps
 
 
@@ -628,12 +678,24 @@ def _append_telemetry(
     """
     proj = _project_dir(slug)
     tele_path = proj / "telemetry.jsonl"
+    # Make doc path repo-relative when possible (per codex round 1: avoid
+    # leaking full local paths into the telemetry stream). Fall back to the
+    # absolute path only when the doc lives outside the git toplevel.
+    try:
+        toplevel = subprocess.run(
+            ["git", "-C", str(doc.parent), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=True, timeout=2,
+        ).stdout.strip()
+        doc_repo_rel = str(doc.relative_to(toplevel)) if toplevel else str(doc)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, OSError):
+        doc_repo_rel = str(doc)
+
     record = {
         "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "repo": repo,
         "skill": "plan-eng-review",
         "event": event,
-        "doc": str(doc),
+        "doc": doc_repo_rel,
         "status": status,
         "gaps": [{"name": g.name, "description": g.description} for g in gaps],
         "duration_ms": duration_ms,
@@ -648,8 +710,22 @@ def _append_telemetry(
         return None
 
 
-def _write_restore(slug: str, doc: Path) -> Path | None:
-    """Copy the doc to the restore directory pre-mutation. Best-effort."""
+class RestoreWriteError(Exception):
+    """Raised when the pre-mutation restore-point snapshot cannot be written.
+
+    Per codex review of round 1: restore-write failure must abort the audit
+    BEFORE mutation, since the goal "Pre-mutation restore point saved" (design
+    doc Section 2) is a precondition for the mutation. Telemetry remains
+    best-effort because it's an audit-trail concern, not a rollback concern.
+    """
+
+
+def _write_restore(slug: str, doc: Path) -> Path:
+    """Copy the doc to the restore directory pre-mutation.
+
+    Raises RestoreWriteError on any I/O failure — caller must abort before
+    mutating the doc.
+    """
     proj = _project_dir(slug)
     restore_dir = proj / "restore"
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
@@ -659,8 +735,9 @@ def _write_restore(slug: str, doc: Path) -> Path | None:
         shutil.copy2(doc, dest)
         return dest
     except OSError as e:
-        print(f"plan-eng-review-audit: restore write failed: {e}", file=sys.stderr)
-        return None
+        raise RestoreWriteError(
+            f"could not write pre-mutation restore point to {dest}: {e}"
+        ) from e
 
 
 # ---------------------------------------------------------------------------
@@ -800,8 +877,19 @@ def main(argv: Iterable[str] | None = None) -> int:
         print(f"PASS: status={current_status} (mechanical-only; no mutation)")
         return 0
 
-    # Snapshot BEFORE mutation.
-    restore_path = _write_restore(slug, doc_path)
+    # Snapshot BEFORE mutation. Per codex round 1: this is required, not
+    # best-effort. If we can't take a snapshot, abort cleanly — better to
+    # refuse acceptance than to mutate with no rollback path.
+    try:
+        restore_path = _write_restore(slug, doc_path)
+    except RestoreWriteError as e:
+        print(f"plan-eng-review-audit: {e}", file=sys.stderr)
+        print(
+            "plan-eng-review-audit: refusing to mutate without a restore point; "
+            "fix the storage layer and re-run",
+            file=sys.stderr,
+        )
+        return 1
 
     # Mutate frontmatter.
     try:
