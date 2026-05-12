@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# sitrep-linear — Linear CLI wrapper for the /sitrep skill.
+#
+# Hides:
+#   - linear CLI v1 vs v2 command differences (v2: `issue mine`; v1: `issue list`)
+#   - team-key resolution (.linear.toml > $LINEAR_TEAM > STATUS.md > derived)
+#   - ANSI escape codes (terminal output → script-friendly text)
+#
+# Subcommands:
+#   inbox [team]   — list issues assigned to me (triage/backlog/unstarted/started)
+#   docs [team]    — list Linear documents (best-effort: design docs for review)
+#   team-key       — print the resolved team key for this project
+#
+# Output: stripped of ANSI escapes; one line per item for `inbox` (header + rows).
+#
+# Exit codes:
+#   0  success
+#   1  underlying linear CLI not installed
+#   2  unknown subcommand or team-key cannot be resolved
+#   3  linear CLI returned an error after fallback
+
+set -euo pipefail
+
+require_linear() {
+    if ! command -v linear >/dev/null 2>&1; then
+        echo "sitrep-linear: linear CLI not installed. Install @schpet/linear-cli via npm." >&2
+        exit 1
+    fi
+}
+
+strip_ansi() {
+    # Strip:
+    #   - OSC-8 hyperlinks: ESC ] 8 ; ... ESC \   and shorter BEL terminator
+    #   - CSI sequences (incl. private modes ESC[?25l, colon true-color, intermediate bytes)
+    #   - charset designators ESC ( B
+    #   - CR-only lines from progress redraws
+    perl -pe '
+        s/\x1b\]8;[^\x07\x1b]*(?:\x07|\x1b\\)//g;
+        s/\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]//g;
+        s/\x1b\([A-Z]//g;
+    '
+}
+
+# Resolve the Linear team key for the current project.
+# Order:
+#   1. .linear.toml team_key = "..." in PWD or any parent
+#   2. $LINEAR_TEAM env var
+#   3. STATUS.md `linear_team:` field at git root
+#   4. Prefix of STATUS.md `linear_issue:` (e.g. "MIT-343" → "MIT")
+# Read a scalar field from STATUS.md frontmatter.
+# Strips wrapping single OR double quotes. Returns "" if not found.
+status_field() {
+    local file="$1"
+    local key="$2"
+    [[ -f "$file" ]] || return 0
+    awk -v key="$key" '
+        /^---$/ { n++; if (n==2) exit; next }
+        n==1 {
+            if (match($0, "^" key ":[[:space:]]*")) {
+                val = substr($0, RSTART + RLENGTH)
+                gsub(/^[\047"]|[\047"]$/, "", val)   # strip wrapping single/double quotes
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", val)
+                print val
+                exit
+            }
+        }
+    ' "$file"
+}
+
+resolve_team_key() {
+    # 1. .linear.toml walk-up
+    local dir="$PWD"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -f "$dir/.linear.toml" ]]; then
+            local team
+            team="$(grep -oE '^team_key[[:space:]]*=[[:space:]]*[\x27"]?[A-Z][A-Z0-9_]*' "$dir/.linear.toml" 2>/dev/null \
+                | head -1 \
+                | grep -oE '[A-Z][A-Z0-9_]*$' || true)"
+            if [[ -n "$team" ]]; then echo "$team"; return 0; fi
+        fi
+        dir="$(dirname "$dir")"
+    done
+
+    # 2. $LINEAR_TEAM
+    if [[ -n "${LINEAR_TEAM:-}" ]]; then echo "$LINEAR_TEAM"; return 0; fi
+
+    # 3 + 4. STATUS.md at git root
+    local root
+    root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
+    local status_file="$root/STATUS.md"
+    if [[ -f "$status_file" ]]; then
+        # linear_team: MIT
+        local team
+        team="$(status_field "$status_file" linear_team)"
+        if [[ -n "$team" ]]; then echo "$team"; return 0; fi
+
+        # linear_issue: MIT-343  →  MIT
+        local issue
+        issue="$(status_field "$status_file" linear_issue)"
+        local prefix
+        prefix="$(printf '%s' "$issue" | grep -oE '^[A-Z]+' || true)"
+        if [[ -n "$prefix" ]]; then echo "$prefix"; return 0; fi
+    fi
+
+    return 2
+}
+
+cmd_inbox() {
+    require_linear
+    local team="${1:-}"
+    if [[ -z "$team" ]]; then
+        team="$(resolve_team_key)" || {
+            echo "sitrep-linear: cannot resolve team key (no .linear.toml, no \$LINEAR_TEAM, no STATUS.md)" >&2
+            return 2
+        }
+    fi
+
+    # Try v2.x (`issue mine`) first. Pass --team explicitly so we don't silently
+    # accept a different default team's inbox if the CLI is set up that way.
+    # The `if` test form is safe under `set -e`; a plain assignment from a
+    # failing substitution would otherwise abort the function.
+    local out
+    if out="$(linear issue mine --team "$team" --no-pager \
+                --state triage --state backlog --state unstarted --state started 2>/dev/null)"; then
+        printf '%s\n' "$out" | strip_ansi
+        return 0
+    fi
+
+    # Fall back to v1.x (`issue list` with --team --sort). Translate any
+    # CLI error to exit code 3 to match the documented contract.
+    if ! out="$(linear issue list --team "$team" --no-pager --sort priority \
+                --state triage --state backlog --state unstarted --state started 2>&1)"; then
+        printf '%s\n' "$out" | strip_ansi >&2
+        return 3
+    fi
+    printf '%s\n' "$out" | strip_ansi
+}
+
+cmd_docs() {
+    require_linear
+    # Both v1 and v2 accept `linear document list`. v1 has no --no-pager flag.
+    local out
+    if ! out="$(linear document list 2>&1)"; then
+        printf '%s\n' "$out" | strip_ansi >&2
+        return 3
+    fi
+    printf '%s\n' "$out" | strip_ansi
+}
+
+cmd_team_key() {
+    resolve_team_key
+}
+
+usage() {
+    cat <<USAGE
+sitrep-linear — Linear CLI wrapper for the /sitrep skill
+
+Usage: sitrep-linear <subcommand> [args]
+
+Subcommands:
+  inbox [team]   List issues assigned to me (states: triage/backlog/unstarted/started).
+                 If team is omitted, resolves from .linear.toml > \$LINEAR_TEAM >
+                 STATUS.md linear_team > linear_issue prefix.
+  docs           List Linear documents (best-effort; ANSI-stripped).
+  team-key       Print the resolved team key.
+
+Output is ANSI-stripped text from the Linear CLI.
+USAGE
+}
+
+case "${1:-}" in
+    inbox)     shift; cmd_inbox "$@" ;;
+    docs)      shift; cmd_docs "$@" ;;
+    team-key)  cmd_team_key ;;
+    "" | -h | --help) usage ;;
+    *)
+        echo "sitrep-linear: unknown subcommand '${1}'" >&2
+        echo "run 'sitrep-linear --help' for usage" >&2
+        exit 2
+        ;;
+esac
