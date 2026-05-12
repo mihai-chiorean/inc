@@ -2,7 +2,7 @@
 
 A one-page reference of every skill in the `inc` repo. Read top-to-bottom for orientation; jump to any entry to find a fixed set of fields (purpose, when to fire, reads, writes, wrapper, composes-with, link to SKILL.md). This catalog has two parts: **workflow skills** (built and shipping — the ones that actually run the day-to-day procedure: orient, break down, design, review, ship) and **domain / reference skills** (advisory bodies of knowledge loaded by Claude Code when a topic matches, mostly Swift- and infra-flavored). For onboarding, pair this page with [getting-started/workflow.md](../getting-started/workflow.md) (day-in-the-life walkthrough) and [getting-started/bootstrap.md](../getting-started/bootstrap.md) (machine + per-project setup).
 
-The workflow skills are listed first in the order they typically fire in a real session: orient (`/sitrep`), staff the project (`/staff`), break down the work (`/work-breakdown`), scaffold a design doc (`/design-doc`), audit it (`/plan-eng-review`), pressure-test (`/plan-ceo-review`, `/plan-devex-review`, `/office-hours`), and periodically tune the roster (`/workflow-optimizer`). Domain skills follow alphabetically — they are external-reference material with no mutation behavior, so their entries are intentionally terser.
+The workflow skills are listed first in the order they typically fire in a real session: orient (`/sitrep`), staff the project (`/staff`), break down the work (`/work-breakdown`), scaffold a design doc (`/design-doc`), audit it (`/plan-eng-review`), pressure-test (`/plan-ceo-review`, `/plan-devex-review`, `/office-hours`), and periodically tune the roster (`/workflow-optimizer`). Domain skills follow alphabetically — most are purely advisory (read SKILL.md + reference files, emit guidance). A handful — `/project-management`, `/commit-pr-etiquette`, `/linear`, `/docs-site` — directly drive external CLIs (Linear, gh, mkdocs) and can mutate state through them; their per-skill entries name that explicitly.
 
 ---
 
@@ -93,7 +93,7 @@ The workflow skills are listed first in the order they typically fire in a real 
 
 ## Domain & reference skills
 
-External-reference material loaded when a topic matches. These are advisory: they read their own `SKILL.md` plus reference files, and emit guidance — they don't mutate project state.
+External-reference material loaded when a topic matches. Most are purely advisory: they read their own `SKILL.md` plus reference files, and emit guidance. A handful (`/project-management`, `/commit-pr-etiquette`, `/linear`, `/docs-site`) drive external CLIs and can mutate state through those — their per-skill entries call that out.
 
 ### /bay-value-hunter
 **One-line purpose:** Bay Area residential real-estate underwriting playbook — San Francisco, Berkeley, Albany. Per-city profiles for permit sources, hazard patterns, and rent-control context. Produces buy targets, rehab ranges, ARV estimates, and pursue/monitor/pass verdicts — not pretty-home shopping.
