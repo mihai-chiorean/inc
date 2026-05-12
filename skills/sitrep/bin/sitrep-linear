@@ -4,12 +4,15 @@
 # Hides:
 #   - linear CLI v1 vs v2 command differences (v2: `issue mine`; v1: `issue list`)
 #   - team-key resolution (.linear.toml > $LINEAR_TEAM > STATUS.md > derived)
+#   - per-repo scoping via STATUS.md `linear_scope` (list of Linear project names)
 #   - ANSI escape codes (terminal output → script-friendly text)
 #
 # Subcommands:
-#   inbox [team]   — list issues assigned to me (triage/backlog/unstarted/started)
+#   inbox [team]   — list issues assigned to me (triage/backlog/unstarted/started),
+#                    scoped to the projects in STATUS.md `linear_scope` if present
 #   docs [team]    — list Linear documents (best-effort: design docs for review)
 #   team-key       — print the resolved team key for this project
+#   scope          — print the resolved linear_scope (one project name per line; empty if none)
 #
 # Output: stripped of ANSI escapes; one line per item for `inbox` (header + rows).
 #
@@ -105,6 +108,77 @@ resolve_team_key() {
     return 2
 }
 
+# Read STATUS.md `linear_scope:` as one project name per stdout line.
+#
+# Exit codes:
+#   0  field present AND at least one project emitted on stdout
+#   1  field absent (or STATUS.md missing) — caller runs unscoped silently
+#   2  field present but yielded no items (likely malformed) — caller should
+#      warn so a typo doesn't silently reintroduce cross-repo leakage
+#
+# Supports quoted and bare scalars on the same flat-list form. Limitations:
+# block scalars and multi-line values not supported; YAML comments mid-quote
+# are kept verbatim; bare scalars strip a trailing  ` # comment` only.
+read_linear_scope() {
+    local status_file="$1"
+    [[ -f "$status_file" ]] || return 1
+
+    # awk writes the marker flag on its last line (prefixed with __M:) so we
+    # can distinguish "field never appeared" from "field appeared, no items."
+    local raw
+    raw="$(awk '
+        BEGIN { n=0; in_scope=0; saw_marker=0 }
+        /^---$/ { n++; if (n==2) { print "__M:" saw_marker; exit } next }
+        n==1 {
+            if ($0 ~ /^linear_scope:[[:space:]]*$/) {
+                in_scope=1; saw_marker=1
+                next
+            }
+            if (in_scope) {
+                # List item:   "  - value"
+                if (match($0, /^[[:space:]]*-[[:space:]]+/)) {
+                    val = substr($0, RLENGTH + 1)
+                    if (match(val, /^"(.*)"[[:space:]]*$/, m)) { val = m[1] }
+                    else if (match(val, /^\047(.*)\047[[:space:]]*$/, m)) { val = m[1] }
+                    else {
+                        sub(/[[:space:]]+#.*$/, "", val)   # trailing comment
+                        sub(/[[:space:]]+$/, "", val)
+                    }
+                    if (val != "") print val
+                    next
+                }
+                # Next top-level field (no leading whitespace) ends the block.
+                if ($0 ~ /^[A-Za-z_]/) { in_scope=0 }
+            }
+        }
+        END { print "__M:" saw_marker }
+    ' "$status_file")"
+
+    # Split items from the trailing __M: marker.
+    local marker items
+    marker="$(printf '%s\n' "$raw" | awk '/^__M:/ {print substr($0,5); exit}')"
+    items="$(printf '%s\n' "$raw" | awk '!/^__M:/ {print}')"
+    printf '%s' "$items"
+
+    if [[ "$marker" != "1" ]]; then
+        return 1                       # field absent
+    fi
+    if [[ -z "$items" ]]; then
+        return 2                       # field present but yielded nothing
+    fi
+    return 0
+}
+
+# Run one `linear issue list` call for a given project. Returns the raw output
+# on stdout (caller is responsible for stripping ANSI and skipping headers).
+# Returns non-zero if the CLI fails.
+_inbox_one_project() {
+    local team="$1"
+    local project="$2"
+    linear issue list --team "$team" --project "$project" --no-pager --sort priority \
+        --state triage --state backlog --state unstarted --state started 2>&1
+}
+
 cmd_inbox() {
     require_linear
     local team="${1:-}"
@@ -115,25 +189,84 @@ cmd_inbox() {
         }
     fi
 
-    # Try v2.x (`issue mine`) first. Pass --team explicitly so we don't silently
-    # accept a different default team's inbox if the CLI is set up that way.
-    # The `if` test form is safe under `set -e`; a plain assignment from a
-    # failing substitution would otherwise abort the function.
-    local out
-    if out="$(linear issue mine --team "$team" --no-pager \
-                --state triage --state backlog --state unstarted --state started 2>/dev/null)"; then
+    local root
+    root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
+    local scope scope_rc
+    scope="$(read_linear_scope "$root/STATUS.md")" && scope_rc=0 || scope_rc=$?
+
+    # rc 1 = field absent → unscoped, silent (backward compat).
+    # rc 2 = field present but no items extracted → unscoped, with a warning
+    #        (likely malformed YAML or empty list; user should fix or remove).
+    # rc 0 = scoped path.
+    if [[ $scope_rc -ne 0 ]]; then
+        if [[ $scope_rc -eq 2 ]]; then
+            echo "sitrep-linear: warning — linear_scope is present in STATUS.md but no project names were parsed. Showing all team issues. Check the YAML or remove the field." >&2
+        fi
+        local out
+        if out="$(linear issue mine --team "$team" --no-pager \
+                    --state triage --state backlog --state unstarted --state started 2>/dev/null)"; then
+            printf '%s\n' "$out" | strip_ansi
+            return 0
+        fi
+        if ! out="$(linear issue list --team "$team" --no-pager --sort priority \
+                    --state triage --state backlog --state unstarted --state started 2>&1)"; then
+            printf '%s\n' "$out" | strip_ansi >&2
+            return 3
+        fi
         printf '%s\n' "$out" | strip_ansi
         return 0
     fi
 
-    # Fall back to v1.x (`issue list` with --team --sort). Translate any
-    # CLI error to exit code 3 to match the documented contract.
-    if ! out="$(linear issue list --team "$team" --no-pager --sort priority \
-                --state triage --state backlog --state unstarted --state started 2>&1)"; then
-        printf '%s\n' "$out" | strip_ansi >&2
+    # Scoped path — iterate, strip ANSI, accumulate all rows. The first row of
+    # each `linear issue list` call is a column header beginning with the
+    # placeholder glyph (◌); we let the dedup awk pass collapse repeated
+    # headers automatically (column 2 is "ID" on every header → dedupes to one).
+    local all_output=""
+    local any_success=0
+    local failed_projects=()
+    local last_err=""
+    while IFS= read -r project; do
+        [[ -z "$project" ]] && continue
+        local raw
+        if ! raw="$(_inbox_one_project "$team" "$project")"; then
+            failed_projects+=("$project")
+            last_err="$raw"
+            continue
+        fi
+        any_success=1
+        all_output+="$(printf '%s\n' "$raw" | strip_ansi)"$'\n'
+    done <<< "$scope"
+
+    if [[ $any_success -eq 0 ]]; then
+        echo "sitrep-linear: every scoped project query failed. The projects in linear_scope may not exist or may be misspelled. Failed:" >&2
+        printf '  - %s\n' "${failed_projects[@]}" >&2
+        [[ -n "$last_err" ]] && {
+            echo "  Last CLI error:" >&2
+            printf '%s\n' "$last_err" | strip_ansi | sed 's/^/    /' >&2
+        }
         return 3
     fi
-    printf '%s\n' "$out" | strip_ansi
+
+    # Single awk pass:
+    #   - drop empty lines
+    #   - dedup by ID column ($2)
+    #   - keep only header rows (col2="ID") and real issue rows (col2 matches
+    #     <TEAM>-<NUM> where TEAM is letters + digits + underscore — matches
+    #     resolve_team_key's allowed shape, so issues from teams like OPS2
+    #     are not dropped). Drops "No issues found." and other CLI chatter.
+    printf '%s' "$all_output" \
+        | awk 'NF > 0 && ($2 == "ID" || $2 ~ /^[A-Z][A-Z0-9_]*-[0-9]+$/) && !seen[$2]++ { print }'
+
+    # Fail-loud (CLAUDE.md Rule 6): if some — but not all — projects failed,
+    # the user just saw a partial inbox. Surface which projects we missed so
+    # they can fix the scope OR confirm the project name.
+    if [[ ${#failed_projects[@]} -gt 0 ]]; then
+        echo "" >&2
+        echo "sitrep-linear: warning — ${#failed_projects[@]} project(s) in linear_scope failed and were silently excluded from the inbox above:" >&2
+        printf '  - %s\n' "${failed_projects[@]}" >&2
+        echo "  (typo? renamed? deleted? Run 'sitrep-linear scope' to compare against 'linear project list'.)" >&2
+    fi
+    return 0
 }
 
 cmd_docs() {
@@ -151,6 +284,12 @@ cmd_team_key() {
     resolve_team_key
 }
 
+cmd_scope() {
+    local root
+    root="$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")"
+    read_linear_scope "$root/STATUS.md"
+}
+
 usage() {
     cat <<USAGE
 sitrep-linear — Linear CLI wrapper for the /sitrep skill
@@ -161,8 +300,13 @@ Subcommands:
   inbox [team]   List issues assigned to me (states: triage/backlog/unstarted/started).
                  If team is omitted, resolves from .linear.toml > \$LINEAR_TEAM >
                  STATUS.md linear_team > linear_issue prefix.
+                 If STATUS.md has a \`linear_scope\` list, filters by those project
+                 names (one query per project; results unioned + deduped). If
+                 \`linear_scope\` is missing or empty, all team issues are shown
+                 (backward-compatible).
   docs           List Linear documents (best-effort; ANSI-stripped).
   team-key       Print the resolved team key.
+  scope          Print the resolved linear_scope (one project per line; empty if none).
 
 Output is ANSI-stripped text from the Linear CLI.
 USAGE
@@ -172,6 +316,7 @@ case "${1:-}" in
     inbox)     shift; cmd_inbox "$@" ;;
     docs)      shift; cmd_docs "$@" ;;
     team-key)  cmd_team_key ;;
+    scope)     cmd_scope ;;
     "" | -h | --help) usage ;;
     *)
         echo "sitrep-linear: unknown subcommand '${1}'" >&2

@@ -1,17 +1,25 @@
 ---
 status_version: 1
-current_objective: "Week 3a of the gstack-borrow initiative — build /design-doc skill that scaffolds a doc with three mandatory diagrams (user-flow + state-machine + data-flow). plan-eng-review (the auditor) ships as Week 3b."
-active_branch: mit-347-design-doc
+current_objective: "Fix /sitrep cross-project leakage by adding linear_scope to STATUS.md; sitrep-linear inbox filters by it. Detour before Week 3b."
+active_branch: mit-362-sitrep-scope
 active_pr: null
-linear_issue: MIT-347
+linear_issue: MIT-362
 linear_team: MIT
-linear_project: https://linear.app/mitzoku/project/gstack-borrow-week-3-planning-discipline-bba4630036be
+linear_project: null
 blocked_on_user: []
-next_command: "Draft skills/design-doc/SKILL.md + a template file with all 8 required sections"
-last_verified_state: 2026-05-11T00:00:00Z
+next_command: "Update sitrep-linear to honor linear_scope; manual test that inbox no longer leaks transcribe.py / wendy / X-Y items"
+last_verified_state: 2026-05-12T18:00:00Z
+linear_scope:
+  - "gstack borrow — Week 1: bootstrap loop"
+  - "gstack borrow — Week 2: /work-breakdown"
+  - "gstack borrow — Week 3: planning discipline"
+  - "gstack borrow — Week 4: /prioritize"
+  - "gstack borrow — eval mechanics (parallel to Project B)"
+  - "Per-project agent staffing skill"
+  - "Agent roster eval framework"
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
-  project: https://linear.app/mitzoku/project/gstack-borrow-week-2-work-breakdown-e7a410fbafb8
+  project: null
   handoff: research/gstack-borrow-2026-05-11.md
 ---
 
@@ -19,17 +27,17 @@ links:
 
 ## Current objective
 
-Week 3a of the **gstack-borrow** initiative — `/design-doc` skill. Scaffolds a design doc with three mandatory diagram sections (user-flow + state-machine + data-flow) so the "did I include all the diagrams?" cognitive load goes to zero.
+Small detour: fix `/sitrep` cross-project leakage by adding `linear_scope` (list of Linear project names) to STATUS.md. `sitrep-linear inbox` will filter by it so the inbox no longer surfaces transcribe.py / wendy / vision-pipeline / X-Y items when running `/sitrep` from this repo.
 
-Per codex review of the shortlist: `/design-doc` creates, `plan-eng-review` audits. Two separate skills, two separate PRs. This is Week 3a (creator). Week 3b (auditor + hard gate) is the follow-up.
+Week 3a (`/design-doc`) merged yesterday as PR #22. Week 3b (`plan-eng-review` lift) comes after this fix lands.
 
 ## What's next
 
-1. Draft `skills/design-doc/SKILL.md` with the 8-section template + 3 mandatory diagram stubs.
-2. Manual test: scaffold the design doc for the upcoming `plan-eng-review` lift (Week 3b). That doc then becomes Week 3b's input.
+1. Update `sitrep-linear inbox` to honor `linear_scope` (read STATUS.md, run one `linear issue list --project X` per project, union + strip ANSI).
+2. Manual test: confirm `sitrep-linear inbox` in this repo no longer surfaces transcribe.py / wendy items.
 3. Codex review.
 4. PR against `main`.
-5. Move to Week 3b: `plan-eng-review` lift from gstack (strip plumbing, hard gate on missing diagrams).
+5. Then Week 3b: `plan-eng-review` lift from gstack.
 
 ## Open items needing my attention
 
@@ -42,9 +50,12 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 - [research/gstack-borrow-2026-05-11.md](research/gstack-borrow-2026-05-11.md) — handoff doc. Reference for Week 3+ (`/design-doc`, `plan-eng-review`) and Week 4 (`/prioritize`).
 - Project B (MIT-294–302) — fold gstack eval mechanics (touchfile diff selection + tier system + extended EvalResult schema) when picked up. Parallel track.
+- **Label-based scoping for `/sitrep` (long-term direction).** v0 (MIT-362) uses Linear project names in `linear_scope`. Project-based misses orphan issues (no project assigned) and breaks if a project gets renamed or split. Long-term: every repo-relevant issue gets a label like `repo:claude-agents` and `linear_scope` accepts a `labels:` key. Survives project moves and covers orphan/triage items. Defer until v0 friction is observed.
 
 ## Decisions log (recent)
 
+- 2026-05-12 — Observed during `/sitrep`: inbox leaked transcribe.py / wendy / X-Y items across repos. Root cause: Linear has no "issue belongs to repo" link; one MIT team, many repos. Added `linear_scope` to STATUS.md schema v1.1 (backward-compat — empty/missing = current behavior). Long-term direction is label-based (see Future work).
+- 2026-05-11 — Week 3a merged (PR #22, MIT-347). `/design-doc` skill + `design-doc-scaffold` wrapper + `decisions/` established as ADR location.
 - 2026-05-11 — Ran `/design-doc` manual test by scaffolding the Week 3b doc itself (`decisions/0001-plan-eng-review-lift.md`). 8 sections + 3 diagram stubs created cleanly via template substitution. Recursive setup: the design doc for plan-eng-review will eventually be audited BY plan-eng-review.
 - 2026-05-11 — Established `decisions/` as the canonical location for design docs (ADR-numbered format `NNNN-<slug>.md`). `research/` reserved for research handoffs / external-source notes.
 - 2026-05-11 — Evaluated the Forrest-Chang 12-rule CLAUDE.md template (karpathy-thread-derived). Cherry-picked 2 rules (Surface conflicts + Fail loud). Rejected 10: Simplicity-First contradicts boil-the-lake; token-budgets are unenforceable from CLAUDE.md; several others duplicate Claude Code defaults. MIT-346 captures the promotion + rationale.

@@ -60,7 +60,8 @@ links:
 | `active_pr` | string\|null | yes | PR number or URL. `null` if no PR open. |
 | `linear_issue` | string\|null | yes | Issue ID (e.g. `MIT-343`) the active work corresponds to. |
 | `linear_team` | string\|null | no | Linear team key (e.g. `MIT`). Used by `/sitrep` when no `.linear.toml` is present. If omitted, `/sitrep` derives it from the `linear_issue` prefix. |
-| `linear_project` | string\|null | no | Linear project URL if the work is under one. |
+| `linear_project` | string\|null | no | Linear project URL for the **active** work (the project the current branch is under). Distinct from `linear_scope` below. |
+| `linear_scope` | list\|null | no | List of Linear project **names** (exact match) that count as "this repo's work." Used by `sitrep-linear inbox` to filter the team-wide inbox down to issues relevant to this repo. If omitted or empty, the inbox falls back to all-team behavior (backward compat). See *Scoping* below. |
 | `blocked_on_user` | list | yes | Things waiting on the human. Can be empty `[]`. Each item: `{item: string, since: ISO-date, link: URL\|null}`. |
 | `next_command` | string | yes | One sentence imperative. The thing to do next in this project. |
 | `last_verified_state` | ISO-8601 | yes | When `/sitrep` last ran end-to-end successfully. Stale value = trust the body sections less. |
@@ -101,9 +102,38 @@ links:
 4. On write, `/sitrep` should diff-update fields rather than rewriting the whole file — preserves human edits and trailing notes.
 5. `blocked_on_user` items survive `/sitrep` writes unless explicitly cleared by the user via prompt.
 
+## Scoping (`linear_scope`)
+
+Linear has no inherent "this issue belongs to this repo" link — one team, many repos. `linear_scope` is the bridge: a list of Linear project names that `sitrep-linear inbox` will filter by.
+
+```yaml
+linear_scope:
+  - "gstack borrow — Week 1: bootstrap loop"
+  - "Per-project agent staffing skill"
+  - "agent eval framework"
+```
+
+**Match rule:** exact-string match on project name. Order doesn't matter. Empty list / missing field = no filtering (all team issues, backward compat).
+
+**Caveats:**
+- Issues without a Linear project (e.g. orphan side-quests, untriaged items) are not surfaced. Known limitation of the project-based approach.
+- YAML comments in items are not supported (bare scalars strip a trailing ` # comment`; quoted strings keep all characters verbatim).
+- Block scalars and multi-line values are not supported.
+
+**Loud failure modes:**
+- If `linear_scope` is present but parses to zero project names (malformed YAML, empty list, all items quoted as empty strings) → `sitrep-linear inbox` falls back to all-team behavior **and** prints a warning to stderr so a typo doesn't silently reintroduce cross-repo leakage.
+- If some — but not all — scoped projects fail (e.g. one project name has a typo, the rest are valid) → the inbox shows the partial results and prints a stderr warning listing the failed project names. Per CLAUDE.md Rule 6 (fail loud), partial-success-disguised-as-success is the failure mode we explicitly refuse.
+- If every scoped project query fails → exit 3 with the failed-project list and the last CLI error.
+
+**Long-term direction (label-based):** project-based scoping misses orphan issues and breaks when projects are renamed or split. Eventually `linear_scope` will accept a `labels:` key alongside `projects:` so a `repo:claude-agents` label on every relevant issue covers the orphan case. Blocker: linear CLI v1.11.1 has `--project` but no `--label` on `issue list`; either a CLI upgrade, a GraphQL-via-`linear api` path, or post-fetch filtering is needed. Defer until v0 friction is observed.
+
 ## Versioning
 
 `status_version: 1`. If the schema changes:
 - Bump `status_version`.
 - Document the migration in this file.
 - `/sitrep` should detect lower versions and offer an in-place migration.
+
+### Changelog
+- v1 (initial): defined the schema.
+- v1.1 (2026-05-12): added optional `linear_scope` field. Backward-compatible — absent field falls back to all-team inbox behavior.
