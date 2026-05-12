@@ -35,7 +35,12 @@ Why split `.claude/staff/` from `.claude/agents/`: Claude Code walks `.claude/ag
 schema_version: 1
 generated_at: 2026-05-07T18:00:00Z
 generated_by: scripts/generate-manifest.py
-source_repo: claude-agents
+source_repo: claude-agents   # stable logical identifier — kept as the
+                             # original name even after the 2026-05-12
+                             # repo rebrand to `inc`, so existing
+                             # lockfiles in downstream repos (lab-control)
+                             # remain valid. Do NOT rename without a
+                             # planned lockfile migration.
 
 agents:
   go-engineer:                                       # stable ID — the dictionary key
