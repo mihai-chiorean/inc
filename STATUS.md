@@ -31,7 +31,9 @@ Per codex review: this is narrower than `/autoplan`. Just the breakdown decision
 
 ## Open items needing my attention
 
-_Populated by `/sitrep` from live Linear/GitHub queries._
+- [MIT-345 — /sitrep --all for cross-project rollup](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup) — side-quest issue created during the /work-breakdown manual test. S-sized. Picks up after Week 2 ships if no higher-priority work appears.
+
+_Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
 
 ## Future work (not inbox)
 
@@ -40,6 +42,7 @@ _Populated by `/sitrep` from live Linear/GitHub queries._
 
 ## Decisions log (recent)
 
+- 2026-05-11 — Ran `/work-breakdown` manual test on the `/sitrep --all` idea. Classified S; created MIT-345. Applied Step-7 Case B (side quest) — did not change `current_objective`. Confirms the skill produces useful Linear artifacts and the side-quest test fires correctly.
 - 2026-05-11 — Week 1 merged (PR #19, MIT-343). Bootstrap loop shipped: STATUS.md schema v1 + thin CLAUDE.md + /sitrep v0 + sitrep-linear wrapper.
 - 2026-05-11 — Per user feedback on PR #19: wrap CLI in a tool, don't bury CLI version handling in skill prose. Pattern: `skills/<skill>/bin/<wrapper>` symlinked to `~/.local/bin/`.
 - 2026-05-11 — Adopted boil-the-lake the gstack way (full adoption, including feature scope). Folded into the Week 1 stance: build the complete useful version of `/sitrep`, not a "recent commits" stub. Recorded in handoff.
