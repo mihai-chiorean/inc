@@ -93,9 +93,13 @@ def parse_frontmatter_permissive(raw: str, source: str = "<frontmatter>") -> dic
     previous field (because that's almost always content inside a multi-line
     description, like `user: "..."` or `Context: ...` in an `<example>` block).
     HOWEVER, if the unrecognized key looks like it could be a real
-    frontmatter field — not in DESCRIPTION_CONTENT_KEYS — emit a stderr
-    warning so the user knows to add it to KNOWN_KEYS rather than silently
-    losing it.
+    frontmatter field, emit a stderr warning so the user knows to add it to
+    KNOWN_KEYS rather than silently losing it.
+
+    Suppression of the warning for DESCRIPTION_CONTENT_KEYS only applies
+    while we're inside a `description:` field. A `user:` or `Context:`
+    line appearing after `tools:` (or any other field) is still surfaced —
+    it's almost certainly a real frontmatter key being mis-attached.
 
     The previous bug (MIT-375): adding `scope:` to frontmatter without
     updating KNOWN_KEYS silently corrupted the `name` field. The warning
@@ -106,27 +110,36 @@ def parse_frontmatter_permissive(raw: str, source: str = "<frontmatter>") -> dic
     out: dict[str, str] = {}
     current_key: str | None = None
     unknown_keys_seen: set[str] = set()
-    for line in raw.splitlines():
+    for lineno, line in enumerate(raw.splitlines(), start=1):
         m = KEY_LINE_RE.match(line)
         if m and m.group(1) in KNOWN_KEYS:
             current_key = m.group(1)
             out[current_key] = m.group(2)
-        elif m and m.group(1) not in DESCRIPTION_CONTENT_KEYS:
-            # Looks like a frontmatter key but isn't recognized. Warn once
-            # per unknown key, then treat as continuation.
+            continue
+        if m:
             k = m.group(1)
-            if k not in unknown_keys_seen:
+            # Only suppress the warning for content-keys when we're actually
+            # inside a description body; outside that scope they're suspect.
+            suppress = current_key == "description" and k in DESCRIPTION_CONTENT_KEYS
+            if not suppress and k not in unknown_keys_seen:
                 unknown_keys_seen.add(k)
-                print(
-                    f"warning: {source}: unrecognized frontmatter key {k!r}. "
-                    f"Treating as continuation of {current_key!r}. "
-                    f"If this is a real field, add {k!r} to KNOWN_KEYS in "
-                    f"scripts/generate-manifest.py.",
-                    file=sys.stderr,
-                )
-            if current_key is not None:
-                out[current_key] += "\n" + line
-        elif current_key is not None:
+                if current_key is None:
+                    print(
+                        f"warning: {source}:{lineno}: unrecognized frontmatter key {k!r} "
+                        f"before any known field — line ignored. "
+                        f"If this is a real field, add {k!r} to KNOWN_KEYS in "
+                        f"scripts/generate-manifest.py.",
+                        file=sys.stderr,
+                    )
+                else:
+                    print(
+                        f"warning: {source}:{lineno}: unrecognized frontmatter key {k!r}. "
+                        f"Treating as continuation of {current_key!r}. "
+                        f"If this is a real field, add {k!r} to KNOWN_KEYS in "
+                        f"scripts/generate-manifest.py.",
+                        file=sys.stderr,
+                    )
+        if current_key is not None:
             out[current_key] += "\n" + line
     for required in REQUIRED_KEYS:
         if required not in out or not out[required].strip():
