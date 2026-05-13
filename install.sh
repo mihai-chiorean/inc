@@ -253,9 +253,12 @@ fi
 # Returns 0 if the agent .md at $1 has `scope: org` in its frontmatter
 # (between the first two `---` lines). Works on macOS bash3 + Linux.
 is_org_agent() {
+    # Case-insensitive match on `scope: org`. POSIX awk doesn't have a
+    # case-insensitive flag, so we lowercase via tolower() before the regex.
+    # Matches `scope: org`, `Scope: Org`, `SCOPE:    Org`, etc.
     awk '
         /^---$/ { n++; if (n==2) exit }
-        n==1 && /^scope:[[:space:]]*org[[:space:]]*$/ { found=1; exit }
+        n==1 { lc = tolower($0); if (lc ~ /^scope:[[:space:]]*org[[:space:]]*$/) { found=1; exit } }
         END { exit !found }
     ' "$1"
 }
@@ -349,6 +352,25 @@ if (( SKIPPED > 0 )); then
     echo "Some entries were skipped because the target exists and is not our symlink." >&2
     echo "Inspect them under ${AGENTS_TARGET} or ${SKILLS_TARGET} and remove or rename, then re-run." >&2
     exit 2
+fi
+
+# Post-install: if we're in org/none mode and there are still non-org agents
+# under ~/.claude/agents/ (e.g. user declined the cleanup prompt), surface
+# this loudly. Otherwise the installer just installed 7 new symlinks while
+# the OLD 48 stayed loaded — install reports success but the user-scope
+# router still sees all 55. Codex caught this on MIT-375 review.
+if [[ -x "$CLEANUP_SCRIPT" && "$AGENTS_MODE" != "all" ]]; then
+    post_rc=0
+    "$CLEANUP_SCRIPT" --status 2>/dev/null || post_rc=$?
+    if [[ $post_rc -eq 10 ]]; then
+        echo >&2
+        echo "${prefix}WARNING: ${AGENTS_TARGET}/ contains stale leftovers from a prior install." >&2
+        echo "${prefix}         The new ${AGENTS_MODE}-mode install added what it should, but old" >&2
+        echo "${prefix}         agents are STILL loaded in every Claude Code session." >&2
+        echo "${prefix}         Run: ./scripts/cleanup-prior-install.sh clean --yes" >&2
+        echo "${prefix}              ./install.sh --link" >&2
+        echo "${prefix}         Or re-run install.sh and answer 'y' to the cleanup prompt." >&2
+    fi
 fi
 
 echo "${prefix}Done."

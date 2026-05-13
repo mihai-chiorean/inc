@@ -125,9 +125,11 @@ old_name_symlinks() {
 # Matches install.sh's is_org_agent semantics so cleanup + install agree on
 # what counts as a "default-install" agent.
 is_org_agent_source() {
+    # Mirror install.sh's case-insensitive match so cleanup and install
+    # agree on what counts as "org" regardless of frontmatter casing.
     awk '
         /^---$/ { n++; if (n==2) exit }
-        n==1 && /^scope:[[:space:]]*org[[:space:]]*$/ { found=1; exit }
+        n==1 { lc = tolower($0); if (lc ~ /^scope:[[:space:]]*org[[:space:]]*$/) { found=1; exit } }
         END { exit !found }
     ' "$1" 2>/dev/null
 }
