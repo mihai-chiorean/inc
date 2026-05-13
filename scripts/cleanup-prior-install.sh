@@ -121,12 +121,28 @@ old_name_symlinks() {
     done
 }
 
+# Returns 0 if the agent .md at $1 has `scope: org` in its frontmatter.
+# Matches install.sh's is_org_agent semantics so cleanup + install agree on
+# what counts as a "default-install" agent.
+is_org_agent_source() {
+    # Mirror install.sh's case-insensitive match so cleanup and install
+    # agree on what counts as "org" regardless of frontmatter casing.
+    awk '
+        /^---$/ { n++; if (n==2) exit }
+        n==1 { lc = tolower($0); if (lc ~ /^scope:[[:space:]]*org[[:space:]]*$/) { found=1; exit } }
+        END { exit !found }
+    ' "$1" 2>/dev/null
+}
+
 # Classify ~/.claude/agents/ contents:
 #   - "clean"  — empty, OR all symlinks point into the current inc workspace
-#                (i.e. the user re-ran install.sh and everything is good).
+#                AND each target is a `scope: org` agent (matches the new
+#                default install per MIT-375).
 #   - "stale"  — contains copies (regular files/dirs that aren't symlinks),
 #                OR symlinks pointing at the old workspace, OR symlinks
-#                pointing somewhere outside the current inc workspace.
+#                pointing somewhere outside the current inc workspace,
+#                OR symlinks pointing at a non-org agent inside this inc
+#                clone (leftover from a prior --include-all-agents install).
 #                In any of these cases the whole tree is a candidate for
 #                backup before re-installing.
 # Echoes one of: "clean" "empty" "missing" "stale:<N>".
@@ -149,13 +165,34 @@ agents_dir_classify() {
     stale=0
     for entry in "$AGENTS_TARGET"/*; do
         [ -e "$entry" ] || [ -L "$entry" ] || continue
+        entry_name="$(basename "$entry")"
         if [ -L "$entry" ]; then
             target="$(readlink "$entry")"
             if [ ! -e "$entry" ]; then
                 stale=$((stale + 1))   # broken — needs backup-and-re-link
             else
                 case "$target" in
-                    $INC_WORKSPACE_PATTERN) : ;;        # ours — clean
+                    $INC_WORKSPACE_PATTERN)
+                        # In-inc target. Root-level non-agent symlinks
+                        # (README.md is the only one install.sh creates
+                        # today) are clean as-is — they're not agents,
+                        # they're documentation pointers.
+                        case "$entry_name" in
+                            README.md)
+                                : ;;   # clean
+                            *)
+                                # Otherwise an inc-source root-level
+                                # symlink should be a `scope: org` agent.
+                                # Non-org at user scope = leftover from a
+                                # prior --include-all-agents install.
+                                if [ -f "$target" ] && is_org_agent_source "$target"; then
+                                    :   # clean
+                                else
+                                    stale=$((stale + 1))
+                                fi
+                                ;;
+                        esac
+                        ;;
                     *) stale=$((stale + 1)) ;;
                 esac
             fi
@@ -168,7 +205,13 @@ agents_dir_classify() {
                         stale=$((stale + 1))            # broken
                     else
                         case "$subtarget" in
-                            $INC_WORKSPACE_PATTERN) : ;;   # ours — clean
+                            $INC_WORKSPACE_PATTERN)
+                                if [ -f "$subtarget" ] && is_org_agent_source "$subtarget"; then
+                                    :   # clean (inc-source + scope:org)
+                                else
+                                    stale=$((stale + 1))   # inc-source but non-org
+                                fi
+                                ;;
                             *) stale=$((stale + 1)) ;;
                         esac
                     fi

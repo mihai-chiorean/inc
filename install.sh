@@ -1,13 +1,31 @@
 #!/bin/bash
 # Install inc agents + skills into ~/.claude/{agents,skills}/
 #
-# Usage: ./install.sh [--link] [--dry-run] [--skills-only] [--cleanup|--auto-cleanup|--no-cleanup]
-#   --link            Symlink instead of copy (keeps repo as source of truth)
-#   --dry-run         Print what would happen without making any changes
-#   --skills-only     Install skills only; skip agents. Recommended for the
-#                     per-project staffing flow (use /staff to populate
-#                     per-project .claude/agents/ instead of dumping all
-#                     agents globally).
+# Usage: ./install.sh [--link] [--dry-run] [--include-all-agents|--skills-only]
+#                     [--cleanup|--auto-cleanup|--no-cleanup]
+#
+#   --link               Symlink instead of copy (keeps repo as source of truth)
+#   --dry-run            Print what would happen without making any changes
+#
+#   Agent installation (mutually exclusive):
+#
+#   (default)            Install ONLY agents tagged `scope: org` in their
+#                        frontmatter — the small set that makes sense to load
+#                        in every Claude Code session. Currently 7 agents:
+#                        hiring-manager, blog-writer, social-amplifier,
+#                        product-manager, tpm, tech-lead, security-auditor.
+#                        Project-shaped agents stay in this repo; consumer
+#                        projects pull a curated subset via /staff.
+#
+#   --include-all-agents Install all 55 agents to user scope. This is the
+#                        old default (pre-MIT-375). NOT recommended: it
+#                        defeats /staff's per-project curation, because
+#                        all agents will be loaded in every session regardless
+#                        of which project you're in.
+#
+#   --skills-only        Install zero agents (skills + bin only). For
+#                        fully-curated setups where every project manages
+#                        its own roster via /staff.
 #   --cleanup         Print the cleanup inventory at startup (preview),
 #                     then proceed. Useful for confirming nothing-to-clean
 #                     before an install. Does NOT change the prompt
@@ -38,20 +56,21 @@ BIN_TARGET="${HOME}/.local/bin"
 
 MODE="copy"
 DRY_RUN=0
-SKILLS_ONLY=0
+AGENTS_MODE="org"     # org (default — agents tagged scope: org) | all | none
 CLEANUP_MODE="auto"   # auto (prompt if stale) | force-prompt | auto-yes | skip
 for arg in "$@"; do
     case "$arg" in
-        --link)          MODE="link" ;;
-        --dry-run)       DRY_RUN=1 ;;
-        --skills-only)   SKILLS_ONLY=1 ;;
-        --cleanup)       CLEANUP_MODE="force-prompt" ;;
-        --auto-cleanup)  CLEANUP_MODE="auto-yes" ;;
-        --no-cleanup)    CLEANUP_MODE="skip" ;;
+        --link)                MODE="link" ;;
+        --dry-run)             DRY_RUN=1 ;;
+        --skills-only)         AGENTS_MODE="none" ;;
+        --include-all-agents)  AGENTS_MODE="all" ;;
+        --cleanup)             CLEANUP_MODE="force-prompt" ;;
+        --auto-cleanup)        CLEANUP_MODE="auto-yes" ;;
+        --no-cleanup)          CLEANUP_MODE="skip" ;;
         -h|--help)
             sed -n '/^# Usage/,/^set/p' "$0" | sed 's/^# //; /^set/d'
             exit 0 ;;
-        *)               echo "unknown arg: $arg" >&2; exit 2 ;;
+        *)                     echo "unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
 
@@ -136,12 +155,20 @@ maybe_run_cleanup() {
 # Run cleanup gate before any install action.
 maybe_run_cleanup
 
-if (( SKILLS_ONLY )); then
-    echo "${prefix}Installing skills only to ${SKILLS_TARGET} (mode: ${MODE})"
-    echo "${prefix}Skipping agents. Use /staff suggest in projects to populate .claude/agents/ per project."
-else
-    echo "${prefix}Installing to ${AGENTS_TARGET} and ${SKILLS_TARGET} (mode: ${MODE})"
-fi
+case "$AGENTS_MODE" in
+    none)
+        echo "${prefix}Installing skills only to ${SKILLS_TARGET} (mode: ${MODE})"
+        echo "${prefix}Skipping all agents. Use /staff suggest in projects to populate .claude/agents/ per project."
+        ;;
+    org)
+        echo "${prefix}Installing org-scope agents + all skills to ${AGENTS_TARGET} and ${SKILLS_TARGET} (mode: ${MODE})"
+        echo "${prefix}Project-shaped agents stay in this repo; use /staff in projects to stage them per-repo."
+        ;;
+    all)
+        echo "${prefix}Installing ALL 55 agents + skills to ${AGENTS_TARGET} and ${SKILLS_TARGET} (mode: ${MODE})"
+        echo "${prefix}WARNING: --include-all-agents loads every agent in every session, defeating /staff curation." >&2
+        ;;
+esac
 
 # Counters for the summary
 LINKED=0
@@ -219,21 +246,49 @@ install_dir() {
 }
 
 run mkdir -p "${SKILLS_TARGET}"
-if (( ! SKILLS_ONLY )); then
+if [[ "$AGENTS_MODE" != "none" ]]; then
     run mkdir -p "${AGENTS_TARGET}"
 fi
 
-# ---- Agents (skipped if --skills-only) ----
+# Returns 0 if the agent .md at $1 has `scope: org` in its frontmatter
+# (between the first two `---` lines). Works on macOS bash3 + Linux.
+is_org_agent() {
+    # Case-insensitive match on `scope: org`. POSIX awk doesn't have a
+    # case-insensitive flag, so we lowercase via tolower() before the regex.
+    # Matches `scope: org`, `Scope: Org`, `SCOPE:    Org`, etc.
+    awk '
+        /^---$/ { n++; if (n==2) exit }
+        n==1 { lc = tolower($0); if (lc ~ /^scope:[[:space:]]*org[[:space:]]*$/) { found=1; exit } }
+        END { exit !found }
+    ' "$1"
+}
+
+# ---- Agents ----
+# AGENTS_MODE controls which agents (if any) get installed at user scope:
+#   none → no agents installed (--skills-only)
+#   org  → only agents tagged `scope: org` in their frontmatter (default)
+#   all  → every agent .md in the category dirs (--include-all-agents)
 agent_count=0
-if (( ! SKILLS_ONLY )); then
+if [[ "$AGENTS_MODE" != "none" ]]; then
     CATEGORIES=(bonus design engineering marketing product project-management studio-operations testing writing)
     for category in "${CATEGORIES[@]}"; do
         src="${SCRIPT_DIR}/${category}"
         [[ -d "${src}" ]] || continue
-        run mkdir -p "${AGENTS_TARGET}/${category}"
+        # Decide if this category has any agents to install before mkdir-ing.
+        category_dir_made=0
         for file in "${src}"/*.md; do
             [[ -f "${file}" ]] || continue
             name="$(basename "${file}")"
+            [[ "${name}" == "README.md" ]] && continue
+            # Filter by scope when in org mode.
+            if [[ "$AGENTS_MODE" == "org" ]] && ! is_org_agent "${file}"; then
+                continue
+            fi
+            # Lazy-create the category dir on first matching agent.
+            if (( ! category_dir_made )); then
+                run mkdir -p "${AGENTS_TARGET}/${category}"
+                category_dir_made=1
+            fi
             install_file "${file}" "${AGENTS_TARGET}/${category}/${name}"
             agent_count=$((agent_count + 1))
         done
@@ -251,8 +306,8 @@ if [[ -d "${SCRIPT_DIR}/skills" ]]; then
     done
 fi
 
-# ---- README (only with full agent install) ----
-if (( ! SKILLS_ONLY )); then
+# ---- README (only if any agents are being installed) ----
+if [[ "$AGENTS_MODE" != "none" ]]; then
     install_file "${SCRIPT_DIR}/README.md" "${AGENTS_TARGET}/README.md"
 fi
 
@@ -276,11 +331,14 @@ if [[ -d "${SCRIPT_DIR}/skills" ]]; then
 fi
 
 echo
-if (( SKILLS_ONLY )); then
-    echo "${prefix}Summary: ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
-else
-    echo "${prefix}Summary: ${agent_count} agents + ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)"
-fi
+case "$AGENTS_MODE" in
+    none)
+        echo "${prefix}Summary: ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)" ;;
+    org)
+        echo "${prefix}Summary: ${agent_count} org agents + ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)" ;;
+    all)
+        echo "${prefix}Summary: ${agent_count} agents (ALL) + ${skill_count} skill dirs + ${bin_count} bins processed (${LINKED} linked, ${COPIED} copied, ${ALREADY} already in place, ${SKIPPED} skipped)" ;;
+esac
 
 if (( bin_count > 0 )); then
     case ":${PATH}:" in
@@ -294,6 +352,25 @@ if (( SKIPPED > 0 )); then
     echo "Some entries were skipped because the target exists and is not our symlink." >&2
     echo "Inspect them under ${AGENTS_TARGET} or ${SKILLS_TARGET} and remove or rename, then re-run." >&2
     exit 2
+fi
+
+# Post-install: if we're in org/none mode and there are still non-org agents
+# under ~/.claude/agents/ (e.g. user declined the cleanup prompt), surface
+# this loudly. Otherwise the installer just installed 7 new symlinks while
+# the OLD 48 stayed loaded — install reports success but the user-scope
+# router still sees all 55. Codex caught this on MIT-375 review.
+if [[ -x "$CLEANUP_SCRIPT" && "$AGENTS_MODE" != "all" ]]; then
+    post_rc=0
+    "$CLEANUP_SCRIPT" --status 2>/dev/null || post_rc=$?
+    if [[ $post_rc -eq 10 ]]; then
+        echo >&2
+        echo "${prefix}WARNING: ${AGENTS_TARGET}/ contains stale leftovers from a prior install." >&2
+        echo "${prefix}         The new ${AGENTS_MODE}-mode install added what it should, but old" >&2
+        echo "${prefix}         agents are STILL loaded in every Claude Code session." >&2
+        echo "${prefix}         Run: ./scripts/cleanup-prior-install.sh clean --yes" >&2
+        echo "${prefix}              ./install.sh --link" >&2
+        echo "${prefix}         Or re-run install.sh and answer 'y' to the cleanup prompt." >&2
+    fi
 fi
 
 echo "${prefix}Done."

@@ -6,28 +6,31 @@ A comprehensive collection of specialized AI agents designed to accelerate and e
 
 This repo is the canonical home for agents and skills. Use `install.sh` to wire them into Claude Code.
 
-### Recommended: skills only + per-project staffing
+### Recommended (default)
 
 ```bash
 git clone <this-repo>
 cd inc
-./install.sh --link --skills-only
+./install.sh --link
 
 # Set this in ~/.zshrc so `staff` knows where HR lives:
 echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
 ```
 
-This installs only the skills (including `/staff`) and leaves `~/.claude/agents/` empty. Each skill that ships executables under its `bin/` dir is symlinked into `~/.local/bin/` — for the staff skill that means `staff suggest`, `staff apply`, `staff status`, etc. work as plain commands from any project.
+The default install puts at user scope:
 
-Use `staff suggest` in each project to populate `.claude/agents/` — the [Per-project agent staffing skill](https://linear.app/mitzoku/project/per-project-agent-staffing-skill-b7691b903726) avoids the bloat of dumping all 56 agents into every Claude Code session.
+- **All skills** (`~/.claude/skills/`) — procedural overlays load in every session.
+- **Skill binaries** (`~/.local/bin/`) — `staff`, `sitrep-linear`, `design-doc-scaffold`, `plan-eng-review-audit`.
+- **Org-scope agents** (`~/.claude/agents/`) — currently 7: `hiring-manager`, `blog-writer`, `social-amplifier`, `product-manager`, `tpm`, `tech-lead`, `security-auditor`. These genuinely fire across every project. An agent is "org-scope" iff its frontmatter contains `scope: org`.
 
-### Legacy: install all agents globally
+The other ~48 project-shaped agents stay in this repo. In each project, use `/staff` (or `staff suggest && staff apply`) to stage a curated subset into `<project>/.claude/agents/`.
+
+### Alternative modes
 
 ```bash
-./install.sh --link
+./install.sh --link --skills-only         # zero agents at user scope; fully /staff-driven
+./install.sh --link --include-all-agents  # all 55 agents at user scope (defeats /staff curation; not recommended)
 ```
-
-Symlinks every agent into `~/.claude/agents/` and every skill into `~/.claude/skills/`. All agents load into every Claude Code session. Kept for backwards compatibility; prefer `--skills-only` + `/staff` for new setups.
 
 ### Flags
 
@@ -35,13 +38,15 @@ Symlinks every agent into `~/.claude/agents/` and every skill into `~/.claude/sk
 |---|---|
 | `--link` | Symlink instead of copy (keeps the repo as source of truth; updates via `git pull`) |
 | `--dry-run` | Print what would happen, no writes |
-| `--skills-only` | Install skills only; skip agents |
+| `--include-all-agents` | Install all 55 agents at user scope (not recommended; loads every agent in every session) |
+| `--skills-only` | Install zero agents (skills + bins only) |
+| `--cleanup` / `--auto-cleanup` / `--no-cleanup` | Control the pre-install cleanup gate. See `docs/getting-started/bootstrap.md` |
 
 ### Idempotency
 
-`./install.sh` is safe to re-run. Existing symlinks pointing into this repo are left alone; targets that point elsewhere are reported and skipped (no clobbering).
+`./install.sh` is safe to re-run. Existing symlinks pointing into this repo are left alone; targets that point elsewhere are reported and skipped (no clobbering). The cleanup gate (`scripts/cleanup-prior-install.sh`) catches most "stale leftover from a prior install" cases automatically.
 
-After updates: `git pull && ./install.sh --link --skills-only`. Then in each project, `/staff sync` (when MIT-290 lands) will refresh staffed agents.
+After updates: `git pull && ./install.sh --link`. Then in each project, `staff sync` refreshes staffed agents against the new HR HEAD.
 
 ### Restart Claude Code
 

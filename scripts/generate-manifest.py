@@ -57,7 +57,7 @@ CATEGORIES = [
 ]
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-KNOWN_KEYS = {"name", "description", "model", "color", "tools"}
+KNOWN_KEYS = {"name", "description", "model", "color", "tools", "scope"}
 KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
 
 
@@ -162,9 +162,19 @@ def build_entry(path: Path, existing: dict) -> tuple[str, dict]:
     prev_desc_hash = prev.get("description_hash") or ""
     summary = prev_summary if prev_desc_hash == desc_hash else ""
 
+    # Read `scope` from frontmatter; default to "project". The org set is
+    # what install.sh installs at user scope by default; the rest go to
+    # per-project .claude/agents/ via /staff. See docs/getting-started/
+    # bootstrap.md and MIT-375.
+    scope_raw = frontmatter.get("scope", "project")
+    scope = scope_raw.strip().lower() if isinstance(scope_raw, str) else "project"
+    if scope not in {"project", "org"}:
+        scope = "project"
+
     entry = {
         "file": rel,
         "category": category,
+        "scope": scope,
         "description": description,
         "description_summary": summary,
         "description_hash": desc_hash,
