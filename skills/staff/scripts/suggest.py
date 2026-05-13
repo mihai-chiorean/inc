@@ -37,6 +37,27 @@ import _llm  # type: ignore  # noqa: E402
 SUGGEST_SCHEMA_VERSION = 1
 
 DOC_FILES = ("CLAUDE.md", "README.md", "README.rst", "README", "AGENTS.md")
+# Dependency / build-manifest files at the project root. Scanned for regex
+# hints alongside DOC_FILES so signals like `(?i)\bopenai\b` fire on
+# package.json deps, not just on prose. Glob expansion is intentionally
+# skipped — these are well-known root filenames.
+DEP_FILES = (
+    # Node
+    "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
+    # Python
+    "requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock",
+    "poetry.lock", "uv.lock", "setup.py",
+    # Go
+    "go.mod", "go.sum",
+    # Rust
+    "Cargo.toml", "Cargo.lock",
+    # Ruby
+    "Gemfile", "Gemfile.lock",
+    # PHP
+    "composer.json",
+    # Java / Kotlin
+    "pom.xml", "build.gradle", "build.gradle.kts",
+)
 DOC_EXCERPT_BYTES = 4096  # per doc file when building the LLM prompt
 GLOB_DEPTH_LIMIT = 4
 EXCLUDED_DIRS = frozenset({
@@ -45,6 +66,21 @@ EXCLUDED_DIRS = frozenset({
     ".terraform", ".cache", ".next", ".nuxt", ".turbo",
 })
 DOC_FILE_MAX_BYTES = 1_048_576  # 1 MiB; refuse to scan larger docs
+# Lockfiles (package-lock.json, Cargo.lock) regularly exceed 1 MiB on real
+# projects. Give dep files more headroom so the regex scan still finds
+# deps in moderately large lockfiles, without enabling pathological
+# multi-hundred-MiB reads. Note: lockfiles include transitive deps too, so
+# matches against them can be slightly noisier than matches against direct
+# manifest files like package.json or go.mod.
+DEP_FILE_MAX_BYTES = 5 * 1_048_576  # 5 MiB
+
+# Guardrail threshold for empty description_summary: fire if ≥30% of
+# manifest agents have empty summaries, or ≥10 agents do (whichever
+# triggers first). The LLM matcher's fallback truncates raw descriptions
+# to this many chars when description_summary is empty.
+EMPTY_SUMMARY_PCT_THRESHOLD = 0.30
+EMPTY_SUMMARY_COUNT_THRESHOLD = 10
+EMPTY_SUMMARY_FALLBACK_CHARS = 200
 
 
 def load_manifest(hr_repo: Path) -> dict:
@@ -181,20 +217,25 @@ def file_match(project_root: Path, pattern: str) -> list[str]:
     return [str(m.relative_to(project_root)) for m in matches if m.exists()]
 
 
-def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
-    """Return (filename, snippet) for each doc file the regex matches."""
-    try:
-        rx = re.compile(pattern)
-    except re.error as exc:
-        print(f"warning: invalid regex {pattern!r}: {exc}", file=sys.stderr)
-        return []
+def _scan_files(
+    project_root: Path,
+    filenames: tuple[str, ...],
+    rx: re.Pattern[str],
+    max_bytes: int,
+) -> list[tuple[str, str]]:
+    """Return (filename, snippet) for each project-root file matching rx.
+
+    Files larger than max_bytes or under EXCLUDED_DIRS are skipped silently.
+    Only top-level files in project_root are considered (no glob)."""
     hits: list[tuple[str, str]] = []
-    for name in DOC_FILES:
+    for name in filenames:
         p = project_root / name
         if not p.is_file():
             continue
+        if _is_under_excluded(p, project_root):
+            continue
         try:
-            if p.stat().st_size > DOC_FILE_MAX_BYTES:
+            if p.stat().st_size > max_bytes:
                 continue
             text = p.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -202,6 +243,23 @@ def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
         m = rx.search(text)
         if m:
             hits.append((name, m.group(0)))
+    return hits
+
+
+def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
+    """Return (filename, snippet) for each doc or dep file the regex matches.
+
+    Doc files (CLAUDE.md / README / AGENTS.md) and dependency manifests
+    (package.json, requirements.txt, go.mod, Cargo.toml, ...) at the project
+    root are both scanned. This lets hints like `(?i)\\bopenai\\b` fire on
+    package.json deps even when the prose docs never mention OpenAI."""
+    try:
+        rx = re.compile(pattern)
+    except re.error as exc:
+        print(f"warning: invalid regex {pattern!r}: {exc}", file=sys.stderr)
+        return []
+    hits = _scan_files(project_root, DOC_FILES, rx, DOC_FILE_MAX_BYTES)
+    hits.extend(_scan_files(project_root, DEP_FILES, rx, DEP_FILE_MAX_BYTES))
     return hits
 
 
@@ -341,7 +399,7 @@ def build_llm_prompt(
         else:
             text = (entry.get("description_summary") or "").strip()
             if not text:
-                text = (entry.get("description") or "").strip().replace("\n", " ")[:200] + "..."
+                text = (entry.get("description") or "").strip().replace("\n", " ")[:EMPTY_SUMMARY_FALLBACK_CHARS] + "..."
         parts.append(f"  [{cat}] {aid}: {text}")
 
     parts.append("")
@@ -395,6 +453,59 @@ def llm_proposals(
             "source": "llm" if det is None else "llm+deterministic",
         })
     return sorted(out, key=lambda p: p["id"])
+
+
+def _empty_summary_agents(manifest: dict) -> list[str]:
+    """Return sorted IDs whose description_summary is empty/missing."""
+    out: list[str] = []
+    for aid, entry in (manifest.get("agents") or {}).items():
+        if not (entry.get("description_summary") or "").strip():
+            out.append(aid)
+    return sorted(out)
+
+
+def should_warn_empty_summaries(manifest: dict) -> tuple[bool, int, int]:
+    """Decide whether the manifest is in degraded-summary state.
+
+    Returns (warn, empty_count, total). Fires when ≥30% of agents have empty
+    description_summary, or ≥10 do, whichever triggers first. Returns
+    (False, 0, 0) for an empty manifest so the warning never fires on
+    pathological inputs."""
+    empties = _empty_summary_agents(manifest)
+    total = len(manifest.get("agents") or {})
+    if total == 0:
+        return (False, 0, 0)
+    pct_trips = (len(empties) / total) >= EMPTY_SUMMARY_PCT_THRESHOLD
+    count_trips = len(empties) >= EMPTY_SUMMARY_COUNT_THRESHOLD
+    return (pct_trips or count_trips, len(empties), total)
+
+
+def _emit_empty_summary_warning(empty_count: int, total: int) -> None:
+    """Print a loud-but-not-fatal warning to stderr."""
+    pct = (empty_count / total * 100) if total else 0
+    print(
+        "warning: degraded manifest — "
+        f"{empty_count}/{total} agents ({pct:.0f}%) have empty "
+        "description_summary.",
+        file=sys.stderr,
+    )
+    print(
+        "  The LLM matcher will fall back to a "
+        f"{EMPTY_SUMMARY_FALLBACK_CHARS}-char truncation of each affected "
+        "agent's raw description,",
+        file=sys.stderr,
+    )
+    print(
+        "  which degrades recall — especially for agents whose "
+        "differentiating signal lives in their <example> blocks.",
+        file=sys.stderr,
+    )
+    print(
+        "  Fix (run from the HR repo root):\n"
+        "    python3 scripts/generate-manifest.py --llm-summaries",
+        file=sys.stderr,
+    )
+    print("  Proceeding anyway.", file=sys.stderr)
 
 
 def collect_proposals(manifest: dict, project_root: Path) -> tuple[list[dict], list[str]]:
@@ -498,6 +609,9 @@ def main() -> int:
         proposals = [{**p, "source": "deterministic"} for p in deterministic]
         provider_name = None
     else:
+        warn, empty_count, total = should_warn_empty_summaries(manifest)
+        if warn:
+            _emit_empty_summary_warning(empty_count, total)
         try:
             provider = _llm.get_provider(args.llm_provider)
             proposals = llm_proposals(project_root, manifest, deterministic, provider, args.strategy)
