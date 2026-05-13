@@ -43,7 +43,11 @@ agents:
       and redundant-call rate, and flag the specific intents where tool choice changed."\n<commentary>\nTool-call accuracy
       and trajectory shape are behavior metrics, not correctness. test-writer-fixer would not have caught this. performance-benchmarker
       would only see the latency side; this agent couples behavior + cost in one report.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use when a project needs evaluation harnesses for LLM-based agent systems, especially autonomous
+      coding or research agents where behavioral quality must be tracked across changes. Specializes in judge-model rubrics,
+      deterministic eval task batteries, tool-call and trajectory scoring, cost/latency regression tied to quality, CI gating,
+      and security-policy test matrices. Do not route per-PR unit test writing, A/B rollout analysis, AI feature implementation,
+      threat-model definition, or general production observability work here.
     description_hash: sha256:92ba5b982405dcdf945444bafd022e3819272324bf3ed5e6b31bd2fd335fedbc
     body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
     tags:
@@ -73,7 +77,10 @@ agents:
       computer vision features\nuser: "Users should be able to search products by taking a photo"\nassistant: "I''ll implement
       visual search using computer vision. Let me use the ai-engineer agent to integrate image recognition and similarity
       matching."\n<commentary>\nComputer vision features require efficient processing and accurate model selection.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for projects that add AI or ML behavior to an application, including LLM chatbots, recommendation
+      systems, intelligent automation, visual search, and computer vision features. Specializes in practical implementation
+      details such as model selection, prompt design, token and response handling, ML pipelines, user-behavior learning, similarity
+      matching, and deployment-oriented integration. No explicit anti-scope is stated.
     description_hash: sha256:c0a2acc67126f6bb7d7b3514b956e0f1b7d2f8e4a9436fe6e4ac59aed6a223c5
     body_hash: sha256:db791bde5f3dd5f9c0c3d0c0ef645834d85f84370463d325942d5a0544309c1a
     tags:
@@ -151,7 +158,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: '{"analytics-reporter":"Use for tasks involving metrics analysis, performance reporting, user behavior
+      analysis, A/B test interpretation, revenue diagnostics, and data-driven recommendations. It specializes in turning raw
+      analytics into concise insights, trend findings, conversion bottlenecks, feature usage priorities, and growth opportunities.
+      No explicit anti-scope is specified."}'
     description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
     body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
     tags:
@@ -223,7 +233,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for API validation work before deployment or when investigating API reliability, including performance,
+      load, contract, and security testing. It specializes in exercising endpoints against expected behavior and specifications,
+      measuring response times, error rates, resource usage, and identifying bottlenecks or common vulnerabilities such as
+      injection, authentication bypass, and data exposure. No explicit anti-scope is defined.
     description_hash: sha256:42930722e2291ac387e823e8d83aa8fa4086d914c48be37fa9602396526c77d2
     body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
     tags:
@@ -262,7 +275,10 @@ agents:
       user: "Should we change our app icon? Users say it''s boring"\nassistant: "Let''s test that systematically. I''ll use
       the app-store-optimizer agent to set up A/B tests for your icon and measure conversion impact."\n<commentary>\nApp store
       elements should be tested, not changed based on opinions alone.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks involving app store listing preparation, keyword research, metadata optimization, conversion-rate
+      improvement, A/B testing of store assets, or app store performance analysis. Specializes in improving organic visibility
+      and downloads through ASO research, competitive keyword targeting, listing copy, and evaluation of icons or other store
+      elements. No explicit anti-scope is defined.
     description_hash: sha256:fddb282f8ab22cf2ba6beea5024bea12d8bdbc9ef38bb9323a27265883e78d2a
     body_hash: sha256:da74e59dd6809cc0d3eddae113819aa56f743983171d190370fc36605629d9cf
     tags:
@@ -291,7 +307,9 @@ agents:
       Implementing authentication system\nuser: "Add OAuth2 login with Google and GitHub"\nassistant: "I''ll implement secure
       OAuth2 authentication. Let me use the backend-architect agent to ensure proper token handling and security measures."\n<commentary>\nAuthentication
       systems require careful security considerations and proper implementation.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for backend work involving API design, server-side implementation, database schema or query optimization,
+      authentication, and scalable service architecture. It specializes in secure, performant backend systems, including RESTful
+      API structure, rate limiting, indexing strategies, OAuth2 flows, and token handling. No explicit anti-scope is stated.
     description_hash: sha256:c4420bdc7ddddba5ba5963b7d4d8c6a2434cd0c3f387777bfd0ac7b7e4bbb4a3
     body_hash: sha256:cd1b035250e5c927fa51a2b116dcd139d1f374ae3aa2adb41abed9f01ee550c9
     tags:
@@ -331,7 +349,12 @@ agents:
       deserve the most skepticism. I''ll use the bay-value-hunter agent to find what the listing isn''t telling you — permit
       gaps, foundation concerns, tenant-in-place wrinkles, or Hayward Fault proximity — before you tour."\n<commentary>\nA
       disciplined investor kills most deals. Great-looking deals usually have a catch.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for disciplined evaluation of Bay Area residential real estate in San Francisco, Berkeley, and
+      Albany, especially owner-occupant/investor decisions near Berkeley/Albany. Specializes in finding value situations such
+      as mispriced homes, fixers, stale listings, estate or probate sales, and underwriting them with local permit sources,
+      neighborhood context, hazard exposure, rent-control rules, rehab estimates, ARV ranges, buy targets, and pursue/monitor/pass
+      verdicts. Do not use for general pretty-home shopping or lifestyle-driven listing browsing without an investment or
+      value thesis.
     description_hash: sha256:bea5f5c237d012ae5145407edbe7bfb7c83abc51d49a7e6c0fab87b9f9199fdf
     body_hash: sha256:86a9c3ac3b46a5f6d538199a38131b5f5e710fdfc13208f40eca86dbb1e7cbdc
     tags:
@@ -359,7 +382,11 @@ agents:
       like observer-making-sense. I''ll use the blog-writer agent — the drafting will help find the thesis."\n</example>\n\n<example>\nContext:
       Existing draft\nuser: "I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me sharpen it?"\nassistant:
       "Existing-draft branch. I''ll use the blog-writer agent to review and run the codex loop."\n</example>'
-    description_summary: ''
+    description_summary: Use for developing, drafting, reviewing, or refining posts for Mihai's personal blog, including half-formed
+      observations, lessons from technical work, founder theses, and existing drafts. It specializes in interactive clarification,
+      finding or sharpening the thesis, drafting in Mihai's voice, and iterating through codex CLI feedback rounds. It is
+      not intended for generic content work outside the personal blog context or for tasks that do not involve shaping a blog
+      post or draft.
     description_hash: sha256:0dcb34d683192fa045b0d78015c28918a557aec21132b2ec9c7119cb1b46ba33
     body_hash: sha256:670f5a5acffa9f42737319ca2aaf2cc2ec73126821aadbedebf4eefc502f2acc
     tags:
@@ -431,7 +458,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for tasks involving brand guideline creation, visual identity definition, cross-platform brand
+      consistency, brand asset organization, or modernization of an existing brand. It specializes in translating product
+      positioning into reusable visual standards, color and asset guidance, and cohesive brand experiences across touchpoints.
+      No explicit anti-scope is defined in the source description.
     description_hash: sha256:566ed0d7859e64886f9e10f95038220dc51ee20d472461a382a8cf1972e20677
     body_hash: sha256:c021eb05dcd6b2e643b3510d685bd8e85e0bd0292098b8c24df2d3717260da3b
     tags:
@@ -465,7 +495,10 @@ agents:
       Assessing competitive threat\nuser: "Could Spotify just build what we''re building?"\nassistant: "Platform risk is real.
       I''ll use the competitive-intel agent to assess the likelihood and timeline of incumbents entering your space."\n<commentary>\nUnderstanding
       whether a big player will copy you is critical for strategy.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for deep competitive analysis when evaluating market entry, competitor strategy, differentiation
+      in crowded categories, or platform/incumbent threat. Specializes in reverse-engineering business models, interpreting
+      strategic moves such as funding and feature launches, mapping competitive dynamics, and identifying underserved segments
+      or whitespace. Not intended for surface-level feature comparisons or generic market summaries.
     description_hash: sha256:36865a28cdb1e3968c392a819f372e916007ed1f751f363e7c2fee57cae468fb
     body_hash: sha256:9dcbd738a00617921194b7e5c10916726e6b2f959e8d8b8192215b561ac9a33c
     tags:
@@ -485,7 +518,9 @@ agents:
     description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
       copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
       unique requirements.
-    description_summary: ''
+    description_summary: '{"content-creator":"Use for tasks that require creating or adapting written content across multiple
+      channels, including blog posts, video scripts, and social media copy. It specializes in reshaping a consistent brand
+      message for each platform''s format, audience expectations, and constraints. No explicit anti-scope is defined."}'
     description_hash: sha256:7bccb0c446911812108bdb4a27effe59730af9f65fa7f4eab43eb0b5db6294fb
     body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
     tags:
@@ -521,7 +556,11 @@ agents:
       "Mixed signals usually mean you''re talking to different segments or asking the wrong questions. Let me use the customer-interviewer
       agent to analyze your interview notes and find the real patterns."\n<commentary>\nPattern recognition across interviews
       is where the gold is — but only if the data is clean.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for preparing customer discovery interviews, choosing interview segments, generating non-leading
+      questions, debriefing conversations, and validating problem hypotheses through user interviews. It specializes in applying
+      The Mom Test methodology to separate concrete past behavior, real pain, commitments, and segment patterns from compliments
+      or vague enthusiasm. It should not be used to seek validation by pitching an idea, asking leading questions, or treating
+      positive reactions as evidence without behavioral signal.
     description_hash: sha256:822b1bdaecdefdba95bfb6dabee5a9bd8cd3e8827256d8f6c119ec0bf937cacd
     body_hash: sha256:6499b9c49dc39d0ec322832c42a3d5eb7f3a55e4fd1c2ddce10bae5b4252df06
     tags:
@@ -549,7 +588,11 @@ agents:
       Schema drift detection\nuser: "Production has columns that aren''t in any migration file"\nassistant: "Schema drift
       indicates out-of-band changes. Let me use the db-migration agent to audit the production schema against migration history."\n<commentary>\nManual
       database changes cause drift that makes migrations fail or miss columns.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for creating, reviewing, and reconciling database migrations, especially when migration ordering,
+      rollback safety, destructive schema changes, or cross-repository conflicts are involved. It specializes in auditing
+      schema drift, coordinating migration histories across Go and Swift backends, and keeping ORM models consistent with
+      the database schema. Do not route general database query work, application feature implementation, or unrelated ORM
+      refactors here unless the task directly affects schema migration correctness.
     description_hash: sha256:8fb6338f3abd635eedf995fefd52cfad6027edeabd1a79d372bf73a82737b3ad
     body_hash: sha256:f65347a48513300ad3b0352c6919ffb0dabb472837c63f52a9bc5eb711f3dba1
     tags:
@@ -586,7 +629,10 @@ agents:
       Monitoring and alerting setup\nuser: "We have no idea when things break in production"\nassistant: "Observability is
       crucial for rapid iteration. I''ll use the devops-automator agent to set up comprehensive monitoring and alerting."\n<commentary>\nProper
       monitoring enables fast issue detection and resolution in production.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks involving CI/CD setup, deployment automation, cloud infrastructure configuration, autoscaling,
+      load balancing, monitoring, and alerting. It specializes in operational automation for rapid development cycles, including
+      pipeline stages for testing, building, deployment, and production observability. No explicit anti-scope is specified
+      in the definition.
     description_hash: sha256:541aaa2716c4eb47007eb4a3fffa1a16e4a2ae5a5c834e72aee0f83d3032879f
     body_hash: sha256:00221538b3b9d90388c1790337fdef042850da4d9babe90747c76a6cc736161b
     tags:
@@ -623,7 +669,11 @@ agents:
       Cross-compilation\nuser: "The Swift binary crashes on Jetson but works on macOS"\nassistant: "ARM64 cross-compilation
       has platform-specific issues. Let me use the embedded-device agent to check architecture, linking, and runtime dependencies."\n<commentary>\nCross-compiled
       Swift binaries may have different Foundation behavior or missing system libraries.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for WendyOS device-side work involving Yocto builds and recipes, wendy-agent behavior, containerd
+      integration, Bluetooth or mDNS discovery, ARM64/Jetson cross-compilation, OTA updates, and device identity. It specializes
+      in embedded Linux debugging across build layers, runtime dependencies, device-to-cloud connectivity, mTLS lifecycle
+      issues, and platform-specific failures on target hardware. Do not route general cloud, frontend, or application tasks
+      here unless the issue depends on device firmware, agent runtime, provisioning, or edge integration.
     description_hash: sha256:5030e05d113f6cbb5f69d615a941fbe68b1ce7fd7efc7bd1fe9e4c5eb322404e
     body_hash: sha256:b2a9e23c8a1ae21a8fa709b6f3190508a12023125bfe8aefa1664a98263c89db
     tags:
@@ -663,7 +713,12 @@ agents:
       Yocto builds take 4 hours in CI, how do we speed this up?"\nassistant: "Long Yocto CI builds usually mean poor sstate-cache
       utilization. I''ll use the embedded-linux agent to optimize your pipeline with KAS and proper caching."\n<commentary>\nWith
       shared sstate-cache and downloads, incremental Yocto builds should take under 30 minutes. KAS makes this reproducible.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for embedded Linux work involving Yocto/OpenEmbedded builds, recipe debugging, BSP integration,
+      kernel and bootloader configuration, device trees, cross-compilation, OTA update frameworks, and CI/CD for embedded
+      image builds. It specializes in ARM64 targets including Jetson with meta-tegra, Raspberry Pi with meta-raspberrypi,
+      and custom board bring-up where layer configuration, machine definitions, partition layout, and build caching matter.
+      Do not route general application development, cloud-only CI, or non-Linux firmware tasks here unless they directly affect
+      the embedded Linux build or runtime platform.
     description_hash: sha256:dd2add70422658e8b6053980aec303a10ac0bd86413d662e7ea23191404162d2
     body_hash: sha256:ec4a7813edc537552bc5dcf6469bbe683a19056b532e58ac012c095af498deec
     tags:
@@ -708,7 +763,12 @@ agents:
       AI avatar feature or remove it?"\nassistant: "Let me analyze the experiment data to inform this decision. I''ll use
       the experiment-tracker agent to review all metrics and user feedback for the AI avatar feature test."\n<commentary>\nProduct
       decisions should be backed by experiment data, not gut feelings.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use when a project starts, changes, monitors, or analyzes an experiment involving real users, such
+      as an A/B test, feature rollout, product iteration, or newly introduced feature flag or experimental code path. Specializes
+      in experiment design, instrumentation, success metrics, statistical analysis, evidence gathering, written readouts,
+      and recommendations that name a winning variant or recommend ship/kill. Do not use for final product decision ownership,
+      which belongs to product management, or for judge-graded agent quality evaluations, which belong to agent evaluation
+      work.
     description_hash: sha256:5cc753105623c45cae07a79a52f64b9bc56f0eb4d892f53b452c8ad933f10ada
     body_hash: sha256:7b5729f9a6aba26a84e3ab9481381b5f034aa93a30375cdc17851b8c4e3fd8aa
     tags:
@@ -741,7 +801,11 @@ agents:
       Identifying user pain points\nuser: "Users seem frustrated but I can''t pinpoint why"\nassistant: "I''ll dig into the
       feedback to identify specific pain points. Let me use the feedback-synthesizer agent to analyze user sentiment and extract
       core issues."\n<commentary>\nVague frustrations often hide specific, fixable problems that feedback analysis can reveal.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use when a task involves analyzing user feedback from multiple sources, such as app store reviews,
+      support tickets, surveys, launch reactions, or feature requests. It specializes in identifying recurring complaints,
+      extracting pain points, summarizing sentiment, and turning raw feedback into prioritized product insights. It is not
+      the right fit for implementing the resulting product changes or making prioritization decisions without user-feedback
+      evidence.
     description_hash: sha256:33c48863ef095f3806a434e2208d129bc53ebd2b64d0cd1a92dd5fdfb94a268b
     body_hash: sha256:058aefb3e409dafa316865dcb22be26d799ca4e6c5fcf5cbff96f852dda0cca5
     tags:
@@ -813,7 +877,11 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for project tasks involving budgets, cost optimization, revenue forecasting, profitability analysis,
+      runway, burn rate, investor reporting, or monetization tradeoffs. It specializes in financial modeling, unit economics,
+      allocation planning, ROI analysis, and turning messy financial inputs into decision-ready projections and reports. It
+      is not intended for general product strategy, user research, engineering implementation, or marketing work unless the
+      task is primarily financial.
     description_hash: sha256:6d3be69546e4fc0ba9251c3146e637fe2bc3b86016caa3077d5737573148e2a7
     body_hash: sha256:a88541e1eed4779a04b075df9daf7c30fc6d8ca6b4a58af04e7ab91d81252f09
     tags:
@@ -843,7 +911,10 @@ agents:
       optimization is crucial for user experience. I''ll use the frontend-developer agent to implement virtualization and
       optimize rendering."\n<commentary>\nFrontend performance requires expertise in React rendering, memoization, and data
       handling.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for building and fixing web user interfaces, including React, Vue, or Angular components, responsive
+      layouts, state management, and frontend performance work. Specializes in accessible, responsive, performant web applications,
+      with emphasis on CSS/mobile behavior, rendering optimization, memoization, virtualization, and handling large client-side
+      datasets. No explicit anti-scope is stated.
     description_hash: sha256:dff300d287e2a0e67cc1bfe3db8f8df360906a56b6cd24a74766b6c9fec9c060
     body_hash: sha256:755c598761f90dc46fdd3cd3d634c7df4c291df49ca2e297c8019de056998056
     tags:
@@ -942,7 +1013,11 @@ agents:
       "Cross-architecture support requires compile-time and runtime dispatch based on SM version. I''ll use the gpu-engineer
       agent to implement proper architecture-aware kernel selection."\n<commentary>\nEach GPU generation introduces new instructions
       and changes resource limits.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for CUDA kernel work, TensorRT/TensorRT-LLM pipelines, CUTLASS, NVIDIA GPU performance tuning,
+      profiling, and GPU-accelerated compute tasks. Specializes in NVIDIA architecture details across Hopper, Blackwell, GeForce,
+      and datacenter SKUs, including shared memory, registers, occupancy, memory layout, warp-level programming, and architecture-aware
+      dispatch. Also fits hardware-specific kernel failures, inference throughput bottlenecks, custom fused kernels, and porting
+      kernels across GPU generations; no explicit anti-scope is stated.
     description_hash: sha256:05a872cd3bce302c6326ebb5388ef50d849d68a1be8b06732fc3fb0a6ae17142
     body_hash: sha256:7f21e56108f4fb29b32dec7a7607db922679d49aa1d4d693b2826a3336d33b79
     tags:
@@ -968,7 +1043,11 @@ agents:
     description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines
       marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive
       exponential user growth.
-    description_summary: ''
+    description_summary: Use for tasks focused on rapid user acquisition, viral loop design, growth experiment planning, and
+      scaling measurable adoption. It specializes in combining marketing strategy, product optimization, and data analysis
+      to identify growth opportunities and design systems that improve activation, retention, referral, or conversion. It
+      is not the right fit for work that is primarily brand design, long-form content production, or general product development
+      without a growth metric or experiment focus.
     description_hash: sha256:4ebbf6891930826ca69b97cea54fce1f96056c7d5256af40a20b73b6f6207dd3
     body_hash: sha256:bd7887081e9159ed64b2803033114471f84269f3205b22e513526cd840b8225a
     tags:
@@ -997,7 +1076,10 @@ agents:
       Adding a new gRPC service\nuser: "Add a new RPC to the certificate service proto"\nassistant: "Proto changes affect
       all consumers. Let me use the grpc-contracts agent to trace all implementations and ensure compatibility."\n<commentary>\nProto
       changes must be coordinated across Go, Swift, and TypeScript consumers.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks involving gRPC/protobuf contract compatibility across Go, Swift, TypeScript, or other
+      backends. Specializes in comparing cross-language behavior such as ALB header parsing, auditing proto file bundling
+      and deployment path resolution, and designing contract tests for RPC changes. Best suited when a proto or transport-layer
+      change can affect multiple consumers or environments.
     description_hash: sha256:72ccf028e1e2b7d521dbeae8aa957a56232814c18f17988e2c9e97eea8e7ba94
     body_hash: sha256:fe8466920f7dcebc426f11d25b1b5220fecf7e3f9dc8e35cfa3b3d8756eed1bd
     tags:
@@ -1045,7 +1127,11 @@ agents:
       has, (3) missing coverage — recurring task types with no clear owner. Output is a prioritized list, not a set of file
       changes — you decide what to act on."\n<commentary>\nAudit mode is read-only. The value is the prioritization: which
       overlap is costing you most churn, which gap is hit most often. That''s the judgment call, not the listing itself.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: 'Use for maintaining and auditing a Claude Code subagent roster: evaluating whether real work exposes
+      a coverage gap, overlap, or scope drift in existing role definitions. It specializes in comparing proposed or observed
+      task areas against current agents, deciding whether to extend an existing role, split out a new one, no-op, or refresh
+      stale `.md` definitions through codex CLI iteration. In audit mode it is read-only and should produce prioritized findings
+      rather than file changes; it should not create duplicate agents without first proving existing coverage is insufficient.'
     description_hash: sha256:3be5b42dfe3f0037ae0a3f77ac652015d658ef637cf02ceaeb8d3ff654dd231d
     body_hash: sha256:8736940aa76b1aa8b3949af8e431e7ca71c64ffebd905dc0eaf2568b4cb9e6e5
     tags:
@@ -1078,7 +1164,11 @@ agents:
       we keep going?"\nassistant: "Those numbers tell a story. Let me use the idea-evaluator agent to diagnose what''s happening
       and recommend kill, pivot, or persevere."\n<commentary>\nThe hardest startup skill is knowing when to quit vs. when
       to push through.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for assessing startup or product ideas before or after an MVP, especially when deciding what
+      to build, which idea to prioritize, or whether to kill, pivot, or continue. It specializes in structured evaluation
+      using YC, lean startup, jobs-to-be-done, scoring frameworks, assumption testing, and pre-mortems to identify the riskiest
+      unknowns and likely failure modes. It is not scoped for building the product itself; its role is evaluation, diagnosis,
+      and decision support.
     description_hash: sha256:710008b81d82b3176e6ac87b08cd93aa809fb52221909002236b1102d8351604
     body_hash: sha256:584ca15275c89eabc8983ae4f5a78987be94072335bca89911ce6fafa5c89de0
     tags:
@@ -1108,7 +1198,11 @@ agents:
       fails with permission denied"\nassistant: "IAM issues need systematic debugging. Let me use the infra-reviewer agent
       to check service account roles and API enablement."\n<commentary>\nGCP IAM requires specific roles per resource type
       and APIs must be enabled before use.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for infrastructure review tasks involving Terraform plans, GCP resource configuration, IAM/API
+      enablement, and CI/CD deployment pipelines before changes are applied. Specializes in GCP services such as Cloud Run,
+      Certificate Manager, Network Security, CAS, Terraform state drift, resource dependency and location constraints, and
+      conflicts between Terraform and gcloud-managed deployments. Anti-scope is not explicitly defined, but the focus is cloud
+      infrastructure validation rather than application code review or feature implementation.
     description_hash: sha256:0d732895f7447d12709f358333172f71e3630f166fa5d5369784c275d141aeeb
     body_hash: sha256:e012bb46ea8871bf026f855ab8b65f442f5ef7f297a7e4d784f37382c1017009
     tags:
@@ -1186,7 +1280,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for tasks involving system health, performance bottlenecks, scaling readiness, infrastructure
+      reliability, monitoring, alerting, and infrastructure cost optimization. It specializes in diagnosing operational issues,
+      hardening applications against outages or traffic spikes, and improving runtime efficiency without sacrificing reliability.
+      No explicit anti-scope is defined.
     description_hash: sha256:c88dd94f5b23a7e0e3cc8a5de36dfe5681dfcc5f8cab849f7052e98e54e07690
     body_hash: sha256:301b9595168ca3a02833ed5cd572368120e45dce39e041ee5dd32e4f85240d2b
     tags:
@@ -1206,7 +1303,10 @@ agents:
     description: Use this agent for Instagram visual content strategy, Stories and Reels production, and platform-native growth
       tactics. Understands Instagram's algorithm, visual aesthetics, and engagement patterns to drive followers, engagement,
       and conversions.
-    description_summary: ''
+    description_summary: Use for tasks focused on Instagram content strategy, including visual direction, Stories, Reels,
+      engagement planning, and platform-native growth tactics. Specializes in Instagram algorithm behavior, aesthetic presentation,
+      content formats, audience interaction patterns, and conversion-oriented social execution. Best suited to Instagram-specific
+      work rather than broader cross-platform social strategy unless Instagram is the primary channel.
     description_hash: sha256:172d51cb373d623ba76623008bcf3ae136046601dc3e879e1e687edb762318f1
     body_hash: sha256:7ab9a71d39e42c44af5832de6e20bef124d6caa61275ad5471a9254228483cd5
     tags:
@@ -1230,7 +1330,9 @@ agents:
       energy during challenging moments.\n</commentary>\n</example>\n\n<example>\nContext: Creating fun error messages\nuser:
       "Our 404 page is boring"\nassistant: "Let''s make that error page memorable! I''ll use the joker agent to create some
       funny 404 messages."\n<commentary>\nHumorous error pages can turn frustration into delight.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks where the goal is to add humor, lighten a tense moment, or produce funny user-facing
+      copy. Specializes in dad jokes, programming puns, startup humor, and playful variants of otherwise dry messages such
+      as 404 pages or team morale notes. No explicit anti-scope is specified.
     description_hash: sha256:6a0b7b55520405e19b46c84f9bd01deeb2a972e16b51210e7b031586c3ad3098
     body_hash: sha256:51f65b1a7a0f51e1702c5f009dde2b187a52d8059a11247f112f6a1493bd144d
     tags:
@@ -1301,7 +1403,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for app-development tasks involving terms of service, privacy policies, regulatory compliance,
+      legal requirements, or data-handling obligations. It specializes in identifying requirements for areas such as GDPR,
+      AI-feature disclosures, health data, children's privacy, in-app purchases, consent, and user trust implications. No
+      explicit anti-scope is stated in the definition.
     description_hash: sha256:4c6d6d8e1347a7624024b74a1731ef7f70725fe2a2d57001e38c9caa97d661f7
     body_hash: sha256:1e57c4fd32896a785b6673a67d2cea53ccf17ba05eb51ec9b4a1fa8bcef55141
     tags:
@@ -1336,7 +1441,11 @@ agents:
       "Stated interest and actual payment are very different things. I''ll use the market-validator agent to assess willingness-to-pay
       using comparable products and behavioral signals."\n<commentary>\nWillingness to pay is the single hardest thing to
       validate pre-launch.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for evaluating whether a startup idea can become a viable business through market sizing, unit
+      economics, monetization analysis, willingness-to-pay assessment, and comparison with existing or failed products. It
+      specializes in grounding opportunity assessments in numbers, evidence, comparable businesses, and failure post-mortems
+      rather than relying on stated interest or intuition. It is not scoped for product design, implementation planning, or
+      technical feasibility except where those factors directly affect business viability.
     description_hash: sha256:216e4a9c26fe482065c1319ad5205be72b7d7bdb224813666fd2325f3fdb9bbc
     body_hash: sha256:c8dae5c721db69a6a1250505ad563f36c38a781cb62786b107ad8ca9c4f9e57b
     tags:
@@ -1365,7 +1474,10 @@ agents:
       on both iOS and Android"\nassistant: "I''ll implement it using React Native for code reuse. Let me use the mobile-app-builder
       agent to ensure native performance on both platforms."\n<commentary>\nCross-platform development requires balancing
       code reuse with platform-specific optimizations.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for native iOS or Android development, React Native feature implementation, and mobile performance
+      work. Specializes in smooth, native-feeling mobile experiences, platform integrations such as push notifications and
+      biometric authentication, cross-platform implementation, scrolling performance, memory management, and platform-specific
+      permissions. No explicit anti-scope is specified.
     description_hash: sha256:5e6661a2503ee87758e72b62c2a61e8f2714f1d72230bab47da03b3d1fa751a7
     body_hash: sha256:a20a2f23356bec699c7c4a779ccd026a6e8a14c456e361308af2dfc261a88de4
     tags:
@@ -1444,7 +1556,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use when a task requires measuring or diagnosing application performance, including load times, runtime
+      speed, rendering behavior, query latency, frame rates, memory use, or bundle size. Specializes in profiling systems,
+      identifying bottlenecks, running benchmarks, and turning measurements into concrete optimization recommendations. It
+      is not intended for general feature implementation or broad code review unless the primary question is performance-related.
     description_hash: sha256:15954de560d495780feccbd7d70f3947ff341b9dc2bb7057523f504e7e51297c
     body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
     tags:
@@ -1484,7 +1599,11 @@ agents:
       - they require trading something out, not just adding. Let me use the product-manager agent to assess what gets cut
       to make room, with explicit rationale."\n<commentary>\nPM owns scope discipline. Adding work without removing work is
       how milestones die.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for roadmap prioritization, feature scoping, customer-discovery synthesis, and ship/kill decisions
+      where user value, success criteria, and explicit tradeoffs need to be framed. Specializes in deciding what should be
+      built and why, integrating inputs from discovery, feedback, competitive, technical, and experiment-readout work into
+      product decisions. Do not use for implementation planning, delivery tracking, raw idea scoring before roadmap commitment,
+      or experiment analysis itself; those belong to technical lead, TPM, idea evaluation, or experiment tracking roles.
     description_hash: sha256:cfa022fc917ff12b0dfee18b30026d02a232d43f5327f5e88b50abd4c29decb1
     body_hash: sha256:e143991aac3d3a1236d390b0581773d67c320e7ea7f26d0f39ee54309fd37a63
     tags:
@@ -1517,7 +1636,11 @@ agents:
       "We''re meeting with investors next week and need to show them our vision"\nassistant: "I''ll help create a compelling
       demo. Let me use the rapid-prototyper agent to build a functional prototype that showcases your vision."\n<commentary>\nInvestor
       demos and stakeholder presentations benefit from working prototypes rather than just mockups.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for quickly creating a new application prototype, MVP, proof of concept, or functional demo,
+      especially when validating an idea, preparing a stakeholder presentation, or testing a trend-driven concept. It specializes
+      in rapid project scaffolding, building core demo features, and integrating current or viral product ideas within a short
+      development cycle. No explicit anti-scope is defined, but the description centers on speed and validation rather than
+      production hardening or long-term system design.
     description_hash: sha256:066e875eb74bfbcbe827e29d2286a0f7a2b9a79d706df2e89841be08efad794f
     body_hash: sha256:02ab1a60dcd04e11ec76540dbb00b27bfe35dd4eb6b73fc013046fcf4eb6fa4c
     tags:
@@ -1537,7 +1660,10 @@ agents:
     description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
       and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while
       strategically growing brand presence.
-    description_summary: ''
+    description_summary: Use for projects that need authentic participation in Reddit communities, community-specific positioning,
+      or organic growth through helpful engagement. It specializes in reading subreddit norms, contributing value before promotion,
+      building relationships, and growing brand presence without violating community expectations. It is not suited for spam,
+      astroturfing, aggressive self-promotion, or tactics that ignore moderation rules and Reddit culture.
     description_hash: sha256:7e3f68fe81b1850f7bb73d214afab13464b31687d58b1eef83225340133f86aa
     body_hash: sha256:b13ad116fbc9330e08055d7c69e0a79af82311c38653cbeee0342a540aa17db7
     tags:
@@ -1575,7 +1701,11 @@ agents:
       rollout plan signed off, rollback drill run within 7 days, monitoring dashboards configured, on-call paged, and anti-checklist
       - has security-auditor signed off, has tpm closed all blocking deps?"\n<commentary>\nLaunch readiness is concrete and
       binary. Either the checklist is done or it isn''t. No vibes.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: '{"release-engineer":"Use for code-complete features that need an engineering release plan, rollout
+      strategy, rollback criteria, launch-day coordination, or post-launch monitoring. Specializes in canary and percentage
+      rollouts, launch readiness checklists, rollback drills, operational dashboards, on-call coordination, and mid-rollout
+      incident response. Do not use for pre-code-complete program management, building CI/CD infrastructure, or marketing-side
+      launch work such as positioning, store listings, or growth copy."}'
     description_hash: sha256:cecf1add7e36757b11b5672432c1d612bc9b0c29b85a63e108cbefa49e1ba51e
     body_hash: sha256:1acd4243ee4b429af8081ef5c48f3cee078ee55ab96a68af4ae8a68d89c259ec
     tags:
@@ -1605,7 +1735,11 @@ agents:
       Certificate lifecycle audit\nuser: "Are revoked certificates still being accepted?"\nassistant: "Certificate revocation
       is critical. Let me use the security-auditor agent to trace the full validation path and check for revocation bypass."\n<commentary>\nWhen
       ALBs don''t check CRLs, backends must implement their own revocation checking.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for security reviews of code, infrastructure, authentication flows, PKI/mTLS setups, certificate
+      validation, and OWASP-style vulnerability checks. It specializes in identifying issues such as header injection, open
+      redirects, spoofing paths, authentication bypasses, token exposure, CSRF risks, revocation bypass, and cryptographic
+      or certificate lifecycle misconfigurations. It is not intended for general code quality review or implementation work
+      unless the task is specifically about security risk.
     description_hash: sha256:566525f913fd8288718debe584954c647d61a5705b2b746d2a38ffca958456be
     body_hash: sha256:76b39eda069687698b727e50355ea27aa16b8fe5533546791fdf2e0a8902fdb1
     tags:
@@ -1631,7 +1765,10 @@ agents:
       Using the social-amplifier agent."\n</example>\n\n<example>\nContext: LinkedIn-only request\nuser: "I want a LinkedIn
       post about shipping the Jetson flash pipeline — skip X"\nassistant: "Single-platform mode. I''ll use the social-amplifier
       agent for LinkedIn only."\n</example>'
-    description_summary: ''
+    description_summary: Use for converting finished or near-finished blog posts into platform-native LinkedIn and X drafts,
+      or for standalone social posts when an idea does not justify a full blog post. It specializes in matching Mihai’s voice,
+      tailoring content separately per platform, and supporting single-platform requests such as LinkedIn-only. Do not route
+      tasks that require writing the full underlying blog post or merely reformatting identical copy across platforms.
     description_hash: sha256:30ea78f41aea2d65cc3087ff6355eb3fa942873d43259d9ade2541bdfa26179e
     body_hash: sha256:ad13f605e0908bb5113c67a46bef34ef4d9ab552fdae3436358af4d8b88d90e3
     tags:
@@ -1671,7 +1808,9 @@ agents:
       user: "Users keep asking how to connect their TikTok account"\nassistant: "Let''s create clear documentation for that.
       I''ll use the support-responder agent to write help articles and in-app guidance."\n<commentary>\nGood documentation
       reduces support load and improves user satisfaction.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for customer support inquiries, support documentation, automated response setup, and analysis
+      of recurring ticket patterns. It specializes in creating response templates, support workflows, help articles, in-app
+      guidance, and extracting product improvement signals from user issues. No explicit anti-scope is defined.
     description_hash: sha256:0bb6ebeee97a52edef0772671dba3a4ac1363b72ac4e719f5003e30ece0a9bc9
     body_hash: sha256:f541d3974c8dad1451874d6ca0e25a4b3e39ea43f49397c0535b6d851e033de1
     tags:
@@ -1702,7 +1841,10 @@ agents:
       "Database queries in the Swift backend use postgres-nio. Let me use the swift-backend agent to implement the revocation
       check with proper connection pooling."\n<commentary>\nPostgreSQL operations in Swift require async/await patterns with
       postgres-nio.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for building or modifying server-side Swift backends, especially gRPC services, Hummingbird applications,
+      SwiftNIO networking, certificate handling, and PostgreSQL access through postgres-nio. It specializes in Swift async
+      patterns, NIO and HTTP/2 connection behavior, streaming RPC lifecycle issues, connection pooling, and the Wendy cloud
+      services architecture. No explicit anti-scope is provided.
     description_hash: sha256:aead8ae11d96f18923c77d259bf0d86fdcefd93c9682a09b6695645abf3d670c
     body_hash: sha256:0fce0483ca582a844f6d4e9dc03a60f3ba82fb44f60f2214c04a7e4eb3293ec1
     tags:
@@ -1756,7 +1898,11 @@ agents:
       it silently. Let me use the tech-lead agent to write the technical reality (migration sequence, validation requirements,
       named risks if compressed), and tee up the conversation for product-manager to either re-prioritize or accept the timeline."\n<commentary>\nTL
       surfaces the technical truth and asks PM to decide. PM owns priorities; TL owns implementation honesty.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: 'Use for non-trivial feature work that needs a feature-level technical approach, design doc, implementation
+      sequencing, or cross-component execution review. Specializes in framing the HOW: API/data model shape, component boundaries,
+      rollout order, tradeoffs, quality risks, and which domain specialists should own deeper slices. Do not use for people
+      management, infrastructure-specific review, or specialist implementation depth such as backend, frontend, security,
+      GPU, Swift, or vision work; route those to the relevant specialist while this agent owns overall technical coherence.'
     description_hash: sha256:a277e83aebb32251d9fd88a2c459da4c5e931015cdd10c9f06c29b86530a22bf
     body_hash: sha256:8bd806be94e3bb8174be3984d40ab9cf31b9a801f0c7588a2949b24b10c0d24d
     tags:
@@ -1828,7 +1974,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for analyzing raw test outputs, coverage data, historical execution records, flaky failures,
+      and sprint-level quality metrics. Specializes in synthesizing trends, identifying failure or performance patterns, finding
+      coverage gaps, and producing actionable quality reports or recommendations. No explicit anti-scope is specified; it
+      is analysis-focused rather than an implementation agent for writing tests or changing production code.
     description_hash: sha256:31cd4f4840202522c976dc5880ce9c6d29f634835d17547e5835c7b633d04335
     body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
     tags:
@@ -1868,7 +2017,10 @@ agents:
       tests.\nuser: "I''ve added the social sharing functionality"\nassistant: "Great! The social sharing is implemented.
       Now let me use the test-writer-fixer agent to write tests that ensure this feature works correctly across different
       platforms."\n<commentary>\nNew features should always include comprehensive test coverage from the start.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use after code changes, refactors, bug fixes, or when critical code lacks coverage to add or update
+      tests and run relevant suites. It specializes in diagnosing test failures, fixing regressions caused by changes, and
+      preserving test integrity while improving coverage for edge cases and error paths. It is not for primary feature implementation
+      or unrelated refactoring beyond changes needed to make tests accurate and passing.
     description_hash: sha256:94dc1dab9d77d73ac19f745357455fc7d9757b9dc9c8d2fa2505c54e246b6446
     body_hash: sha256:84c521dae1a1d6642c064f4c54a33318cd525aa09e2ec7ebe89eee2e04f03069
     tags:
@@ -1903,7 +2055,11 @@ agents:
       your app TikTok-native is smart. I''ll use the tiktok-strategist agent to identify features and moments in your app
       that users would want to share on TikTok."\n<commentary>\nApps with built-in TikTok-worthy moments see higher organic
       growth through user-generated content.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks involving TikTok marketing strategy, viral content ideation, campaign planning, creator
+      partnerships, trend usage, and algorithm-aware optimization for app growth. Specializes in identifying shareable app
+      moments, TikTok-native content formats, and ways to turn product features into user-generated or creator-led promotion.
+      Best fit when TikTok is the target channel; not intended for broad marketing strategy outside TikTok unless it directly
+      supports TikTok-driven growth.
     description_hash: sha256:7a81977ef3316ce15c0c9cfc42c24695053ee224187ef6b91bbcf144b0635ad3
     body_hash: sha256:4600c641292d9e7c6602758059126011e8bb4712f5942eff77ccf3e606c941ff
     tags:
@@ -1942,7 +2098,10 @@ agents:
       user: "Could Bubble or FlutterFlow speed up our prototyping?"\nassistant: "Let''s evaluate if no-code tools fit your
       workflow. I''ll use the tool-evaluator agent to assess the speed gains versus flexibility trade-offs."\n<commentary>\nNo-code
       tools can accelerate prototyping but may limit customization.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use when a project needs to evaluate, compare, or select a development tool, framework, platform,
+      backend service, AI/ML provider, or no-code/low-code option. It specializes in rapid assessments of benefits, trade-offs,
+      pricing, migration effort, integration complexity, and impact on development speed, with recommendations aligned to
+      short development cycles. No explicit anti-scope is defined.
     description_hash: sha256:1643e3ce76fe98f28e4cc6b6c2ed076759cadc1b67670fc3ba63918c552541bd
     body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
     tags:
@@ -1980,7 +2139,11 @@ agents:
       call. Let me use the tpm agent to walk the dependency map, mark each component as on-track / at-risk / blocked, and
       identify what the long pole is."\n<commentary>\nA TPM readout is a status report with named risks - not a vibe check
       or a pep talk.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: 'Use for tracking program readiness across teams or workstreams, mapping dependencies, surfacing
+      schedule risk, identifying blockers, and coordinating multi-component work toward a milestone. Specializes in dates,
+      handoffs, readiness status, quantified slip risk, and escalation paths for decisions that can no longer meet committed
+      priorities. It owns the when, not the what or how: it does not set product priorities, make scope changes, manage rollout
+      after code-complete, or provide motivational coaching.'
     description_hash: sha256:f155d69ef4703abbac667ebbb53ed2e7f85cb16dce6469e3ed4984ed27322bae
     body_hash: sha256:5300a2f001a3fc71d7363e96ae09ade7351e9fab64b8c2c2462bd63e01d4adee
     tags:
@@ -2012,7 +2175,10 @@ agents:
       Finding viral mechanics for existing apps\nuser: "How can we make our habit tracker more shareable?"\nassistant: "I''ll
       research viral sharing mechanics in successful apps. Let me use the trend-researcher agent to identify patterns we can
       adapt."\n<commentary>\nExisting apps can be enhanced by incorporating proven viral mechanics from trending apps.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks that need market trend research, product opportunity discovery, validation of demand,
+      or assessment of whether a competitor feature reflects real traction. Specializes in analyzing TikTok trends, App Store
+      patterns, social media virality, user behavior signals, viral content mechanics, and social sentiment to identify app
+      or feature opportunities. No explicit anti-scope is specified.
     description_hash: sha256:280845c83613138d063639c7bfe469a355160d8cb22dfc58537238a9c7cd0b1f
     body_hash: sha256:b2bab77bf4ba28cbded722c28996cb7aca67d26926185c301a21200000420714
     tags:
@@ -2031,7 +2197,9 @@ agents:
     scope: project
     description: Use this agent for real-time Twitter/X engagement, trending-topic leverage, and viral tweet creation. Specializes
       in concise communication, thread storytelling, and community building through strategic engagement on the platform.
-    description_summary: ''
+    description_summary: Use for tasks involving real-time Twitter/X engagement, capitalizing on trending topics, or drafting
+      posts designed for viral reach. It specializes in concise platform-native writing, thread structure and storytelling,
+      and strategic interaction that supports community growth.
     description_hash: sha256:4a710f8b1b34a837a318fd4b6a00cb593bc995f4e96d884fc08ab4e62220b089
     body_hash: sha256:37a3261785d7f7c91c79a4e632a1c26d2045dc1251b4432104c39ec0fc28de08
     tags:
@@ -2070,7 +2238,10 @@ agents:
       user: "I love how BeReal does their dual camera view. Can we do something similar?"\nassistant: "I''ll adapt that trendy
       pattern for your app. Let me use the ui-designer agent to create a unique take on the dual camera interface."\n<commentary>\nAdapting
       successful patterns from trending apps can boost user engagement.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use for tasks involving new or existing user interfaces, component design, design systems, visual
+      polish, and adaptation of familiar interaction patterns from other apps. It specializes in producing attractive, usable
+      UI concepts that are practical to implement quickly, with attention to hierarchy, consistency, and sprint-scale feasibility.
+      It is not intended for non-UI implementation work or purely backend, infrastructure, or algorithmic tasks.
     description_hash: sha256:9b9c160fd7d41c3d58bc32a5f3e4400d77d313332dcf14a2ec905bca1ae0df61
     body_hash: sha256:50d63044c26060efdbfb2cf3418b46b5723467644113ee0e7b79250aad55e1aa
     tags:
@@ -2143,7 +2314,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for tasks that require understanding users before making product or design decisions, such as
+      research planning, behavior analysis, journey mapping, onboarding friction analysis, persona development, and design
+      validation. Specializes in identifying user needs, pain points, motivations, and interaction patterns within rapid development
+      cycles, then translating findings into product guidance. No explicit anti-scope is provided.
     description_hash: sha256:4182d8fa9bc2c62eba5773632b7103f2d23e3636d97560361916c7cac71ee67e
     body_hash: sha256:b2a23b17c716d06e8b06bcf7d20c345c0b31840ff04bfff1bfe56c1ad0ce3553
     tags:
@@ -2241,7 +2415,12 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: '{"vision-engineer":"Use for production computer vision work involving video pipelines, object detection
+      models such as YOLO or SSD, TensorRT optimization, camera and RTSP streams, frame preprocessing, inference, NMS postprocessing,
+      tracking, and edge deployment on NVIDIA Jetson or similar accelerators. It specializes in real-time frame-to-detection
+      systems, including coordinate transforms, latency profiling, hardware decode, stream buffering, and SORT/DeepSORT-style
+      multi-object tracking. Avoid routing unrelated application, backend, or general ML tasks unless the core problem is
+      a deployed vision or video processing pipeline."}'
     description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
     body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
     tags:
@@ -2319,7 +2498,11 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: ''
+    description_summary: Use for tasks that need ideas, data, or product concepts turned into visual narratives, including
+      infographics, onboarding illustrations, pitch decks, presentations, and visual explanations of complex features. It
+      specializes in narrative flow, visual metaphors, and data-to-image communication for users, stakeholders, or investors.
+      Do not route purely textual writing, implementation, or non-visual analysis tasks unless the core deliverable is visual
+      communication.
     description_hash: sha256:316b307c653c6d5f8b161f70a8c05e40f300812bdc0886a8d7ec6c90bc6f25fe
     body_hash: sha256:d0d2906337076d3009dc851e4c394a1a3f6cd31911cce9b49a02b03646941e13
     tags:
@@ -2352,7 +2535,11 @@ agents:
       completed features\nuser: "The user profile page is done"\nassistant: "Perfect! The profile page is complete. Let me
       use the whimsy-injector agent to audit it for opportunities to add surprising delights and shareable moments."\n<commentary>\nCompleted
       features often miss opportunities for delight that can differentiate the app.\n</commentary>\n</example>'
-    description_summary: ''
+    description_summary: Use after UI or UX changes, especially new features, onboarding flows, standard components, loading
+      states, empty states, error handling, or completed feature reviews. It specializes in adding small playful touches,
+      personality, surprise, and memorable interactions that make routine or frustrating states feel more engaging. It is
+      not for core product functionality, backend logic, or general UI implementation unless the task is specifically to add
+      delight to an existing interface.
     description_hash: sha256:546ebc59fb2accc6c6e49c3db2b0551765241da5d5f89a27cb125d9e6774d48c
     body_hash: sha256:57663bb442a59c4efd089a4e0b24588650d63591ce929bec81bc50d024fbc64b
     tags:
