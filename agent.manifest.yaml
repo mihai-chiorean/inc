@@ -1,7 +1,3 @@
-# source_repo is intentionally kept as `claude-agents` even after the
-# 2026-05-12 repo rename to `inc` — it's a stable logical identifier
-# that downstream lockfiles (e.g. lab-control's) depend on. See
-# skills/staff/docs/schemas.md and the MIT-363 commit message.
 schema_version: 1
 generated_by: scripts/generate-manifest.py
 source_repo: claude-agents
@@ -9,6 +5,7 @@ agents:
   agent-eval-engineer:
     file: testing/agent-eval-engineer.md
     category: testing
+    scope: project
     description: 'Use this agent when designing, building, or operating evaluation harnesses for LLM-based agent systems —
       particularly autonomous coding/research agents where the question is "is it still good?" rather than "does the unit
       test pass?". This agent specializes in judge-model rubrics, deterministic eval runs, cost/latency regression tracking
@@ -63,6 +60,7 @@ agents:
   ai-engineer:
     file: engineering/ai-engineer.md
     category: engineering
+    scope: project
     description: 'Use this agent when implementing AI/ML features, integrating language models, building recommendation systems,
       or adding intelligent automation to applications. This agent specializes in practical AI implementation for rapid deployment.
       Examples:\n\n<example>\nContext: Adding AI features to an app\nuser: "We need AI-powered content recommendations"\nassistant:
@@ -97,6 +95,7 @@ agents:
   analytics-reporter:
     file: studio-operations/analytics-reporter.md
     category: studio-operations
+    scope: project
     description: 'Use this agent when analyzing metrics, generating insights from data, creating performance reports, or making
       data-driven recommendations. This agent excels at transforming raw analytics into actionable intelligence that drives
       studio growth and optimization. Examples:\n\n<example>\nContext: Monthly performance review needed
@@ -168,6 +167,7 @@ agents:
   api-tester:
     file: testing/api-tester.md
     category: testing
+    scope: project
     description: 'Use this agent for comprehensive API testing including performance testing, load testing, and contract testing.
       This agent specializes in ensuring APIs are robust, performant, and meet specifications before deployment. Examples:\n\n<example>\nContext:
       Testing API performance under load
@@ -239,6 +239,7 @@ agents:
   app-store-optimizer:
     file: marketing/app-store-optimizer.md
     category: marketing
+    scope: project
     description: 'Use this agent when preparing app store listings, researching keywords, optimizing app metadata, improving
       conversion rates, or analyzing app store performance. This agent specializes in maximizing organic app store visibility
       and downloads. Examples:\n\n<example>\nContext: Preparing for app launch
@@ -278,6 +279,7 @@ agents:
   backend-architect:
     file: engineering/backend-architect.md
     category: engineering
+    scope: project
     description: 'Use this agent when designing APIs, building server-side logic, implementing databases, or architecting
       scalable backend systems. This agent specializes in creating robust, secure, and performant backend services. Examples:\n\n<example>\nContext:
       Designing a new API\nuser: "We need an API for our social sharing feature"\nassistant: "I''ll design a RESTful API with
@@ -305,6 +307,7 @@ agents:
   bay-value-hunter:
     file: bonus/bay-value-hunter.md
     category: bonus
+    scope: project
     description: 'Use this agent when evaluating Bay Area residential real estate as a disciplined owner-occupant/investor.
       Covers San Francisco, Berkeley, and Albany with per-city profiles (neighborhoods, permit sources, hazard patterns, rent
       control). Finds mispriced homes, fixer-uppers, stale listings, estate/probate sales, and other value situations. Produces
@@ -345,6 +348,7 @@ agents:
   blog-writer:
     file: writing/blog-writer.md
     category: writing
+    scope: org
     description: 'Use this agent to develop, draft, and refine blog posts for Mihai''s personal blog. Runs an interactive
       clarification workflow, drafts in his voice, then iterates with codex CLI feedback rounds. Also handles reviewing/refining
       drafts he already has. Use when Mihai mentions writing a blog post, capturing a lesson, developing a founder thesis,
@@ -371,6 +375,7 @@ agents:
   brand-guardian:
     file: design/brand-guardian.md
     category: design
+    scope: project
     description: 'Use this agent when establishing brand guidelines, ensuring visual consistency, managing brand assets, or
       evolving brand identity. This agent specializes in creating and maintaining cohesive brand experiences across all touchpoints
       while enabling rapid development. Examples:\n\n<example>\nContext: Creating brand guidelines for a new app
@@ -442,6 +447,7 @@ agents:
   competitive-intel:
     file: product/competitive-intel.md
     category: product
+    scope: project
     description: 'Use this agent when you need deep competitive analysis — reverse-engineering competitor business models,
       tracking their strategic moves, finding whitespace in crowded markets, or understanding why certain players dominate.
       Goes beyond surface-level feature comparison to understand competitive dynamics. Examples:\n\n<example>\nContext: Entering
@@ -475,6 +481,7 @@ agents:
   content-creator:
     file: marketing/content-creator.md
     category: marketing
+    scope: project
     description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
       copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
       unique requirements.
@@ -494,6 +501,7 @@ agents:
   customer-interviewer:
     file: product/customer-interviewer.md
     category: product
+    scope: project
     description: 'Use this agent when preparing for customer discovery interviews, generating interview questions, debriefing
       after conversations, or validating problem hypotheses through user conversations. This agent is deeply grounded in "The
       Mom Test" methodology — it ensures you learn from customers without leading them or fishing for compliments. Examples:\n\n<example>\nContext:
@@ -529,6 +537,7 @@ agents:
   db-migration:
     file: engineering/db-migration.md
     category: engineering
+    scope: project
     description: 'Use this agent when creating database migrations, validating migration ordering across repositories, checking
       for destructive schema changes, or ensuring Go and Swift ORMs stay consistent with the database schema. Examples:\n\n<example>\nContext:
       Creating a new migration\nuser: "Add a device_tokens table for push notifications"\nassistant: "Database migrations
@@ -564,6 +573,7 @@ agents:
   devops-automator:
     file: engineering/devops-automator.md
     category: engineering
+    scope: project
     description: 'Use this agent when setting up CI/CD pipelines, configuring cloud infrastructure, implementing monitoring
       systems, or automating deployment processes. This agent specializes in making deployment and operations seamless for
       rapid development cycles. Examples:\n\n<example>\nContext: Setting up automated deployments\nuser: "We need automatic
@@ -600,6 +610,7 @@ agents:
   embedded-device:
     file: engineering/embedded-device.md
     category: engineering
+    scope: project
     description: 'Use this agent when working on WendyOS device-side concerns including Yocto recipes, wendy-agent internals,
       containerd integration, Bluetooth/mDNS discovery, cross-compilation for ARM64/Jetson, OTA updates, or device identity
       management. Examples:\n\n<example>\nContext: Device agent development\nuser: "The wendy-agent drops its gRPC connection
@@ -633,6 +644,7 @@ agents:
   embedded-linux:
     file: engineering/embedded-linux.md
     category: engineering
+    scope: project
     description: 'Use this agent for embedded Linux and Yocto/OpenEmbedded work including writing and debugging recipes, BSP
       integration, kernel configuration, bootloader setup, OTA updates (Mender/SWUpdate), cross-compilation, device tree customization,
       and CI/CD for embedded builds. Covers Jetson (meta-tegra), Raspberry Pi (meta-raspberrypi), and general ARM64 targets.
@@ -675,6 +687,7 @@ agents:
   experiment-tracker:
     file: project-management/experiment-tracker.md
     category: project-management
+    scope: project
     description: 'PROACTIVELY use this agent when experiments are started, modified, or when results need analysis. This agent
       specializes in tracking A/B tests, feature rollouts, and product iterations with real users. Owns the EVIDENCE - experiment
       design, instrumentation, statistical analysis, written readouts and recommendations. Anti-scope - this is NOT `product-manager`
@@ -711,6 +724,7 @@ agents:
   feedback-synthesizer:
     file: product/feedback-synthesizer.md
     category: product
+    scope: project
     description: 'Use this agent when you need to analyze user feedback from multiple sources, identify patterns in user complaints
       or requests, synthesize insights from reviews, or prioritize feature development based on user input. This agent excels
       at turning raw feedback into actionable product insights. Examples:\n\n<example>\nContext: Weekly review of user feedback
@@ -743,6 +757,7 @@ agents:
   finance-tracker:
     file: studio-operations/finance-tracker.md
     category: studio-operations
+    scope: project
     description: 'Use this agent when managing budgets, optimizing costs, forecasting revenue, or analyzing financial performance.
       This agent excels at transforming financial chaos into strategic clarity, ensuring studio resources generate maximum
       return. Examples:\n\n<example>\nContext: Planning next quarter''s development budget
@@ -814,6 +829,7 @@ agents:
   frontend-developer:
     file: engineering/frontend-developer.md
     category: engineering
+    scope: project
     description: 'Use this agent when building user interfaces, implementing React/Vue/Angular components, handling state
       management, or optimizing frontend performance. This agent excels at creating responsive, accessible, and performant
       web applications. Examples:\n\n<example>\nContext: Building a new user interface\nuser: "Create a dashboard for displaying
@@ -860,6 +876,7 @@ agents:
   go-engineer:
     file: engineering/go-engineer.md
     category: engineering
+    scope: project
     description: 'Use this agent when writing or modifying Go code, building Cobra-based CLIs, designing cross-platform Go
       binaries (linux/amd64, linux/arm64, darwin/arm64), enforcing golangci-lint/gofumpt/govulncheck discipline, or driving
       the Linear-issue → worktree → codex-reviewed-PR workflow on Go projects. Primary owner of `lab-control` and any future
@@ -906,6 +923,7 @@ agents:
   gpu-engineer:
     file: engineering/gpu-engineer.md
     category: engineering
+    scope: project
     description: 'Use this agent when working on CUDA kernels, TensorRT/TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared
       memory tuning, or any GPU-accelerated computing task. This agent has deep expertise in NVIDIA hardware architectures
       (Hopper, Blackwell, GeForce vs. datacenter SKUs), CUDA programming, kernel profiling, and performance optimization.
@@ -946,6 +964,7 @@ agents:
   growth-hacker:
     file: marketing/growth-hacker.md
     category: marketing
+    scope: project
     description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines
       marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive
       exponential user growth.
@@ -965,6 +984,7 @@ agents:
   grpc-contracts:
     file: engineering/grpc-contracts.md
     category: engineering
+    scope: project
     description: 'Use this agent when validating gRPC/protobuf contract compatibility across multiple backends, checking ALB
       header parsing consistency between Go and Swift, auditing proto file deployment, or designing cross-language contract
       tests. Examples:\n\n<example>\nContext: Cross-language header parsing\nuser: "Both Go and Swift backends parse X-Client-Cert
@@ -999,6 +1019,7 @@ agents:
   hiring-manager:
     file: studio-operations/hiring-manager.md
     category: studio-operations
+    scope: org
     description: 'Use this agent to analyze the current agent roster, spot gaps exposed by real work, draft new role definitions,
       and iterate with codex CLI before committing them. Also used to spot redundancy (two agents doing the same thing) and
       to refresh existing role .md files when their scope drifts. Examples:\n\n<example>\nContext: A recent debugging session
@@ -1026,7 +1047,7 @@ agents:
       overlap is costing you most churn, which gap is hit most often. That''s the judgment call, not the listing itself.\n</commentary>\n</example>'
     description_summary: ''
     description_hash: sha256:3be5b42dfe3f0037ae0a3f77ac652015d658ef637cf02ceaeb8d3ff654dd231d
-    body_hash: sha256:afe9b9c566711d10b7534d704d6808acee1e02e4a3fdbe89071994dffcbbd1eb
+    body_hash: sha256:8736940aa76b1aa8b3949af8e431e7ca71c64ffebd905dc0eaf2568b4cb9e6e5
     tags:
     - hiring
     - manager
@@ -1040,6 +1061,7 @@ agents:
   idea-evaluator:
     file: product/idea-evaluator.md
     category: product
+    scope: project
     description: 'Use this agent to stress-test startup ideas before committing time to build them. Applies proven frameworks
       (YC, lean startup, jobs-to-be-done) to score ideas, identify the riskiest assumptions, run pre-mortems, and make kill/pursue/pivot
       decisions. The skeptical friend every founder needs. Examples:\n\n<example>\nContext: Evaluating a new startup idea\nuser:
@@ -1072,6 +1094,7 @@ agents:
   infra-reviewer:
     file: engineering/infra-reviewer.md
     category: engineering
+    scope: project
     description: 'Use this agent when reviewing Terraform plans, validating GCP configurations, auditing CI/CD pipelines for
       infrastructure conflicts, or catching cloud-specific gotchas before apply. This agent specializes in GCP (Cloud Run,
       Certificate Manager, Network Security, CAS), Terraform state conflicts, and deployment pipeline consistency. Examples:\n\n<example>\nContext:
@@ -1107,6 +1130,7 @@ agents:
   infrastructure-maintainer:
     file: studio-operations/infrastructure-maintainer.md
     category: studio-operations
+    scope: project
     description: 'Use this agent when monitoring system health, optimizing performance, managing scaling, or ensuring infrastructure
       reliability. This agent excels at keeping studio applications running smoothly while preparing for growth and preventing
       disasters. Examples:\n\n<example>\nContext: App experiencing slow performance
@@ -1178,6 +1202,7 @@ agents:
   instagram-curator:
     file: marketing/instagram-curator.md
     category: marketing
+    scope: project
     description: Use this agent for Instagram visual content strategy, Stories and Reels production, and platform-native growth
       tactics. Understands Instagram's algorithm, visual aesthetics, and engagement patterns to drive followers, engagement,
       and conversions.
@@ -1197,6 +1222,7 @@ agents:
   joker:
     file: bonus/joker.md
     category: bonus
+    scope: project
     description: 'Use this agent when you need to lighten the mood, create funny content, or add humor to any situation. This
       agent specializes in dad jokes, programming puns, and startup humor. Examples:\n\n<example>\nContext: Team needs a laugh
       during a stressful sprint\nuser: "We''ve been debugging for hours and everyone''s frustrated"\nassistant: "Time for
@@ -1219,6 +1245,7 @@ agents:
   legal-compliance-checker:
     file: studio-operations/legal-compliance-checker.md
     category: studio-operations
+    scope: project
     description: 'Use this agent when reviewing terms of service, privacy policies, ensuring regulatory compliance, or handling
       legal requirements. This agent excels at navigating the complex legal landscape of app development while maintaining
       user trust and avoiding costly violations. Examples:\n\n<example>\nContext: Launching app in European markets
@@ -1291,6 +1318,7 @@ agents:
   market-validator:
     file: product/market-validator.md
     category: product
+    scope: project
     description: 'Use this agent when you need to evaluate the business viability of a startup idea, size a market, analyze
       unit economics, assess willingness-to-pay, or understand why similar ideas have succeeded or failed. This agent turns
       gut feelings about opportunities into numbers and evidence. Examples:\n\n<example>\nContext: Evaluating whether a market
@@ -1324,6 +1352,7 @@ agents:
   mobile-app-builder:
     file: engineering/mobile-app-builder.md
     category: engineering
+    scope: project
     description: 'Use this agent when developing native iOS or Android applications, implementing React Native features, or
       optimizing mobile performance. This agent specializes in creating smooth, native-feeling mobile experiences. Examples:\n\n<example>\nContext:
       Building a new mobile app\nuser: "Create a TikTok-style video feed for our app"\nassistant: "I''ll build a performant
@@ -1359,6 +1388,7 @@ agents:
   performance-benchmarker:
     file: testing/performance-benchmarker.md
     category: testing
+    scope: project
     description: 'Use this agent for comprehensive performance testing, profiling, and optimization recommendations. This
       agent specializes in measuring speed, identifying bottlenecks, and providing actionable optimization strategies for
       applications. Examples:\n\n<example>\nContext: Application speed testing
@@ -1430,6 +1460,7 @@ agents:
   product-manager:
     file: product/product-manager.md
     category: product
+    scope: org
     description: 'Use this agent when prioritizing the roadmap, framing user value, synthesizing customer-discovery inputs,
       making ship/kill calls on features and experiments, or scoping work by user value and success criteria with named tradeoffs.
       Pairs with `tech-lead` on any non-trivial feature through code-complete (PM frames the WHY; TL frames the HOW); PM re-enters
@@ -1455,7 +1486,7 @@ agents:
       how milestones die.\n</commentary>\n</example>'
     description_summary: ''
     description_hash: sha256:cfa022fc917ff12b0dfee18b30026d02a232d43f5327f5e88b50abd4c29decb1
-    body_hash: sha256:2b3286ac12ae5314aa6445b5ee5de4115cd1a658fab743f93b73117a6b147e0d
+    body_hash: sha256:e143991aac3d3a1236d390b0581773d67c320e7ea7f26d0f39ee54309fd37a63
     tags:
     - manager
     - product
@@ -1464,11 +1495,11 @@ agents:
       regex: []
     conflicts: []
     introduced: '2026-05-08'
-    aliases:
-    - sprint-prioritizer
+    aliases: []
   rapid-prototyper:
     file: engineering/rapid-prototyper.md
     category: engineering
+    scope: project
     description: 'Use this agent when you need to quickly create a new application prototype, MVP, or proof-of-concept within
       the 6-day development cycle. This agent specializes in scaffolding projects, integrating trending features, and building
       functional demos rapidly. Examples:\n\n<example>\nContext: Starting a new experiment or app idea\nuser: "Create a new
@@ -1502,6 +1533,7 @@ agents:
   reddit-community-builder:
     file: marketing/reddit-community-builder.md
     category: marketing
+    scope: project
     description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
       and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while
       strategically growing brand presence.
@@ -1522,6 +1554,7 @@ agents:
   release-engineer:
     file: project-management/release-engineer.md
     category: project-management
+    scope: project
     description: 'Use this agent when planning a release, designing rollout strategy (canary, percentage rollout, region-by-region),
       defining rollback drills, coordinating launch-day monitoring, owning the operational side of getting a code-complete
       feature into users'' hands. Picks up where `tpm` leaves off (at code-complete) and runs through post-launch monitoring.
@@ -1544,7 +1577,7 @@ agents:
       binary. Either the checklist is done or it isn''t. No vibes.\n</commentary>\n</example>'
     description_summary: ''
     description_hash: sha256:cecf1add7e36757b11b5672432c1d612bc9b0c29b85a63e108cbefa49e1ba51e
-    body_hash: sha256:c9c1e29ac6509a4bbc8111cff033168cbbb01125cecbfeaee59f52507f5fadfc
+    body_hash: sha256:1acd4243ee4b429af8081ef5c48f3cee078ee55ab96a68af4ae8a68d89c259ec
     tags:
     - engineer
     - project-management
@@ -1559,6 +1592,7 @@ agents:
   security-auditor:
     file: engineering/security-auditor.md
     category: engineering
+    scope: org
     description: 'Use this agent when reviewing code or infrastructure for security vulnerabilities, auditing PKI/mTLS configurations,
       validating certificate lifecycles, or checking for OWASP-style issues. This agent specializes in finding header injection,
       open redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations. Examples:\n\n<example>\nContext:
@@ -1571,11 +1605,7 @@ agents:
       Certificate lifecycle audit\nuser: "Are revoked certificates still being accepted?"\nassistant: "Certificate revocation
       is critical. Let me use the security-auditor agent to trace the full validation path and check for revocation bypass."\n<commentary>\nWhen
       ALBs don''t check CRLs, backends must implement their own revocation checking.\n</commentary>\n</example>'
-    description_summary: Use for security reviews of application code, infrastructure, authentication flows, PKI/mTLS setups,
-      certificate validation, and certificate lifecycle behavior. It specializes in identifying OWASP-style issues such as
-      header injection, open redirects, spoofing vectors, authentication bypasses, token handling risks, CSRF, and cryptographic
-      or revocation-checking misconfigurations. It is scoped to vulnerability auditing and validation of security controls,
-      not general feature implementation or non-security code review.
+    description_summary: ''
     description_hash: sha256:566525f913fd8288718debe584954c647d61a5705b2b746d2a38ffca958456be
     body_hash: sha256:76b39eda069687698b727e50355ea27aa16b8fe5533546791fdf2e0a8902fdb1
     tags:
@@ -1584,17 +1614,14 @@ agents:
     - security
     project_hints:
       files: []
-      regex:
-      - (?i)\bm[\s-]?tls\b
-      - (?i)\boauth2?\b
-      - (?i)\bauthn?\b.*\bcert\b
-      - (?i)\bx509\b
+      regex: []
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
   social-amplifier:
     file: writing/social-amplifier.md
     category: writing
+    scope: org
     description: 'Use this agent to turn finished or near-finished blog posts into platform-native LinkedIn and X posts that
       sound like Mihai, or to draft standalone social posts when a thought is worth sharing but not worth a full blog post.
       Produces different posts per platform (not the same post reformatted), runs a codex CLI feedback loop. Examples:\n\n<example>\nContext:
@@ -1620,6 +1647,7 @@ agents:
   support-responder:
     file: studio-operations/support-responder.md
     category: studio-operations
+    scope: project
     description: 'Use this agent when handling customer support inquiries, creating support documentation, setting up automated
       responses, or analyzing support patterns. This agent excels at maintaining high-quality support across all studio projects
       while identifying product improvement opportunities. Examples:\n\n<example>\nContext: Setting up support for a new app
@@ -1659,6 +1687,7 @@ agents:
   swift-backend:
     file: engineering/swift-backend.md
     category: engineering
+    scope: project
     description: 'Use this agent when building or modifying Swift server-side backends, implementing gRPC services in Swift,
       working with Hummingbird, swift-nio, swift-certificates, or PostgreSQL via postgres-nio. This agent automatically loads
       relevant Swift skills and understands the Wendy cloud services architecture. Examples:\n\n<example>\nContext: Modifying
@@ -1694,6 +1723,7 @@ agents:
   tech-lead:
     file: engineering/tech-lead.md
     category: engineering
+    scope: org
     description: 'Use this agent when framing the technical approach for a non-trivial feature - writing the design doc, picking
       the implementation approach, sequencing the work across components, owning execution quality, pulling in domain specialists
       for depth on their slice. Pairs with `product-manager` on any non-trivial feature (PM frames the WHY; TL frames the
@@ -1728,7 +1758,7 @@ agents:
       surfaces the technical truth and asks PM to decide. PM owns priorities; TL owns implementation honesty.\n</commentary>\n</example>'
     description_summary: ''
     description_hash: sha256:a277e83aebb32251d9fd88a2c459da4c5e931015cdd10c9f06c29b86530a22bf
-    body_hash: sha256:3ddfb4f24c87da2ba96d923fe6a886c90572963974ab57c204ab77993359397e
+    body_hash: sha256:8bd806be94e3bb8174be3984d40ab9cf31b9a801f0c7588a2949b24b10c0d24d
     tags:
     - engineering
     - lead
@@ -1737,11 +1767,12 @@ agents:
       files: []
       regex: []
     conflicts: []
-    introduced: '2026-05-09'
+    introduced: '2026-05-08'
     aliases: []
   test-results-analyzer:
     file: testing/test-results-analyzer.md
     category: testing
+    scope: project
     description: 'Use this agent for analyzing test results, synthesizing test data, identifying trends, and generating quality
       metrics reports. This agent specializes in turning raw test data into actionable insights that drive quality improvements.
       Examples:\n\n<example>\nContext: Analyzing test suite results
@@ -1814,6 +1845,7 @@ agents:
   test-writer-fixer:
     file: engineering/test-writer-fixer.md
     category: engineering
+    scope: project
     description: 'Use this agent when code changes have been made and you need to write new tests, run existing tests, analyze
       failures, and fix them while maintaining test integrity. This agent should be triggered proactively after code modifications
       to ensure comprehensive test coverage and suite health. Examples:\n\n<example>\nContext: The user has just implemented
@@ -1853,6 +1885,7 @@ agents:
   tiktok-strategist:
     file: marketing/tiktok-strategist.md
     category: marketing
+    scope: project
     description: 'Use this agent when you need to create TikTok marketing strategies, develop viral content ideas, plan TikTok
       campaigns, or optimize for TikTok''s algorithm. This agent specializes in creating shareable moments and leveraging
       TikTok trends for app growth. Examples:\n\n<example>\nContext: Launching a new app and need TikTok strategy\nuser: "We''re
@@ -1886,6 +1919,7 @@ agents:
   tool-evaluator:
     file: testing/tool-evaluator.md
     category: testing
+    scope: project
     description: 'Use this agent when evaluating new development tools, frameworks, or services for the studio. This agent
       specializes in rapid tool assessment, comparative analysis, and making recommendations that align with the 6-day development
       cycle philosophy. Examples:\n\n<example>\nContext: Considering a new framework or library
@@ -1924,6 +1958,7 @@ agents:
   tpm:
     file: project-management/tpm.md
     category: project-management
+    scope: org
     description: 'Use this agent (Technical Program Manager) when tracking program readiness across teams or workstreams,
       mapping cross-team dependencies, surfacing schedule risk, identifying blockers before they become slips, or coordinating
       multi-agent / multi-component work toward a milestone. Owns the WHEN, not the WHAT or HOW. Anti-scope - this is NOT
@@ -1956,11 +1991,11 @@ agents:
       regex: []
     conflicts: []
     introduced: '2026-05-08'
-    aliases:
-    - studio-producer
+    aliases: []
   trend-researcher:
     file: product/trend-researcher.md
     category: product
+    scope: project
     description: 'Use this agent when you need to identify market opportunities, analyze trending topics, research viral content,
       or understand emerging user behaviors. This agent specializes in finding product opportunities from TikTok trends, App
       Store patterns, and social media virality. Examples:\n\n<example>\nContext: Looking for new app ideas based on current
@@ -1993,6 +2028,7 @@ agents:
   twitter-engager:
     file: marketing/twitter-engager.md
     category: marketing
+    scope: project
     description: Use this agent for real-time Twitter/X engagement, trending-topic leverage, and viral tweet creation. Specializes
       in concise communication, thread storytelling, and community building through strategic engagement on the platform.
     description_summary: ''
@@ -2011,6 +2047,7 @@ agents:
   ui-designer:
     file: design/ui-designer.md
     category: design
+    scope: project
     description: 'Use this agent when creating user interfaces, designing components, building design systems, or improving
       visual aesthetics. This agent specializes in creating beautiful, functional interfaces that can be implemented quickly
       within 6-day sprints. Examples:\n\n<example>\nContext: Starting a new app or feature design
@@ -2049,6 +2086,7 @@ agents:
   ux-researcher:
     file: design/ux-researcher.md
     category: design
+    scope: project
     description: 'Use this agent when conducting user research, analyzing user behavior, creating journey maps, or validating
       design decisions through testing. This agent specializes in understanding user needs, pain points, and behaviors to
       inform product decisions within rapid development cycles. Examples:\n\n<example>\nContext: Understanding user needs
@@ -2121,6 +2159,7 @@ agents:
   vision-engineer:
     file: engineering/vision-engineer.md
     category: engineering
+    scope: project
     description: 'Use this agent when working on computer vision pipelines, video processing, object detection models (YOLO,
       SSD, etc.), TensorRT optimization, camera/RTSP stream handling, frame preprocessing, model inference, NMS postprocessing,
       multi-object tracking, or edge deployment of vision models on NVIDIA Jetson or similar accelerators. This agent specializes
@@ -2224,6 +2263,7 @@ agents:
   visual-storyteller:
     file: design/visual-storyteller.md
     category: design
+    scope: project
     description: 'Use this agent when creating visual narratives, designing infographics, building presentations, or communicating
       complex ideas through imagery. This agent specializes in transforming data and concepts into compelling visual stories
       that engage users and stakeholders. Examples:\n\n<example>\nContext: Creating app onboarding illustrations
@@ -2295,6 +2335,7 @@ agents:
   whimsy-injector:
     file: design/whimsy-injector.md
     category: design
+    scope: project
     description: 'PROACTIVELY use this agent after any UI/UX changes to ensure delightful, playful elements are incorporated.
       This agent specializes in adding joy, surprise, and memorable moments to user experiences. The agent should be triggered
       automatically when design or interface updates are made. Examples:\n\n<example>\nContext: After implementing new features

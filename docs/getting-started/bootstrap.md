@@ -99,25 +99,37 @@ The `sitrep-linear` wrapper transparently handles both linear CLI v1.x (which us
 ```bash
 git clone https://github.com/mihai-chiorean/inc.git ~/workspace/inc
 cd ~/workspace/inc
-./install.sh --link --skills-only
+./install.sh --link
 ```
 
-The flags:
+The flag:
 
 - `--link` symlinks instead of copying, so `git pull` in this repo updates everything else in place.
-- `--skills-only` installs only the skills (and their `bin/` executables). Agents stay in this repo; consumer projects pull a curated subset via `/staff` instead of loading all 55 agents globally.
 
-Expected output:
+**What gets installed by default:**
+
+- **All skills** (25 dirs) → `~/.claude/skills/` (loaded in every session — these are procedural overlays, you want them everywhere).
+- **Skill binaries** → `~/.local/bin/` (`staff`, `sitrep-linear`, `design-doc-scaffold`, `plan-eng-review-audit`).
+- **A small set of org-scope agents** (currently 7: `hiring-manager`, `blog-writer`, `social-amplifier`, `product-manager`, `tpm`, `tech-lead`, `security-auditor`) → `~/.claude/agents/` at user scope. These are the agents that genuinely fire across every project. The other ~48 stay in this repo until you stage them per-project via `/staff`.
+
+An agent is "org-scope" iff its frontmatter contains `scope: org`. Add or remove the tag to change the default set; `install.sh` reads each agent's `.md` directly.
+
+**Alternative modes:**
+
+- `./install.sh --link --include-all-agents` — installs all 55 agents at user scope. **Not recommended:** loads every agent in every session, defeating the per-project `/staff` curation. Use only if you genuinely want every specialist available globally.
+- `./install.sh --link --skills-only` — installs zero agents (skills + bins only). For fully-`/staff`-curated setups.
+
+Expected output (default mode):
 
 ```
-Installing skills only to /home/<you>/.claude/skills (mode: link)
-Skipping agents. Use /staff suggest in projects to populate .claude/agents/ per project.
+Installing org-scope agents + all skills to /home/<you>/.claude/agents and /home/<you>/.claude/skills (mode: link)
+Project-shaped agents stay in this repo; use /staff in projects to stage them per-repo.
 
-Summary: 25 skill dirs + 4 bins processed (29 linked, 0 copied, 0 already in place, 0 skipped)
+Summary: 7 org agents + 25 skill dirs + 4 bins processed (37 linked, 0 copied, 0 already in place, 0 skipped)
 Done.
 ```
 
-(Skill count and bin count drift as the repo grows. The interesting line is the trailing summary — non-zero `SKIPPED` means an existing non-symlink target is in the way; the installer refuses to clobber and exits 2.)
+(Skill / agent / bin counts drift as the repo grows. The interesting line is the trailing summary — non-zero `SKIPPED` means an existing non-symlink target is in the way; the installer refuses to clobber and exits 2. See A.0 for the cleanup procedure when that happens.)
 
 ### A.3 Make the skill binaries reachable
 
@@ -482,7 +494,7 @@ The Linear dependency is the most opinionated. If you don't use Linear, most of 
 
 **Worth forking as-is**, if your workflow looks similar:
 
-- **`install.sh`.** Idempotent symlink installer with `--link / --dry-run / --skills-only`. Generic and reusable.
+- **`install.sh`.** Idempotent symlink installer with `--link / --dry-run / --skills-only / --include-all-agents`. Default mode installs skills + bins + org-scope agents. Generic and reusable.
 - **`/staff` skill** (`skills/staff/`). The per-project agent staffing pattern — lockfile, drift detection, overlays, sync — is the load-bearing piece if you're trying to avoid the "load every agent into every session" failure mode.
 - **`/sitrep` + `STATUS.md` schema** (`skills/sitrep/`). The session-bootstrap contract is the lift from gstack that's paid off the most. The schema is at `skills/sitrep/docs/status-schema.md`; the wrapper script `bin/sitrep-linear` hides the Linear CLI v1/v2 mess.
 - **`/design-doc` template** (`skills/design-doc/templates/design-doc.md.tmpl`). Three-diagram + failure-modes + alternatives. Forkable on its own without the rest of `inc`.
@@ -521,7 +533,7 @@ The minimum-viable trial:
 
 ```bash
 git clone https://github.com/mihai-chiorean/inc.git /tmp/inc
-cd /tmp/inc && ./install.sh --link --skills-only --dry-run
+cd /tmp/inc && ./install.sh --link --dry-run
 ```
 
 `--dry-run` prints what `install.sh` would do without writing anything. Read the output, decide if you want the symlinks in your `~/.claude/skills/`, then re-run without `--dry-run`.
@@ -533,7 +545,7 @@ find ~/.claude/skills -maxdepth 1 -type l -lname "$HOME/workspace/inc/skills/*" 
 find ~/.local/bin     -maxdepth 1 -type l -lname "$HOME/workspace/inc/skills/*" -delete
 ```
 
-Do **not** `rm ~/.claude/skills/*` — that wipes every Claude Code skill on the machine (Anthropic-shipped, plugin-shipped, your other repos), not just the inc ones. The installer creates symlinks into `~/.claude/skills/` by skill name, so this targeted command only removes the ones originating from this clone. Agents weren't installed (because of `--skills-only`), so nothing to clean up there.
+Do **not** `rm ~/.claude/skills/*` — that wipes every Claude Code skill on the machine (Anthropic-shipped, plugin-shipped, your other repos), not just the inc ones. The installer creates symlinks into `~/.claude/skills/` by skill name, so this targeted command only removes the ones originating from this clone. Plus the 7 org-scope agents at `~/.claude/agents/` (if you ran the default install) — same `find -lname` pattern handles those: `find ~/.claude/agents -type l -lname "$HOME/workspace/inc/*" -delete`.
 
 ---
 
@@ -557,4 +569,4 @@ Do **not** `rm ~/.claude/skills/*` — that wipes every Claude Code skill on the
 - **Day-to-day workflow.** See [`workflow.md`](workflow.md) — what a typical session looks like once setup is done.
 - **Skill reference.** See [`../reference/skills.md`](../reference/skills.md) — one-page catalog of every skill and what fires it.
 - **Agent authoring.** See the top-level [`README.md`](../../README.md) section "Customizing Agents for Your Studio" for the YAML frontmatter contract and the system-prompt checklist.
-- **Updating after `git pull`.** Re-run `./install.sh --link --skills-only` (idempotent) and `staff sync` in each project (per-agent diff + accept).
+- **Updating after `git pull`.** Re-run `./install.sh --link` (idempotent) and `staff sync` in each project (per-agent diff + accept).

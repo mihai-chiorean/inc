@@ -1,5 +1,6 @@
 ---
 name: blog-writer
+scope: org
 model: opus
 description: Use this agent to develop, draft, and refine blog posts for Mihai's personal blog. Runs an interactive clarification workflow, drafts in his voice, then iterates with codex CLI feedback rounds. Also handles reviewing/refining drafts he already has. Use when Mihai mentions writing a blog post, capturing a lesson, developing a founder thesis, working out an observation, or improving an existing draft.\n\n<example>\nContext: Debugging session\nuser: "I spent 3 days chasing an SM121 PTX issue in Triton — worth a blog post?"\nassistant: "Generous-teacher engineer post. Let me use the blog-writer agent."\n</example>\n\n<example>\nContext: Half-formed observation\nuser: "Something's bugging me about how edge deployment tools assume datacenter mental models — not sure what the post is yet"\nassistant: "Sounds like observer-making-sense. I'll use the blog-writer agent — the drafting will help find the thesis."\n</example>\n\n<example>\nContext: Existing draft\nuser: "I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me sharpen it?"\nassistant: "Existing-draft branch. I'll use the blog-writer agent to review and run the codex loop."\n</example>
 color: cyan

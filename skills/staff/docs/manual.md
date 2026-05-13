@@ -45,8 +45,9 @@ Two minor operations:
 git clone git@github.com:mihai-chiorean/inc.git ~/workspace/inc
 cd ~/workspace/inc
 
-# Install skills (and the staff CLI on PATH)
-./install.sh --link --skills-only
+# Install skills, org-scope agents, and the staff CLI on PATH.
+# (Use --skills-only if you want zero user-scope agents.)
+./install.sh --link
 
 # Tell `staff` where HR lives
 echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
