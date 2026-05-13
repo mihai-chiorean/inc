@@ -421,8 +421,9 @@ staff rif go-engineer
 
 # rif --global: demote scope: project, remove the user-scope symlink
 # at ~/.claude/agents/<id>.md if and only if it's a symlink pointing
-# into the HR repo. Refuses without --force if any project lockfile
-# under ~/.inc/projects/*/lock.yaml still references the agent.
+# into the HR repo. Refuses without --force if the agent is still
+# referenced by any project lockfile under ~/.inc/projects/*/lock.yaml
+# OR the current --project-root's own lockfile.
 staff rif blog-writer --global
 staff rif blog-writer --global --force      # override the safety gate
 

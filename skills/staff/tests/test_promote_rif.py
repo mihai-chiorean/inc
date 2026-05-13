@@ -214,7 +214,7 @@ def test_rif_global_demotes(root: Path) -> None:
     user_agents = root / "user_agents"
     user_agents.mkdir()
     res = run_rif(
-        hr, "beta", extra=["--global", "--skip-install"],
+        hr, "beta", extra=["--global"],
         env={"STAFF_USER_AGENTS_DIR": str(user_agents),
              "STAFF_PROJECTS_DIR": str(root / "no-such-projects")},
     )
@@ -252,6 +252,38 @@ def test_rif_global_refuses_when_in_use(root: Path) -> None:
     expect(manifest_scope(hr, "beta") == "org", "beta unchanged in manifest")
 
 
+def test_rif_global_refuses_via_current_project_root(root: Path) -> None:
+    """rif --global also counts the current --project-root's own lockfile,
+    not just projects under STAFF_PROJECTS_DIR. Otherwise an unindexed
+    project could rif --global an agent it still uses."""
+    print("test_rif_global_refuses_via_current_project_root")
+    hr = make_fake_hr(root)
+    # STAFF_PROJECTS_DIR is empty — the indexed-projects scan finds nothing.
+    empty_projects = root / "empty-projects"
+    empty_projects.mkdir()
+    # The current project is not under STAFF_PROJECTS_DIR but staffs beta.
+    here = root / "current-project"
+    (here / ".claude/staff").mkdir(parents=True)
+    (here / ".claude/staff/lock.yaml").write_text(
+        "schema_version: 1\n"
+        "hr_repo: file://" + str(hr) + "\n"
+        "hr_commit_pinned: 0000000000000000000000000000000000000000\n"
+        "staffed:\n"
+        "  beta:\n"
+        "    pinned_at: 0000000000000000000000000000000000000000\n"
+        "    file: engineering/beta.md\n",
+    )
+    res = run_rif(
+        hr, "beta", extra=["--global", "--project-root", str(here)],
+        expect_exit=8,
+        env={"STAFF_PROJECTS_DIR": str(empty_projects),
+             "STAFF_USER_AGENTS_DIR": str(root / "user_agents")},
+    )
+    expect("referenced" in res.stderr.lower(),
+           "stderr explains the refusal (current project counted)")
+    expect(manifest_scope(hr, "beta") == "org", "beta unchanged in manifest")
+
+
 def test_rif_global_force_overrides(root: Path) -> None:
     print("test_rif_global_force_overrides")
     hr = make_fake_hr(root)
@@ -269,7 +301,7 @@ def test_rif_global_force_overrides(root: Path) -> None:
         "    file: engineering/beta.md\n",
     )
     run_rif(
-        hr, "beta", extra=["--global", "--force", "--skip-install"],
+        hr, "beta", extra=["--global", "--force"],
         env={"STAFF_PROJECTS_DIR": str(projects_dir),
              "STAFF_USER_AGENTS_DIR": str(root / "user_agents")},
     )
@@ -283,7 +315,7 @@ def test_rif_global_already_project_is_noop(root: Path) -> None:
     user_agents.mkdir()
     pre = (hr / "engineering/alpha.md").read_text()
     res = run_rif(
-        hr, "alpha", extra=["--global", "--skip-install"],
+        hr, "alpha", extra=["--global"],
         env={"STAFF_PROJECTS_DIR": str(root / "no-such"),
              "STAFF_USER_AGENTS_DIR": str(user_agents)},
     )
@@ -307,7 +339,7 @@ def test_rif_global_deletes_symlink_into_hr(root: Path) -> None:
     expect(link.is_symlink(), "fixture symlink created")
 
     run_rif(
-        hr, "beta", extra=["--global", "--skip-install"],
+        hr, "beta", extra=["--global"],
         env={"STAFF_PROJECTS_DIR": str(root / "no-such"),
              "STAFF_USER_AGENTS_DIR": str(user_agents)},
     )
@@ -327,7 +359,7 @@ def test_rif_global_preserves_real_file(root: Path) -> None:
     expect(real.is_file() and not real.is_symlink(), "fixture real file created")
 
     res = run_rif(
-        hr, "beta", extra=["--global", "--skip-install"],
+        hr, "beta", extra=["--global"],
         env={"STAFF_PROJECTS_DIR": str(root / "no-such"),
              "STAFF_USER_AGENTS_DIR": str(user_agents)},
     )
@@ -391,7 +423,7 @@ def test_promote_then_rif_round_trip(root: Path) -> None:
     expect(manifest_scope(hr, "alpha") == "org", "alpha promoted to org")
 
     run_rif(
-        hr, "alpha", extra=["--global", "--skip-install"],
+        hr, "alpha", extra=["--global"],
         env={"STAFF_PROJECTS_DIR": str(root / "no-such"),
              "STAFF_USER_AGENTS_DIR": str(user_agents)},
     )
@@ -412,6 +444,7 @@ def main() -> int:
         test_promote_dry_run_writes_nothing,
         test_rif_global_demotes,
         test_rif_global_refuses_when_in_use,
+        test_rif_global_refuses_via_current_project_root,
         test_rif_global_force_overrides,
         test_rif_global_already_project_is_noop,
         test_rif_global_deletes_symlink_into_hr,

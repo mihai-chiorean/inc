@@ -275,7 +275,8 @@ staff rif go-engineer
 
 # rif global: demote scope back to 'project', remove ~/.claude/agents/<id>.md
 # IF it's a symlink into this HR repo. Refuses without --force if any project
-# lockfile under ~/.inc/projects/*/lock.yaml still references the agent.
+# lockfile under ~/.inc/projects/*/lock.yaml OR the current --project-root's
+# own lockfile still references the agent.
 staff rif blog-writer --global
 staff rif blog-writer --global --force   # override
 

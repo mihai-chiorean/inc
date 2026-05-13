@@ -68,27 +68,40 @@ def user_agents_dir() -> Path:
     return DEFAULT_USER_AGENTS_DIR
 
 
-def find_projects_referencing(agent_id: str, aliases: list[str]) -> list[Path]:
-    """Best-effort scan of ~/.inc/projects/*/lock.yaml for any lockfile
-    whose staffed: map contains the given agent id (or any of its aliases).
-    Returns the list of lockfile paths."""
+def _lockfile_references(lock_path: Path, needles: set[str]) -> bool:
+    """True if the lockfile at lock_path lists any of `needles` under staffed:."""
+    try:
+        data = yaml.safe_load(lock_path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return False
+    staffed = data.get("staffed") if isinstance(data, dict) else None
+    if not isinstance(staffed, dict):
+        return False
+    return bool(needles & set(staffed.keys()))
+
+
+def find_projects_referencing(
+    agent_id: str, aliases: list[str], extra_project_root: Path | None = None,
+) -> list[Path]:
+    """Best-effort scan for any project lockfile whose staffed: map contains
+    the given agent id (or any of its aliases). Returns lockfile paths.
+
+    Scans ~/.inc/projects/*/lock.yaml and */.claude/staff/lock.yaml under
+    the projects_dir() root. If extra_project_root is provided, its
+    .claude/staff/lock.yaml is also checked — this covers the case where
+    the caller is standing in a project that isn't indexed under
+    ~/.inc/projects/ but is itself a consumer of the agent."""
     pdir = projects_dir()
-    if not pdir.is_dir():
-        return []
-    candidates = sorted(pdir.glob("*/lock.yaml")) + sorted(pdir.glob("*/.claude/staff/lock.yaml"))
+    candidates: list[Path] = []
+    if pdir.is_dir():
+        candidates.extend(sorted(pdir.glob("*/lock.yaml")))
+        candidates.extend(sorted(pdir.glob("*/.claude/staff/lock.yaml")))
+    if extra_project_root is not None:
+        extra = extra_project_root / ".claude/staff/lock.yaml"
+        if extra.is_file() and extra not in candidates:
+            candidates.append(extra)
     needles = {agent_id, *aliases}
-    out: list[Path] = []
-    for lock_path in candidates:
-        try:
-            data = yaml.safe_load(lock_path.read_text(encoding="utf-8")) or {}
-        except (OSError, yaml.YAMLError):
-            continue
-        staffed = data.get("staffed") if isinstance(data, dict) else None
-        if not isinstance(staffed, dict):
-            continue
-        if needles & set(staffed.keys()):
-            out.append(lock_path)
-    return out
+    return [p for p in candidates if _lockfile_references(p, needles)]
 
 
 def find_user_scope_path(agent_id: str) -> Path | None:
@@ -200,8 +213,8 @@ def run_project_rif(agent: str, project_root: Path) -> int:
     return result.returncode
 
 
-def run_global_rif(agent: str, hr_repo: Path, force: bool, skip_install: bool,
-                   dry_run: bool) -> int:
+def run_global_rif(agent: str, hr_repo: Path, project_root: Path | None,
+                   force: bool, dry_run: bool) -> int:
     """Global demote: scope: project in frontmatter + regen manifest +
     remove user-scope symlink (if owned by this HR repo). Refuses without
     --force if any project lockfile under ~/.inc/projects/ still references
@@ -220,7 +233,9 @@ def run_global_rif(agent: str, hr_repo: Path, force: bool, skip_install: bool,
 
     aliases = list(entry.get("aliases") or [])
     if not force:
-        referencing = find_projects_referencing(canonical, aliases)
+        referencing = find_projects_referencing(
+            canonical, aliases, extra_project_root=project_root,
+        )
         if referencing:
             print(
                 f"error: refusing to demote {canonical} — still referenced by "
@@ -323,12 +338,6 @@ def main() -> int:
         help="for --global: proceed even if other project lockfiles reference the agent",
     )
     parser.add_argument(
-        "--skip-install", action="store_true",
-        help="for --global: skip re-running install.sh (unused but kept for symmetry "
-             "with /staff promote; --global never re-runs install.sh, only deletes the "
-             "user-scope symlink)",
-    )
-    parser.add_argument(
         "--dry-run", action="store_true",
         help="report what would happen, write nothing",
     )
@@ -362,8 +371,8 @@ def main() -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 2
         rc_g = run_global_rif(
-            args.agent, hr_repo, force=args.force,
-            skip_install=args.skip_install, dry_run=args.dry_run,
+            args.agent, hr_repo, project_root=project_root,
+            force=args.force, dry_run=args.dry_run,
         )
         if rc_g != 0:
             return rc_g
