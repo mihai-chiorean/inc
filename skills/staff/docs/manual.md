@@ -54,6 +54,14 @@ echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
 source ~/.zshrc
 ```
 
+The agent.manifest.yaml that ships in the repo already has per-agent `description_summary` populated. If you ever add a new agent or edit an existing one's description, regenerate the summary so `/staff suggest`'s LLM matcher has a clean signal to route on:
+
+```bash
+python3 scripts/generate-manifest.py --llm-summaries
+```
+
+`/staff suggest` will warn on stderr if it sees a degraded manifest (≥30% or ≥10 agents with empty `description_summary`) and tell you to run this. Loud but non-fatal — recall is degraded until you fix it.
+
 The script symlinks every skill into `~/.claude/skills/` and every skill's `bin/` entries into `~/.local/bin/`. Verify:
 
 ```bash
@@ -185,13 +193,22 @@ Never use Foundation in the auth path (ADR-014).
         │  CLAUDE.md       │                 │
         │  README.md       │                 │
         │  AGENTS.md       │                 │
-        │  go.mod, …       │                 │
+        │ ───────────────  │                 │
+        │ Dep manifests:   │                 │
+        │  package.json    │                 │
+        │  requirements.txt│                 │
+        │  pyproject.toml  │                 │
+        │  go.mod, go.sum  │                 │
+        │  Cargo.toml/lock │                 │
+        │  Gemfile, pom.xml│                 │
+        │  …               │                 │
         └────────┬─────────┘                 │
                  │                           │
                  │  ┌──────────────────────┐ │
                  └─▶│ Deterministic match  │◀┘
                     │  (file presence +    │
-                    │   regex on docs)     │
+                    │   regex on docs and  │
+                    │   dep manifests)     │
                     └──────────┬───────────┘
                                │
                                │ "concrete signals"

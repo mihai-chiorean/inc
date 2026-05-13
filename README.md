@@ -23,7 +23,7 @@ The default install puts at user scope:
 - **Skill binaries** (`~/.local/bin/`) — `staff`, `sitrep-linear`, `design-doc-scaffold`, `plan-eng-review-audit`.
 - **Org-scope agents** (`~/.claude/agents/`) — currently 7: `hiring-manager`, `blog-writer`, `social-amplifier`, `product-manager`, `tpm`, `tech-lead`, `security-auditor`. These genuinely fire across every project. An agent is "org-scope" iff its frontmatter contains `scope: org`.
 
-The other ~48 project-shaped agents stay in this repo. In each project, use `/staff` (or `staff suggest && staff apply`) to stage a curated subset into `<project>/.claude/agents/`.
+The other ~48 project-shaped agents stay in this repo. In each project, use `/staff` (or `staff suggest && staff apply`) to stage a curated subset into `<project>/.claude/agents/`. Use `/staff promote <id>` to lift a project-scope agent into the org set, or `/staff rif <id>` to drop one — both manipulate the agent's `scope:` frontmatter and the user-scope symlink farm, no manual editing required.
 
 ### Alternative modes
 

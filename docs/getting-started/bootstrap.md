@@ -170,7 +170,20 @@ echo 'export STAFF_HR_REPO=$HOME/workspace/inc' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### A.5 Verify the symlink farm
+### A.5 Populate agent description summaries (first-run only)
+
+`/staff suggest` uses an LLM to pick agents for a project. To keep that match accurate, it reads a 2–4 sentence `description_summary` per agent from `agent.manifest.yaml` rather than the full description. **A fresh clone has those summaries populated** (committed to the repo), but if you ever add a new agent or modify an existing one's description, regenerate:
+
+```bash
+cd ~/workspace/inc
+python3 scripts/generate-manifest.py --llm-summaries
+```
+
+This uses the codex CLI (configurable via `STAFF_LLM`) to (re)compute the summary for any agent whose description has changed or which has no summary yet. ~7s per agent. Existing summaries are preserved unchanged.
+
+`/staff suggest` will warn loudly on stderr if it sees a degraded manifest (≥30% or ≥10 agents with empty summaries) and tell you to run this. Loud but non-fatal — it'll proceed with degraded recall.
+
+### A.6 Verify the symlink farm
 
 ```bash
 ls -la ~/.claude/skills/ | head -10
@@ -179,7 +192,7 @@ ls -la ~/.local/bin/ | grep -E '(staff|sitrep-linear|design-doc-scaffold|plan-en
 
 Expected: every entry in `~/.claude/skills/` is a symlink pointing into `~/workspace/inc/skills/`, and every wrapper in `~/.local/bin/` points into a skill's `bin/` directory. If any entry is a real file (not a symlink), the installer skipped it — investigate by hand and re-run.
 
-### A.6 Authenticate `gh` and `linear`
+### A.7 Authenticate `gh` and `linear`
 
 ```bash
 gh auth login          # interactive: pick GitHub.com, HTTPS, browser auth
@@ -200,7 +213,7 @@ $ linear auth whoami
 
 If you're on a headless box where the browser auth flow won't work, `linear auth login --plaintext` stores credentials in `~/.config/linear/credentials.toml` instead of the system keyring. For CI / bot accounts, set `LINEAR_API_KEY=lin_api_...` from <https://linear.app/settings/account/security> — it takes precedence over the keyring.
 
-### A.7 Restart Claude Code
+### A.8 Restart Claude Code
 
 Skills are loaded once per session. If Claude Code was already running, exit and relaunch so it picks up the new `~/.claude/skills/`.
 
@@ -219,7 +232,7 @@ cd ~/workspace/<your-project>
 staff suggest
 ```
 
-`staff suggest` is read-only. By default it uses an LLM (defaults to `STAFF_LLM=codex`, configurable to `claude` or a local provider) to match project hints — file presence, regex matches in `CLAUDE.md`/`README.md`/`AGENTS.md`, and surface signals — against the HR manifest. Pass `--no-llm` to force deterministic regex-only matching (faster, no codex dependency, less accurate on novel repos).
+`staff suggest` is read-only. By default it uses an LLM (defaults to `STAFF_LLM=codex`, configurable to `claude` or a local provider) to match project hints — file presence, regex matches in `CLAUDE.md`/`README.md`/`AGENTS.md`, **regex matches in dependency manifests** (`package.json`, `requirements.txt`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `Gemfile`, `pom.xml`, etc.), and surface signals — against the HR manifest. Pass `--no-llm` to force deterministic regex-only matching (faster, no codex dependency, less accurate on novel repos).
 
 Sample output:
 
