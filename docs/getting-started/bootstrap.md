@@ -20,6 +20,66 @@ Sibling guides:
 
 This sets up `inc` as the **HR repo** for your machine: the single source of truth for agents and skills that other projects pull from.
 
+### A.0 Existing install? Clean up first
+
+Skip if you're on a truly fresh machine (no prior `claude-agents` checkout, no other `~/.claude/skills/` setup). Otherwise read this section before running `install.sh`.
+
+**What "prior install" means.** Most likely:
+
+- You had `claude-agents` (the pre-rebrand name) cloned at `~/workspace/claude-agents`. That clone got renamed to `inc`, but `~/.claude/skills/` still has symlinks pointing at the old path (now broken).
+- You ran `./install.sh` without `--link` at some point, so `~/.claude/agents/` contains COPIES of agent .md files instead of symlinks — those copies are stale.
+- An older Claude Code skill bootstrap left files in `~/.claude/skills/` that don't belong to inc.
+
+**The cleanup script handles all three.** It's at `scripts/cleanup-prior-install.sh` in this repo, symlinked to nothing (intentional — you run it from the clone). Safe-by-default: read-only `inventory` mode by default, never deletes unrelated symlinks, moves `~/.claude/agents/` to a timestamped backup rather than `rm`-ing it.
+
+**Two ways to use it.**
+
+**(1) Standalone — preview, then commit:**
+
+```bash
+cd ~/workspace/inc
+
+# Read-only inspection. Shows what would be cleaned. No changes.
+./scripts/cleanup-prior-install.sh inventory
+
+# When ready, run the cleanup. Prompts for confirmation.
+./scripts/cleanup-prior-install.sh clean
+
+# Or fully non-interactive (CI / re-runs):
+./scripts/cleanup-prior-install.sh clean --yes
+
+# Or preview without committing:
+./scripts/cleanup-prior-install.sh clean --yes --dry-run
+```
+
+The script exits `0` on success / nothing-to-clean, `1` if you decline the prompt, `2` for bad arguments or refuses (e.g. `~/workspace/claude-agents/` still exists — finish the rebrand mv first).
+
+**(2) Let `install.sh` handle it for you.** Skip the standalone step — `install.sh` runs the same inventory at startup and prompts:
+
+```bash
+cd ~/workspace/inc
+./install.sh --link
+
+# … if leftovers detected, you'll see:
+# Clean up these leftovers before installing? [y/N/show]
+```
+
+Answer:
+- `y` / `yes` → runs the cleanup, then proceeds with install.
+- `show` → re-prints the inventory, asks again.
+- `n` / `no` / Enter (default) → proceeds anyway. `install.sh` will refuse to clobber any conflicting target and report `SKIPPED` items at the end with instructions.
+
+For non-interactive scenarios (CI, headless re-install), pass `--auto-cleanup`. To skip the check entirely (you know the machine is clean), pass `--no-cleanup`.
+
+**Safety guarantees.** The cleanup:
+
+- Only removes symlinks under `~/.claude/skills/` or `~/.local/bin/` whose target matches `*workspace/claude-agents*` (old-name leftovers), OR symlinks that are broken AND point at the current inc workspace (install will recreate them).
+- **Leaves unrelated broken symlinks alone** with a stderr WARN line listing them. If you have a custom skill symlinked into `~/.claude/skills/` whose target moved temporarily, the script will not touch it.
+- Moves `~/.claude/agents/` to `~/.claude/agents.bak-pre-inc-<UTC-timestamp>/` rather than deleting. Restore from the backup later if anything is missing.
+- Refuses to run if `~/workspace/claude-agents/` still exists — finish `mv ~/workspace/claude-agents ~/workspace/inc` first (the script reminds you).
+
+**Portability.** Shebang is `#!/bin/bash`; works on macOS (`/bin/bash` is bash 3.2) and Linux. **Do NOT invoke as `zsh scripts/cleanup-prior-install.sh`** — zsh's `case`-pattern semantics differ from POSIX and the script will silently misclassify. Use `./scripts/cleanup-prior-install.sh` (shebang resolves to bash) or `bash scripts/cleanup-prior-install.sh`.
+
 ### A.1 Prerequisites
 
 | Tool | Why | Install check |
@@ -51,7 +111,7 @@ Expected output:
 Installing skills only to /home/<you>/.claude/skills (mode: link)
 Skipping agents. Use /staff suggest in projects to populate .claude/agents/ per project.
 
-Summary: 24 skill dirs + 4 bins processed (28 linked, 0 copied, 0 already in place, 0 skipped)
+Summary: 25 skill dirs + 4 bins processed (29 linked, 0 copied, 0 already in place, 0 skipped)
 Done.
 ```
 
