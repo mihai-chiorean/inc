@@ -57,28 +57,57 @@ CATEGORIES = [
 ]
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-KNOWN_KEYS = {"name", "description", "model", "color", "tools", "scope"}
+# A frontmatter line is "a new field" if it starts at column 0 with an
+# identifier-looking key followed by ':'. Continuations (rare in our agent
+# files — descriptions are single-line with literal `\n`) must be indented
+# OR start with a character that doesn't look like a key. There's no
+# allowlist: ANY top-level key:value line is captured.
+#
+# Why this matters: the old parser used a KNOWN_KEYS allowlist; any
+# unrecognized key (e.g. a future `priority:`, or swift-backend's
+# `skills:`) silently got appended to the previous field's value, often
+# corrupting it. MIT-376 catches that.
 KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
+# Required fields: every agent must have these. Anything else is preserved
+# in the parsed frontmatter dict but not validated here.
+REQUIRED_KEYS = {"name", "description"}
 
 
 def parse_frontmatter_permissive(raw: str) -> dict:
     """Parse the agent frontmatter without choking on unquoted descriptions
     that contain embedded ': ' sequences (e.g., 'Examples:\\n<example>\\nContext: foo').
 
-    Returns dict with at least 'name' and 'description'; fails loudly otherwise."""
+    A line is a new field iff it starts at column 0 with an identifier-looking
+    key followed by ':'. Indented or non-key-shaped lines are treated as
+    continuations of the previous field. NO allowlist — any top-level key is
+    accepted and preserved (MIT-376; the old KNOWN_KEYS allowlist silently
+    corrupted any unrecognized frontmatter key into the previous field's
+    value).
+
+    Returns dict with at least 'name' and 'description'; fails loudly otherwise.
+    """
     out: dict[str, str] = {}
     current_key: str | None = None
     for line in raw.splitlines():
+        # Continuation: lines that start with whitespace are continuations of
+        # the previous field regardless of content. (Indented `key: value`
+        # would be ambiguous, but we don't have those today and standard YAML
+        # block-style would use `key: |` first.)
+        if line and line[0] in (" ", "\t"):
+            if current_key is not None:
+                out[current_key] += "\n" + line
+            continue
         m = KEY_LINE_RE.match(line)
-        if m and m.group(1) in KNOWN_KEYS:
+        if m:
             current_key = m.group(1)
             out[current_key] = m.group(2)
         elif current_key is not None:
+            # Non-key-shaped continuation (e.g. an empty separator line, or a
+            # line that doesn't match the key pattern). Append to previous.
             out[current_key] += "\n" + line
-    if "name" not in out or not out["name"].strip():
-        raise ValueError("frontmatter missing required 'name' field")
-    if "description" not in out or not out["description"].strip():
-        raise ValueError("frontmatter missing required 'description' field")
+    for required in REQUIRED_KEYS:
+        if required not in out or not out[required].strip():
+            raise ValueError(f"frontmatter missing required {required!r} field")
     return out
 
 
