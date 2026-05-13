@@ -57,53 +57,76 @@ CATEGORIES = [
 ]
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-# A frontmatter line is "a new field" if it starts at column 0 with an
-# identifier-looking key followed by ':'. Continuations (rare in our agent
-# files — descriptions are single-line with literal `\n`) must be indented
-# OR start with a character that doesn't look like a key. There's no
-# allowlist: ANY top-level key:value line is captured.
+# The parser has to deal with a non-canonical YAML reality: 16 of our 55
+# agents have multi-line descriptions containing column-0 lines like
+# `user: "..."` or `Context: ...` (inside `<example>` blocks). Those are
+# CONTENT, not YAML keys. A naive "any column-0 key:value is a new field"
+# parser would truncate those descriptions.
 #
-# Why this matters: the old parser used a KNOWN_KEYS allowlist; any
-# unrecognized key (e.g. a future `priority:`, or swift-backend's
-# `skills:`) silently got appended to the previous field's value, often
-# corrupting it. MIT-376 catches that.
+# Compromise: an allowlist of recognized top-level keys. Anything in the
+# allowlist becomes a new field. Anything NOT in it is treated as
+# continuation of the previous field BUT prints a stderr warning — so the
+# original MIT-376 failure mode (adding `scope:` and silently corrupting
+# `name`) is no longer silent. The user sees the warning and adds the key.
+#
+# Long-term cleaner fix: normalize all descriptions to single-line with
+# literal `\n`, then drop the allowlist. Filed as a follow-up under
+# MIT-376's open questions.
 KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
-# Required fields: every agent must have these. Anything else is preserved
-# in the parsed frontmatter dict but not validated here.
+KNOWN_KEYS = {"name", "description", "model", "color", "tools", "scope", "skills"}
+# Required fields: every agent must have these.
 REQUIRED_KEYS = {"name", "description"}
+# Heuristic: keys that look like agent-frontmatter content rather than
+# YAML structure. Used to suppress the unknown-key warning for noisy
+# false positives (HTML-like content in multi-line descriptions).
+DESCRIPTION_CONTENT_KEYS = {
+    "user", "assistant", "Context", "context", "commentary",
+}
 
 
-def parse_frontmatter_permissive(raw: str) -> dict:
+def parse_frontmatter_permissive(raw: str, source: str = "<frontmatter>") -> dict:
     """Parse the agent frontmatter without choking on unquoted descriptions
-    that contain embedded ': ' sequences (e.g., 'Examples:\\n<example>\\nContext: foo').
+    that contain embedded ': ' sequences.
 
-    A line is a new field iff it starts at column 0 with an identifier-looking
-    key followed by ':'. Indented or non-key-shaped lines are treated as
-    continuations of the previous field. NO allowlist — any top-level key is
-    accepted and preserved (MIT-376; the old KNOWN_KEYS allowlist silently
-    corrupted any unrecognized frontmatter key into the previous field's
-    value).
+    Recognizes the KNOWN_KEYS set as top-level fields. Any other column-0
+    line that matches `key:value` shape is treated as a CONTINUATION of the
+    previous field (because that's almost always content inside a multi-line
+    description, like `user: "..."` or `Context: ...` in an `<example>` block).
+    HOWEVER, if the unrecognized key looks like it could be a real
+    frontmatter field — not in DESCRIPTION_CONTENT_KEYS — emit a stderr
+    warning so the user knows to add it to KNOWN_KEYS rather than silently
+    losing it.
+
+    The previous bug (MIT-375): adding `scope:` to frontmatter without
+    updating KNOWN_KEYS silently corrupted the `name` field. The warning
+    catches that case.
 
     Returns dict with at least 'name' and 'description'; fails loudly otherwise.
     """
     out: dict[str, str] = {}
     current_key: str | None = None
+    unknown_keys_seen: set[str] = set()
     for line in raw.splitlines():
-        # Continuation: lines that start with whitespace are continuations of
-        # the previous field regardless of content. (Indented `key: value`
-        # would be ambiguous, but we don't have those today and standard YAML
-        # block-style would use `key: |` first.)
-        if line and line[0] in (" ", "\t"):
-            if current_key is not None:
-                out[current_key] += "\n" + line
-            continue
         m = KEY_LINE_RE.match(line)
-        if m:
+        if m and m.group(1) in KNOWN_KEYS:
             current_key = m.group(1)
             out[current_key] = m.group(2)
+        elif m and m.group(1) not in DESCRIPTION_CONTENT_KEYS:
+            # Looks like a frontmatter key but isn't recognized. Warn once
+            # per unknown key, then treat as continuation.
+            k = m.group(1)
+            if k not in unknown_keys_seen:
+                unknown_keys_seen.add(k)
+                print(
+                    f"warning: {source}: unrecognized frontmatter key {k!r}. "
+                    f"Treating as continuation of {current_key!r}. "
+                    f"If this is a real field, add {k!r} to KNOWN_KEYS in "
+                    f"scripts/generate-manifest.py.",
+                    file=sys.stderr,
+                )
+            if current_key is not None:
+                out[current_key] += "\n" + line
         elif current_key is not None:
-            # Non-key-shaped continuation (e.g. an empty separator line, or a
-            # line that doesn't match the key pattern). Append to previous.
             out[current_key] += "\n" + line
     for required in REQUIRED_KEYS:
         if required not in out or not out[required].strip():
@@ -122,7 +145,7 @@ def parse_agent_file(path: Path) -> tuple[dict, str]:
     m = FRONTMATTER_RE.match(text)
     if not m:
         raise ValueError(f"{path}: no frontmatter found")
-    frontmatter = parse_frontmatter_permissive(m.group(1))
+    frontmatter = parse_frontmatter_permissive(m.group(1), source=str(path))
     body = m.group(2)
     return frontmatter, body
 

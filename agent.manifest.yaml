@@ -98,9 +98,61 @@ agents:
     scope: project
     description: 'Use this agent when analyzing metrics, generating insights from data, creating performance reports, or making
       data-driven recommendations. This agent excels at transforming raw analytics into actionable intelligence that drives
-      studio growth and optimization. Examples:\n\n<example>\nContext: Monthly performance review needed'
+      studio growth and optimization. Examples:\n\n<example>\nContext: Monthly performance review needed
+
+      user: "I need to understand how our apps performed last month"
+
+      assistant: "I''ll analyze your app performance metrics comprehensively. Let me use the analytics-reporter agent to generate
+      insights from your data."
+
+      <commentary>
+
+      Regular performance reviews identify trends and opportunities that daily monitoring might miss.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: User behavior analysis for feature decisions
+
+      user: "Which features are users actually using in our fitness app?"
+
+      assistant: "Feature usage data is crucial for prioritization. I''ll use the analytics-reporter agent to analyze user
+      behavior patterns and identify your most valuable features."
+
+      <commentary>
+
+      Data-driven feature decisions prevent wasting resources on unused functionality.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Revenue optimization analysis
+
+      user: "Our revenue is plateauing, need to find growth opportunities"
+
+      assistant: "Let''s dive deep into your revenue metrics. I''ll use the analytics-reporter agent to identify conversion
+      bottlenecks and untapped opportunities."
+
+      <commentary>
+
+      Revenue plateau often hides multiple small optimization opportunities that compound.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: A/B test results interpretation
+
+      user: "We ran three different onboarding flows, which performed best?"
+
+      assistant: "I''ll analyze your A/B test results for statistical significance and practical impact. Let me use the analytics-reporter
+      agent to interpret the data."
+
+      <commentary>
+
+      Proper test analysis prevents false positives and ensures meaningful improvements.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:e0cd94addef61bc4949fedd743b24837869fcf263322432d034c7f04fe0a04d7
+    description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
     body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
     tags:
     - analytics
@@ -118,9 +170,61 @@ agents:
     scope: project
     description: 'Use this agent for comprehensive API testing including performance testing, load testing, and contract testing.
       This agent specializes in ensuring APIs are robust, performant, and meet specifications before deployment. Examples:\n\n<example>\nContext:
-      Testing API performance under load'
+      Testing API performance under load
+
+      user: "We need to test if our API can handle 10,000 concurrent users"
+
+      assistant: "I''ll help test your API''s performance under load. Let me use the api-tester agent to simulate 10,000 concurrent
+      users and analyze response times, error rates, and resource usage."
+
+      <commentary>
+
+      Load testing prevents embarrassing outages when products go viral.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Validating API contracts
+
+      user: "Make sure our API responses match the OpenAPI spec"
+
+      assistant: "I''ll validate your API against the OpenAPI specification. Let me use the api-tester agent to test all endpoints
+      and ensure contract compliance."
+
+      <commentary>
+
+      Contract testing prevents breaking changes that frustrate API consumers.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: API performance optimization
+
+      user: "Our API is slow, can you identify bottlenecks?"
+
+      assistant: "I''ll analyze your API performance and identify bottlenecks. Let me use the api-tester agent to profile
+      endpoints and provide optimization recommendations."
+
+      <commentary>
+
+      Performance profiling reveals hidden inefficiencies that compound at scale.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Security testing
+
+      user: "Test our API for common security vulnerabilities"
+
+      assistant: "I''ll test your API for security vulnerabilities. Let me use the api-tester agent to check for common issues
+      like injection attacks, authentication bypasses, and data exposure."
+
+      <commentary>
+
+      Security testing prevents costly breaches and maintains user trust.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:a52258bacfe6c6f55c7277df582d80b8848ca2f8846eae2bcc82fa1c09597675
+    description_hash: sha256:42930722e2291ac387e823e8d83aa8fa4086d914c48be37fa9602396526c77d2
     body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
     tags:
     - api
@@ -138,9 +242,28 @@ agents:
     scope: project
     description: 'Use this agent when preparing app store listings, researching keywords, optimizing app metadata, improving
       conversion rates, or analyzing app store performance. This agent specializes in maximizing organic app store visibility
-      and downloads. Examples:\n\n<example>\nContext: Preparing for app launch'
+      and downloads. Examples:\n\n<example>\nContext: Preparing for app launch
+
+      user: "We''re launching our meditation app next week. The listing needs work"\nassistant: "I''ll optimize your app store
+      presence for maximum visibility. Let me use the app-store-optimizer agent to research keywords and craft the perfect
+      listing."\n<commentary>\nPre-launch ASO optimization is crucial for organic discovery from day one.\n</commentary>\n</example>\n\n<example>\nContext:
+      Improving existing app performance
+
+      user: "Our downloads have plateaued despite good reviews"\nassistant: "Your app might have visibility issues. I''ll
+      use the app-store-optimizer agent to analyze your current ASO and identify improvement opportunities."\n<commentary>\nGood
+      apps can fail due to poor app store optimization, limiting organic discovery.\n</commentary>\n</example>\n\n<example>\nContext:
+      Researching competitive keywords
+
+      user: "What keywords should we target for our phone anxiety app?"\nassistant: "Keyword research is crucial for ASO.
+      Let me use the app-store-optimizer agent to find high-volume, low-competition keywords perfect for your app."\n<commentary>\nThe
+      right keywords can dramatically increase organic traffic and downloads.\n</commentary>\n</example>\n\n<example>\nContext:
+      A/B testing app store elements
+
+      user: "Should we change our app icon? Users say it''s boring"\nassistant: "Let''s test that systematically. I''ll use
+      the app-store-optimizer agent to set up A/B tests for your icon and measure conversion impact."\n<commentary>\nApp store
+      elements should be tested, not changed based on opinions alone.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:c45ebe105fd2279f857ad064eb4a4457b5990f8fae361a6a1893e47b2c9a1487
+    description_hash: sha256:fddb282f8ab22cf2ba6beea5024bea12d8bdbc9ef38bb9323a27265883e78d2a
     body_hash: sha256:da74e59dd6809cc0d3eddae113819aa56f743983171d190370fc36605629d9cf
     tags:
     - app
@@ -255,9 +378,61 @@ agents:
     scope: project
     description: 'Use this agent when establishing brand guidelines, ensuring visual consistency, managing brand assets, or
       evolving brand identity. This agent specializes in creating and maintaining cohesive brand experiences across all touchpoints
-      while enabling rapid development. Examples:\n\n<example>\nContext: Creating brand guidelines for a new app'
+      while enabling rapid development. Examples:\n\n<example>\nContext: Creating brand guidelines for a new app
+
+      user: "We need to establish a visual identity for our meditation app"
+
+      assistant: "I''ll help create a calming yet distinctive brand identity. Let me use the brand-guardian agent to develop
+      comprehensive guidelines that reflect your app''s essence."
+
+      <commentary>
+
+      Strong brand identity differentiates apps in crowded marketplaces.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Ensuring consistency across platforms
+
+      user: "Our app looks different on iOS, Android, and web"
+
+      assistant: "Brand consistency builds trust and recognition. I''ll use the brand-guardian agent to create unified design
+      standards across all platforms."
+
+      <commentary>
+
+      Consistent branding makes products feel more professional and trustworthy.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Evolving existing brand
+
+      user: "Our brand feels outdated compared to competitors like Headspace"
+
+      assistant: "Brand evolution can revitalize user perception. Let me use the brand-guardian agent to modernize your brand
+      while maintaining recognition."
+
+      <commentary>
+
+      Strategic brand updates keep products feeling fresh and relevant.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Managing brand assets
+
+      user: "Developers keep using different shades of our brand colors"
+
+      assistant: "Clear asset management prevents brand dilution. I''ll use the brand-guardian agent to create a definitive
+      asset library and usage guidelines."
+
+      <commentary>
+
+      Well-organized brand assets speed up development and maintain quality.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:f4d40a2fad959301e426d14213d36fe8080f2bb50175ce4b4fbc989e451db28f
+    description_hash: sha256:566ed0d7859e64886f9e10f95038220dc51ee20d472461a382a8cf1972e20677
     body_hash: sha256:c021eb05dcd6b2e643b3510d685bd8e85e0bd0292098b8c24df2d3717260da3b
     tags:
     - brand
@@ -552,9 +727,22 @@ agents:
     scope: project
     description: 'Use this agent when you need to analyze user feedback from multiple sources, identify patterns in user complaints
       or requests, synthesize insights from reviews, or prioritize feature development based on user input. This agent excels
-      at turning raw feedback into actionable product insights. Examples:\n\n<example>\nContext: Weekly review of user feedback'
+      at turning raw feedback into actionable product insights. Examples:\n\n<example>\nContext: Weekly review of user feedback
+
+      user: "We got a bunch of new app store reviews this week"\nassistant: "Let me analyze those reviews for actionable insights.
+      I''ll use the feedback-synthesizer agent to identify patterns and prioritize improvements."\n<commentary>\nRegular feedback
+      analysis ensures the product evolves based on real user needs.\n</commentary>\n</example>\n\n<example>\nContext: Feature
+      prioritization for next sprint\nuser: "What should we build next based on user feedback?"\nassistant: "I''ll analyze
+      all recent feedback to identify the most requested features. Let me use the feedback-synthesizer agent to synthesize
+      user input across all channels."\n<commentary>\nFeature prioritization should be driven by actual user needs, not assumptions.\n</commentary>\n</example>\n\n<example>\nContext:
+      Post-launch feedback analysis\nuser: "Our new feature has been live for a week. What are users saying?"\nassistant:
+      "I''ll compile and analyze user reactions to the new feature. Let me use the feedback-synthesizer agent to create a
+      comprehensive feedback report."\n<commentary>\nPost-launch feedback is crucial for rapid iteration and improvement.\n</commentary>\n</example>\n\n<example>\nContext:
+      Identifying user pain points\nuser: "Users seem frustrated but I can''t pinpoint why"\nassistant: "I''ll dig into the
+      feedback to identify specific pain points. Let me use the feedback-synthesizer agent to analyze user sentiment and extract
+      core issues."\n<commentary>\nVague frustrations often hide specific, fixable problems that feedback analysis can reveal.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:c8cf64d161febaea41cfe7611fc6037e80812425817f9a4431f7f991c07615b2
+    description_hash: sha256:33c48863ef095f3806a434e2208d129bc53ebd2b64d0cd1a92dd5fdfb94a268b
     body_hash: sha256:058aefb3e409dafa316865dcb22be26d799ca4e6c5fcf5cbff96f852dda0cca5
     tags:
     - feedback
@@ -572,9 +760,61 @@ agents:
     scope: project
     description: 'Use this agent when managing budgets, optimizing costs, forecasting revenue, or analyzing financial performance.
       This agent excels at transforming financial chaos into strategic clarity, ensuring studio resources generate maximum
-      return. Examples:\n\n<example>\nContext: Planning next quarter''s development budget'
+      return. Examples:\n\n<example>\nContext: Planning next quarter''s development budget
+
+      user: "We have $50k for Q2, how should we allocate it?"
+
+      assistant: "I''ll create an optimized budget allocation plan. Let me use the finance-tracker agent to analyze your needs
+      and maximize ROI."
+
+      <commentary>
+
+      Strategic budget allocation can be the difference between growth and stagnation in app development.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: App profitability analysis
+
+      user: "Our fitness app has 10k users but we''re still losing money"
+
+      assistant: "Let''s analyze your unit economics and find the path to profitability. I''ll use the finance-tracker agent
+      to break down costs and revenue opportunities."
+
+      <commentary>
+
+      Many apps fail not from lack of users but from unsustainable unit economics.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Evaluating monetization strategies
+
+      user: "Should we switch from ads to subscriptions?"
+
+      assistant: "This requires careful financial modeling. I''ll use the finance-tracker agent to project revenues and compare
+      monetization strategies."
+
+      <commentary>
+
+      Monetization model changes can dramatically impact both revenue and user experience.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Investor reporting preparation
+
+      user: "I need to show our investors our burn rate and runway"
+
+      assistant: "I''ll prepare comprehensive financial reports for your investors. Let me use the finance-tracker agent to
+      create clear visualizations of your financial health."
+
+      <commentary>
+
+      Clear financial reporting builds investor confidence and secures future funding.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:197189a4fd978599e4dcaab9808687a4e994a580235344745f36d855bd075bac
+    description_hash: sha256:6d3be69546e4fc0ba9251c3146e637fe2bc3b86016caa3077d5737573148e2a7
     body_hash: sha256:a88541e1eed4779a04b075df9daf7c30fc6d8ca6b4a58af04e7ab91d81252f09
     tags:
     - finance
@@ -893,9 +1133,61 @@ agents:
     scope: project
     description: 'Use this agent when monitoring system health, optimizing performance, managing scaling, or ensuring infrastructure
       reliability. This agent excels at keeping studio applications running smoothly while preparing for growth and preventing
-      disasters. Examples:\n\n<example>\nContext: App experiencing slow performance'
+      disasters. Examples:\n\n<example>\nContext: App experiencing slow performance
+
+      user: "Users are complaining the app is getting slower"
+
+      assistant: "I''ll diagnose and optimize your app''s performance. Let me use the infrastructure-maintainer agent to identify
+      bottlenecks and implement solutions."
+
+      <commentary>
+
+      Performance degradation often creeps in gradually until it reaches a tipping point that drives users away.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Preparing for viral growth
+
+      user: "We might go viral next week with this influencer partnership"
+
+      assistant: "Let''s ensure your infrastructure can handle the surge. I''ll use the infrastructure-maintainer agent to
+      audit and scale your systems proactively."
+
+      <commentary>
+
+      Viral moments can kill apps that aren''t prepared—success becomes failure without proper infrastructure.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Reducing infrastructure costs
+
+      user: "Our server costs are eating up all our profit margins"
+
+      assistant: "I''ll analyze and optimize your infrastructure spending. Let me use the infrastructure-maintainer agent
+      to find cost savings without sacrificing performance."
+
+      <commentary>
+
+      Many apps overspend on infrastructure due to poor optimization and outdated configurations.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Setting up monitoring and alerts
+
+      user: "I want to know immediately if something breaks"
+
+      assistant: "Proactive monitoring is essential. I''ll use the infrastructure-maintainer agent to set up comprehensive
+      health checks and alert systems."
+
+      <commentary>
+
+      The first user complaint should never be how you discover an outage.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:95855b1eddb8715bbc268af849b594792a37834e07491822e7fbe90cf3014102
+    description_hash: sha256:c88dd94f5b23a7e0e3cc8a5de36dfe5681dfcc5f8cab849f7052e98e54e07690
     body_hash: sha256:301b9595168ca3a02833ed5cd572368120e45dce39e041ee5dd32e4f85240d2b
     tags:
     - infrastructure
@@ -956,9 +1248,61 @@ agents:
     scope: project
     description: 'Use this agent when reviewing terms of service, privacy policies, ensuring regulatory compliance, or handling
       legal requirements. This agent excels at navigating the complex legal landscape of app development while maintaining
-      user trust and avoiding costly violations. Examples:\n\n<example>\nContext: Launching app in European markets'
+      user trust and avoiding costly violations. Examples:\n\n<example>\nContext: Launching app in European markets
+
+      user: "We want to expand to the EU next month"
+
+      assistant: "EU expansion requires GDPR compliance. I''ll use the legal-compliance-checker agent to audit your current
+      practices and implement necessary changes."
+
+      <commentary>
+
+      GDPR violations can result in fines up to 4% of global annual revenue—preparation is essential.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Adding AI features to the app
+
+      user: "We''re integrating ChatGPT into our education app"
+
+      assistant: "AI integration has specific legal considerations. Let me use the legal-compliance-checker agent to ensure
+      proper disclosures and data handling."
+
+      <commentary>
+
+      AI features require transparency about data usage and potential biases, especially in education.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Collecting user health data
+
+      user: "Our fitness app will track heart rate and sleep patterns"
+
+      assistant: "Health data has strict privacy requirements. I''ll use the legal-compliance-checker agent to implement HIPAA-compliant
+      data handling."
+
+      <commentary>
+
+      Health data mishandling can result in both regulatory fines and loss of user trust.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Implementing in-app purchases for children''s app
+
+      user: "We want to add a coin store to our kids'' game"
+
+      assistant: "Children''s apps have special requirements for purchases. Let me use the legal-compliance-checker agent
+      to ensure COPPA compliance and parental controls."
+
+      <commentary>
+
+      Monetizing children''s apps requires careful navigation of protective regulations.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:5baf1c01f9f0b41fd28987c1a1c2cfee9bfb87546cd4e04550a7a74db2f0c413
+    description_hash: sha256:4c6d6d8e1347a7624024b74a1731ef7f70725fe2a2d57001e38c9caa97d661f7
     body_hash: sha256:1e57c4fd32896a785b6673a67d2cea53ccf17ba05eb51ec9b4a1fa8bcef55141
     tags:
     - checker
@@ -1047,9 +1391,61 @@ agents:
     scope: project
     description: 'Use this agent for comprehensive performance testing, profiling, and optimization recommendations. This
       agent specializes in measuring speed, identifying bottlenecks, and providing actionable optimization strategies for
-      applications. Examples:\n\n<example>\nContext: Application speed testing'
+      applications. Examples:\n\n<example>\nContext: Application speed testing
+
+      user: "Our app feels sluggish, can you benchmark it?"
+
+      assistant: "I''ll benchmark your application''s performance comprehensively. Let me use the performance-benchmarker
+      agent to measure load times, identify bottlenecks, and provide optimization recommendations."
+
+      <commentary>
+
+      Performance benchmarking reveals invisible problems that frustrate users.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Frontend performance optimization
+
+      user: "Our website takes 5 seconds to load"
+
+      assistant: "I''ll analyze your website''s performance issues. Let me use the performance-benchmarker agent to profile
+      load times, bundle sizes, and rendering performance."
+
+      <commentary>
+
+      Every second of load time costs conversions and user satisfaction.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Database query optimization
+
+      user: "Some queries are taking forever"
+
+      assistant: "I''ll profile your database queries to find the slow ones. Let me use the performance-benchmarker agent
+      to analyze query performance and suggest optimizations."
+
+      <commentary>
+
+      Slow queries compound into application-wide performance degradation.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Mobile app performance
+
+      user: "Our React Native app is janky on older phones"
+
+      assistant: "I''ll benchmark your app''s performance on various devices. Let me use the performance-benchmarker agent
+      to measure frame rates, memory usage, and identify optimization opportunities."
+
+      <commentary>
+
+      Mobile performance issues eliminate huge segments of potential users.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:6cc146986c93d50d6edef08edac44fe59e597efe7835019cd5e70722b7dbcbe3
+    description_hash: sha256:15954de560d495780feccbd7d70f3947ff341b9dc2bb7057523f504e7e51297c
     body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
     tags:
     - benchmarker
@@ -1255,9 +1651,28 @@ agents:
     description: 'Use this agent when handling customer support inquiries, creating support documentation, setting up automated
       responses, or analyzing support patterns. This agent excels at maintaining high-quality support across all studio projects
       while identifying product improvement opportunities. Examples:\n\n<example>\nContext: Setting up support for a new app
-      launch'
+      launch
+
+      user: "We''re launching tomorrow and need customer support ready"\nassistant: "I''ll set up comprehensive customer support
+      for your launch. Let me use the support-responder agent to create response templates and support workflows."\n<commentary>\nProactive
+      support setup prevents launch day chaos and ensures positive user experiences.\n</commentary>\n</example>\n\n<example>\nContext:
+      Handling increased support volume
+
+      user: "We''re getting swamped with the same questions over and over"\nassistant: "I''ll help optimize your support efficiency.
+      Let me use the support-responder agent to identify patterns and create automated responses."\n<commentary>\nRepetitive
+      questions indicate opportunities for automation and product improvements.\n</commentary>\n</example>\n\n<example>\nContext:
+      Analyzing support tickets for product insights
+
+      user: "What are users actually struggling with in our app?"\nassistant: "Support tickets are a goldmine of insights.
+      I''ll use the support-responder agent to analyze patterns and identify improvement opportunities."\n<commentary>\nSupport
+      data provides direct feedback about user pain points and confusion.\n</commentary>\n</example>\n\n<example>\nContext:
+      Creating help documentation
+
+      user: "Users keep asking how to connect their TikTok account"\nassistant: "Let''s create clear documentation for that.
+      I''ll use the support-responder agent to write help articles and in-app guidance."\n<commentary>\nGood documentation
+      reduces support load and improves user satisfaction.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:9e93f2c78b4f8ed306524d5834141ebfac504eb66b39d224177f179d3d91ec0e
+    description_hash: sha256:0bb6ebeee97a52edef0772671dba3a4ac1363b72ac4e719f5003e30ece0a9bc9
     body_hash: sha256:f541d3974c8dad1451874d6ca0e25a4b3e39ea43f49397c0535b6d851e033de1
     tags:
     - responder
@@ -1360,9 +1775,61 @@ agents:
     scope: project
     description: 'Use this agent for analyzing test results, synthesizing test data, identifying trends, and generating quality
       metrics reports. This agent specializes in turning raw test data into actionable insights that drive quality improvements.
-      Examples:\n\n<example>\nContext: Analyzing test suite results'
+      Examples:\n\n<example>\nContext: Analyzing test suite results
+
+      user: "Our test suite has been flaky lately, can you analyze the patterns?"
+
+      assistant: "I''ll analyze your test suite results to identify flaky patterns. Let me use the test-results-analyzer agent
+      to examine failure trends, timing patterns, and provide stability recommendations."
+
+      <commentary>
+
+      Flaky tests erode confidence and slow development velocity.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Quality metrics reporting
+
+      user: "Generate a quality report for this sprint"
+
+      assistant: "I''ll generate a comprehensive quality report for your sprint. Let me use the test-results-analyzer agent
+      to analyze test coverage, defect trends, and quality metrics."
+
+      <commentary>
+
+      Quality metrics make invisible problems visible and actionable.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Test trend analysis
+
+      user: "Are our tests getting slower over time?"
+
+      assistant: "I''ll analyze your test execution trends over time. Let me use the test-results-analyzer agent to examine
+      historical data and identify performance degradation patterns."
+
+      <commentary>
+
+      Slow tests compound into slow development cycles.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Coverage analysis
+
+      user: "Which parts of our codebase lack test coverage?"
+
+      assistant: "I''ll analyze your test coverage to find gaps. Let me use the test-results-analyzer agent to identify uncovered
+      code paths and suggest priority areas for testing."
+
+      <commentary>
+
+      Coverage gaps are where bugs love to hide.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:85e926988d25894d05b189999e702cab0c3450be8c3ecd5836668a2a8eb7c496
+    description_hash: sha256:31cd4f4840202522c976dc5880ce9c6d29f634835d17547e5835c7b633d04335
     body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
     tags:
     - analyzer
@@ -1455,9 +1922,28 @@ agents:
     scope: project
     description: 'Use this agent when evaluating new development tools, frameworks, or services for the studio. This agent
       specializes in rapid tool assessment, comparative analysis, and making recommendations that align with the 6-day development
-      cycle philosophy. Examples:\n\n<example>\nContext: Considering a new framework or library'
+      cycle philosophy. Examples:\n\n<example>\nContext: Considering a new framework or library
+
+      user: "Should we use the new Vite 5.0 for our next project?"\nassistant: "I''ll evaluate Vite 5.0 for your needs. Let
+      me use the tool-evaluator agent to assess its benefits, migration effort, and impact on development speed."\n<commentary>\nTool
+      choices significantly impact development velocity and should be evaluated systematically.\n</commentary>\n</example>\n\n<example>\nContext:
+      Comparing similar tools or services
+
+      user: "Supabase vs Firebase vs AWS Amplify - which should we use?"\nassistant: "I''ll compare these backend services
+      for your use case. Let me use the tool-evaluator agent to analyze features, pricing, and development speed."\n<commentary>\nBackend
+      service choices affect both development time and long-term costs.\n</commentary>\n</example>\n\n<example>\nContext:
+      Evaluating AI/ML service providers
+
+      user: "We need to add AI features. OpenAI, Anthropic, or Replicate?"\nassistant: "I''ll evaluate these AI providers
+      for your specific needs. Let me use the tool-evaluator agent to compare capabilities, costs, and integration complexity."\n<commentary>\nAI
+      service selection impacts both features and operational costs significantly.\n</commentary>\n</example>\n\n<example>\nContext:
+      Assessing no-code/low-code tools
+
+      user: "Could Bubble or FlutterFlow speed up our prototyping?"\nassistant: "Let''s evaluate if no-code tools fit your
+      workflow. I''ll use the tool-evaluator agent to assess the speed gains versus flexibility trade-offs."\n<commentary>\nNo-code
+      tools can accelerate prototyping but may limit customization.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:04ef4cc6671ed1c74858f1af43a1b59ec455ca17a88747ac1e6cb95d5b4f307f
+    description_hash: sha256:1643e3ce76fe98f28e4cc6b6c2ed076759cadc1b67670fc3ba63918c552541bd
     body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
     tags:
     - evaluator
@@ -1564,9 +2050,28 @@ agents:
     scope: project
     description: 'Use this agent when creating user interfaces, designing components, building design systems, or improving
       visual aesthetics. This agent specializes in creating beautiful, functional interfaces that can be implemented quickly
-      within 6-day sprints. Examples:\n\n<example>\nContext: Starting a new app or feature design'
+      within 6-day sprints. Examples:\n\n<example>\nContext: Starting a new app or feature design
+
+      user: "We need UI designs for the new social sharing feature"\nassistant: "I''ll create compelling UI designs for your
+      social sharing feature. Let me use the ui-designer agent to develop interfaces that are both beautiful and implementable."\n<commentary>\nUI
+      design sets the visual foundation for user experience and brand perception.\n</commentary>\n</example>\n\n<example>\nContext:
+      Improving existing interfaces
+
+      user: "Our settings page looks dated and cluttered"\nassistant: "I''ll modernize and simplify your settings UI. Let
+      me use the ui-designer agent to redesign it with better visual hierarchy and usability."\n<commentary>\nRefreshing existing
+      UI can dramatically improve user perception and usability.\n</commentary>\n</example>\n\n<example>\nContext: Creating
+      consistent design systems
+
+      user: "Our app feels inconsistent across different screens"\nassistant: "Design consistency is crucial for professional
+      apps. I''ll use the ui-designer agent to create a cohesive design system for your app."\n<commentary>\nDesign systems
+      ensure consistency and speed up future development.\n</commentary>\n</example>\n\n<example>\nContext: Adapting trendy
+      design patterns
+
+      user: "I love how BeReal does their dual camera view. Can we do something similar?"\nassistant: "I''ll adapt that trendy
+      pattern for your app. Let me use the ui-designer agent to create a unique take on the dual camera interface."\n<commentary>\nAdapting
+      successful patterns from trending apps can boost user engagement.\n</commentary>\n</example>'
     description_summary: ''
-    description_hash: sha256:6fdf9669336a74c2e83d51b8514a608b5487641ceb3e150323f9a43ee2f1efbe
+    description_hash: sha256:9b9c160fd7d41c3d58bc32a5f3e4400d77d313332dcf14a2ec905bca1ae0df61
     body_hash: sha256:50d63044c26060efdbfb2cf3418b46b5723467644113ee0e7b79250aad55e1aa
     tags:
     - design
@@ -1585,9 +2090,61 @@ agents:
     description: 'Use this agent when conducting user research, analyzing user behavior, creating journey maps, or validating
       design decisions through testing. This agent specializes in understanding user needs, pain points, and behaviors to
       inform product decisions within rapid development cycles. Examples:\n\n<example>\nContext: Understanding user needs
-      for a new feature'
+      for a new feature
+
+      user: "We want to add a mood tracking feature but aren''t sure what users really need"
+
+      assistant: "I''ll help uncover what users truly need from mood tracking. Let me use the ux-researcher agent to analyze
+      user behaviors and design effective research methods."
+
+      <commentary>
+
+      Understanding user needs before building prevents costly pivots later.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Improving app onboarding
+
+      user: "Our onboarding has a 60% drop-off rate"
+
+      assistant: "That''s a critical issue affecting user retention. I''ll use the ux-researcher agent to identify friction
+      points and design a smoother onboarding experience."
+
+      <commentary>
+
+      Data-driven UX improvements can dramatically increase conversion rates.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Validating design decisions
+
+      user: "Should we use a tab bar or hamburger menu for navigation?"
+
+      assistant: "Let''s make this decision based on user behavior data. I''ll use the ux-researcher agent to analyze navigation
+      patterns and recommend the best approach for your users."
+
+      <commentary>
+
+      UX research removes guesswork from design decisions.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Creating user personas
+
+      user: "We need to better understand our target users for the fitness app"
+
+      assistant: "Understanding your users is crucial for product-market fit. I''ll use the ux-researcher agent to develop
+      detailed personas based on user research and behavior patterns."
+
+      <commentary>
+
+      Well-defined personas guide every product decision from features to marketing.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:e8896d3723872242318d0bb5bc62b9565f92877e7c5e494e41f3b6c45cebb78d
+    description_hash: sha256:4182d8fa9bc2c62eba5773632b7103f2d23e3636d97560361916c7cac71ee67e
     body_hash: sha256:b2a23b17c716d06e8b06bcf7d20c345c0b31840ff04bfff1bfe56c1ad0ce3553
     tags:
     - design
@@ -1609,9 +2166,83 @@ agents:
       in building production vision systems that process video at real-time frame rates. Examples:
 
 
-      <example>'
+      <example>
+
+      Context: Building or debugging a YOLO object detection pipeline
+
+      user: "The YOLO detector is producing wrong bounding box coordinates after preprocessing"
+
+      assistant: "Bounding box coordinate transforms between model space and image space are a common source of bugs. Let
+      me use the vision-engineer agent to trace the full coordinate pipeline from letterbox resize through inference output
+      to screen-space boxes."
+
+      <commentary>
+
+      Coordinate space bugs in detection pipelines require understanding letterboxing, aspect ratio preservation, and the
+      exact output format of YOLO variants (transposed vs non-transposed, center-xy vs top-left, normalized vs pixel coordinates).
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Optimizing TensorRT inference performance on Jetson
+
+      user: "Our YOLO11n model runs at 12 FPS on Orin but we need 30 FPS"
+
+      assistant: "Let me use the vision-engineer agent to profile the pipeline and identify bottlenecks — it could be preprocessing,
+      GPU memory transfers, engine configuration, or postprocessing overhead."
+
+      <commentary>
+
+      Vision pipeline optimization requires understanding the full frame-to-detection latency breakdown: decode, preprocess,
+      GPU transfer, inference, postprocess, and render.
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Implementing multi-object tracking
+
+      user: "We need to track people across frames and assign stable IDs"
+
+      assistant: "I''ll implement a tracking algorithm suited to your detector. Let me use the vision-engineer agent to build
+      a SORT/DeepSORT-style tracker with Kalman filtering and IoU-based association."
+
+      <commentary>
+
+      Tracking requires understanding detection noise, occlusion handling, track lifecycle management, and the trade-offs
+      between simple IoU trackers and visual-feature-based trackers like DeepSORT or NvDCF.
+
+      </commentary>
+
+      </example>
+
+
+      <example>
+
+      Context: Video stream processing and RTSP integration
+
+      user: "Our RTSP camera feed drops frames and the detector gets stale data"
+
+      assistant: "RTSP reliability depends on transport protocol, buffering, and frame queue management. Let me use the vision-engineer
+      agent to diagnose the stream pipeline and implement proper frame pacing."
+
+      <commentary>
+
+      Video stream handling involves FFmpeg/GStreamer configuration, hardware vs software decode, frame rate control, and
+      managing the backpressure between decode speed and inference speed.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:af52f572e1e94ed82bc41465aad894afe752b0f706b4a1cd899a707f299ca97a
+    description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
     body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
     tags:
     - engineer
@@ -1635,9 +2266,61 @@ agents:
     scope: project
     description: 'Use this agent when creating visual narratives, designing infographics, building presentations, or communicating
       complex ideas through imagery. This agent specializes in transforming data and concepts into compelling visual stories
-      that engage users and stakeholders. Examples:\n\n<example>\nContext: Creating app onboarding illustrations'
+      that engage users and stakeholders. Examples:\n\n<example>\nContext: Creating app onboarding illustrations
+
+      user: "We need to explain how our AI journaling app works in a visual way"
+
+      assistant: "I''ll create an engaging visual narrative for your onboarding. Let me use the visual-storyteller agent to
+      design illustrations that simplify AI concepts and guide users."
+
+      <commentary>
+
+      Visual storytelling in onboarding dramatically improves user comprehension and retention.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Designing investor pitch deck
+
+      user: "We need a pitch deck that shows our growth trajectory and vision"
+
+      assistant: "A compelling visual story can make or break funding rounds. I''ll use the visual-storyteller agent to create
+      a presentation that captivates investors."
+
+      <commentary>
+
+      Data visualization and narrative flow are crucial for successful pitches.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Creating marketing infographics
+
+      user: "We want to show how our app saves users 2 hours per week"
+
+      assistant: "That''s a powerful value proposition to visualize. Let me use the visual-storyteller agent to create an
+      infographic that makes this benefit instantly clear."
+
+      <commentary>
+
+      Well-designed infographics can go viral and drive organic growth.
+
+      </commentary>
+
+      </example>\n\n<example>\nContext: Explaining complex features
+
+      user: "Users don''t understand how our recommendation algorithm works"
+
+      assistant: "Complex systems need simple visual explanations. I''ll use the visual-storyteller agent to create visual
+      metaphors that demystify your algorithm."
+
+      <commentary>
+
+      Visual explanations build trust by making complexity approachable.
+
+      </commentary>
+
+      </example>'
     description_summary: ''
-    description_hash: sha256:7093b1a818d87bd6f1054b96b9ec7698ac6bcc5adcc45e5e3d993858f33eaa66
+    description_hash: sha256:316b307c653c6d5f8b161f70a8c05e40f300812bdc0886a8d7ec6c90bc6f25fe
     body_hash: sha256:d0d2906337076d3009dc851e4c394a1a3f6cd31911cce9b49a02b03646941e13
     tags:
     - design
