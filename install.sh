@@ -1,13 +1,28 @@
 #!/bin/bash
 # Install inc agents + skills into ~/.claude/{agents,skills}/
 #
-# Usage: ./install.sh [--link] [--dry-run] [--skills-only]
-#   --link         Symlink instead of copy (keeps repo as source of truth)
-#   --dry-run      Print what would happen without making any changes
-#   --skills-only  Install skills only; skip agents. Recommended for the
-#                  per-project staffing flow (use /staff to populate
-#                  per-project .claude/agents/ instead of dumping all
-#                  agents globally).
+# Usage: ./install.sh [--link] [--dry-run] [--skills-only] [--cleanup|--auto-cleanup|--no-cleanup]
+#   --link            Symlink instead of copy (keeps repo as source of truth)
+#   --dry-run         Print what would happen without making any changes
+#   --skills-only     Install skills only; skip agents. Recommended for the
+#                     per-project staffing flow (use /staff to populate
+#                     per-project .claude/agents/ instead of dumping all
+#                     agents globally).
+#   --cleanup         Force the prompt at startup ("found N stale items;
+#                     clean up first?") even if nothing-to-clean is detected.
+#                     (Useful for previewing the inventory.)
+#   --auto-cleanup    Run cleanup-prior-install.sh non-interactively before
+#                     install. Useful for CI or re-runs that won't have a TTY.
+#   --no-cleanup      Skip the cleanup check entirely. Use when you know the
+#                     environment is clean.
+#
+# Default behavior (interactive): on startup, inventory existing
+# ~/.claude/{agents,skills} and ~/.local/bin/ for leftovers from a prior
+# claude-agents (pre-rebrand) or partial inc install. If stale items found,
+# prompt: "Found N stale items. Clean up first? [y/N/show]". On `y`, run
+# scripts/cleanup-prior-install.sh clean --yes (with --dry-run if flagged).
+# On `show`, print the inventory and re-prompt. On `n` (default), proceed —
+# install.sh will refuse to clobber and report SKIPPED items at the end.
 #
 # Idempotent: re-running with the same flags is safe. Existing targets that
 # already point to the right source are left alone; targets that point
@@ -22,15 +37,19 @@ BIN_TARGET="${HOME}/.local/bin"
 MODE="copy"
 DRY_RUN=0
 SKILLS_ONLY=0
+CLEANUP_MODE="auto"   # auto (prompt if stale) | force-prompt | auto-yes | skip
 for arg in "$@"; do
     case "$arg" in
-        --link)         MODE="link" ;;
-        --dry-run)      DRY_RUN=1 ;;
-        --skills-only)  SKILLS_ONLY=1 ;;
+        --link)          MODE="link" ;;
+        --dry-run)       DRY_RUN=1 ;;
+        --skills-only)   SKILLS_ONLY=1 ;;
+        --cleanup)       CLEANUP_MODE="force-prompt" ;;
+        --auto-cleanup)  CLEANUP_MODE="auto-yes" ;;
+        --no-cleanup)    CLEANUP_MODE="skip" ;;
         -h|--help)
             sed -n '/^# Usage/,/^set/p' "$0" | sed 's/^# //; /^set/d'
             exit 0 ;;
-        *)              echo "unknown arg: $arg" >&2; exit 2 ;;
+        *)               echo "unknown arg: $arg" >&2; exit 2 ;;
     esac
 done
 
@@ -38,6 +57,79 @@ prefix=""
 if (( DRY_RUN )); then
     prefix="[dry-run] "
 fi
+
+# ---- Cleanup check (delegated to scripts/cleanup-prior-install.sh) ----
+# Detect prior-install leftovers BEFORE doing the install. The helper script
+# is non-destructive in 'inventory' mode and prompts in 'clean' mode.
+CLEANUP_SCRIPT="${SCRIPT_DIR}/scripts/cleanup-prior-install.sh"
+maybe_run_cleanup() {
+    [[ -x "$CLEANUP_SCRIPT" ]] || return 0
+    [[ "$CLEANUP_MODE" == "skip" ]] && return 0
+
+    # Get the helper's inventory. We use its tail-line summary as the signal:
+    # "Summary: nothing to clean." means clean; otherwise stale items present.
+    local inventory_out
+    inventory_out="$("$CLEANUP_SCRIPT" inventory 2>&1 || true)"
+    local has_stale=0
+    if ! echo "$inventory_out" | grep -q "Summary: nothing to clean\."; then
+        has_stale=1
+    fi
+
+    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "auto" ]]; then
+        return 0   # quiet: nothing to do
+    fi
+    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "auto-yes" ]]; then
+        echo "${prefix}cleanup check: nothing to clean."
+        return 0
+    fi
+    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "force-prompt" ]]; then
+        echo "$inventory_out"
+        return 0   # nothing to clean even though user asked for prompt
+    fi
+
+    # has_stale=1 — surface and decide.
+    echo
+    echo "$inventory_out"
+    echo
+
+    local clean_args=("clean")
+    [[ "$ASSUME_YES_DEFAULT" == "1" ]] && true   # placeholder for future flag
+    (( DRY_RUN )) && clean_args+=("--dry-run")
+
+    case "$CLEANUP_MODE" in
+        auto-yes)
+            echo "${prefix}--auto-cleanup set; running cleanup non-interactively."
+            "$CLEANUP_SCRIPT" "${clean_args[@]}" --yes
+            echo
+            ;;
+        *)
+            # auto (with stale found) OR force-prompt: ask the user.
+            while true; do
+                read -r -p "Clean up these leftovers before installing? [y/N/show] " ans
+                case "${ans:-n}" in
+                    y|Y|yes|YES)
+                        "$CLEANUP_SCRIPT" "${clean_args[@]}" --yes
+                        echo
+                        break ;;
+                    n|N|no|NO|"")
+                        echo "Skipping cleanup; install will SKIP any conflicting targets."
+                        echo
+                        break ;;
+                    show|SHOW|s|S)
+                        echo "$inventory_out"
+                        echo
+                        ;;
+                    *)
+                        echo "Answer y, n, or show." ;;
+                esac
+            done
+            ;;
+    esac
+}
+
+# Run cleanup gate before any install action.
+ASSUME_YES_DEFAULT=0
+maybe_run_cleanup
 
 if (( SKILLS_ONLY )); then
     echo "${prefix}Installing skills only to ${SKILLS_TARGET} (mode: ${MODE})"
