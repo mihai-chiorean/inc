@@ -30,7 +30,9 @@ Skip if you're on a truly fresh machine (no prior `claude-agents` checkout, no o
 - You ran `./install.sh` without `--link` at some point, so `~/.claude/agents/` contains COPIES of agent .md files instead of symlinks — those copies are stale.
 - An older Claude Code skill bootstrap left files in `~/.claude/skills/` that don't belong to inc.
 
-**The cleanup script handles all three.** It's at `scripts/cleanup-prior-install.sh` in this repo, symlinked to nothing (intentional — you run it from the clone). Safe-by-default: read-only `inventory` mode by default, never deletes unrelated symlinks, moves `~/.claude/agents/` to a timestamped backup rather than `rm`-ing it.
+**The cleanup script handles the first two cases directly.** It's at `scripts/cleanup-prior-install.sh` in this repo (run from the clone — not symlinked anywhere, by design). Safe-by-default: read-only `inventory` mode by default, moves `~/.claude/agents/` to a timestamped backup rather than `rm`-ing it.
+
+For the third case — unrelated Claude Code skills already installed by other tools — the script **does not actively clean them**. It leaves unrelated symlinks alone (with a stderr WARN if any are broken). If an unrelated skill happens to share a name with one inc would install, `install.sh --link` will report it as `SKIPPED` and refuse to clobber. You'd manually inspect and resolve those.
 
 **Two ways to use it.**
 

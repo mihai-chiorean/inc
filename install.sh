@@ -8,9 +8,11 @@
 #                     per-project staffing flow (use /staff to populate
 #                     per-project .claude/agents/ instead of dumping all
 #                     agents globally).
-#   --cleanup         Force the prompt at startup ("found N stale items;
-#                     clean up first?") even if nothing-to-clean is detected.
-#                     (Useful for previewing the inventory.)
+#   --cleanup         Print the cleanup inventory at startup (preview),
+#                     then proceed. Useful for confirming nothing-to-clean
+#                     before an install. Does NOT change the prompt
+#                     behavior — the prompt fires automatically when
+#                     stale items are detected (default --auto mode).
 #   --auto-cleanup    Run cleanup-prior-install.sh non-interactively before
 #                     install. Useful for CI or re-runs that won't have a TTY.
 #   --no-cleanup      Skip the cleanup check entirely. Use when you know the
@@ -66,17 +68,20 @@ maybe_run_cleanup() {
     [[ -x "$CLEANUP_SCRIPT" ]] || return 0
     [[ "$CLEANUP_MODE" == "skip" ]] && return 0
 
-    # Machine-readable status check.
+    # Machine-readable status check. Capture the exit code via `|| rc=$?`
+    # — `if ! cmd; then` would corrupt $? (the `!` operator's negation
+    # becomes the result, so $? inside the then-branch is always 0 or 1,
+    # not the script's actual exit code). Codex caught this in MIT-372
+    # review: --status exit 10 (stale) was always being read as 0 and the
+    # gate was silently skipping the prompt.
     local has_stale=0
-    if ! "$CLEANUP_SCRIPT" --status 2>/dev/null; then
-        # Distinguish "stale found" (exit 10) from other errors.
-        local rc=$?
-        if [[ $rc -eq 10 ]]; then
-            has_stale=1
-        else
-            echo "${prefix}cleanup status check failed (rc=$rc); skipping cleanup gate." >&2
-            return 0
-        fi
+    local rc=0
+    "$CLEANUP_SCRIPT" --status 2>/dev/null || rc=$?
+    if [[ $rc -eq 10 ]]; then
+        has_stale=1
+    elif [[ $rc -ne 0 ]]; then
+        echo "${prefix}cleanup status check failed (rc=$rc); skipping cleanup gate." >&2
+        return 0
     fi
 
     if (( ! has_stale )); then
