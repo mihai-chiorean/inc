@@ -43,9 +43,10 @@ DOC_FILES = ("CLAUDE.md", "README.md", "README.rst", "README", "AGENTS.md")
 # skipped — these are well-known root filenames.
 DEP_FILES = (
     # Node
-    "package.json", "package-lock.json",
+    "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
     # Python
     "requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock",
+    "poetry.lock", "uv.lock", "setup.py",
     # Go
     "go.mod", "go.sum",
     # Rust
@@ -67,8 +68,10 @@ EXCLUDED_DIRS = frozenset({
 DOC_FILE_MAX_BYTES = 1_048_576  # 1 MiB; refuse to scan larger docs
 # Lockfiles (package-lock.json, Cargo.lock) regularly exceed 1 MiB on real
 # projects. Give dep files more headroom so the regex scan still finds
-# direct deps in moderately large lockfiles, without enabling pathological
-# multi-hundred-MiB reads.
+# deps in moderately large lockfiles, without enabling pathological
+# multi-hundred-MiB reads. Note: lockfiles include transitive deps too, so
+# matches against them can be slightly noisier than matches against direct
+# manifest files like package.json or go.mod.
 DEP_FILE_MAX_BYTES = 5 * 1_048_576  # 5 MiB
 
 # Guardrail threshold for empty description_summary: fire if ≥30% of
