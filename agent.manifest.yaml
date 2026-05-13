@@ -158,10 +158,10 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: '{"analytics-reporter":"Use for tasks involving metrics analysis, performance reporting, user behavior
-      analysis, A/B test interpretation, revenue diagnostics, and data-driven recommendations. It specializes in turning raw
-      analytics into concise insights, trend findings, conversion bottlenecks, feature usage priorities, and growth opportunities.
-      No explicit anti-scope is specified."}'
+    description_summary: Use when a project task involves analyzing metrics, interpreting user behavior, evaluating revenue
+      or performance trends, producing reports, or turning A/B test results into recommendations. It specializes in converting
+      raw analytics into actionable insights such as growth opportunities, feature usage patterns, conversion bottlenecks,
+      and statistically grounded experiment conclusions. No explicit anti-scope is stated.
     description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
     body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
     tags:
@@ -518,9 +518,9 @@ agents:
     description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
       copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
       unique requirements.
-    description_summary: '{"content-creator":"Use for tasks that require creating or adapting written content across multiple
-      channels, including blog posts, video scripts, and social media copy. It specializes in reshaping a consistent brand
-      message for each platform''s format, audience expectations, and constraints. No explicit anti-scope is defined."}'
+    description_summary: Use for creating and adapting content across formats such as long-form blog posts, video scripts,
+      and social-media copy. It specializes in preserving brand consistency while tailoring messaging, structure, and emphasis
+      to each platform's requirements and audience expectations. No explicit anti-scope is defined in the source description.
     description_hash: sha256:7bccb0c446911812108bdb4a27effe59730af9f65fa7f4eab43eb0b5db6294fb
     body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
     tags:
@@ -1701,11 +1701,11 @@ agents:
       rollout plan signed off, rollback drill run within 7 days, monitoring dashboards configured, on-call paged, and anti-checklist
       - has security-auditor signed off, has tpm closed all blocking deps?"\n<commentary>\nLaunch readiness is concrete and
       binary. Either the checklist is done or it isn''t. No vibes.\n</commentary>\n</example>'
-    description_summary: '{"release-engineer":"Use for code-complete features that need an engineering release plan, rollout
-      strategy, rollback criteria, launch-day coordination, or post-launch monitoring. Specializes in canary and percentage
-      rollouts, launch readiness checklists, rollback drills, operational dashboards, on-call coordination, and mid-rollout
-      incident response. Do not use for pre-code-complete program management, building CI/CD infrastructure, or marketing-side
-      launch work such as positioning, store listings, or growth copy."}'
+    description_summary: 'Use for the operational phase of shipping a code-complete release: rollout planning, canary or percentage
+      ramps, region sequencing, launch-day monitoring, rollback criteria, drills, and post-launch follow-up. Specializes in
+      turning a finished build into a controlled release with explicit cutover gates, observability, on-call coordination,
+      and incident response during rollout. Do not use for pre-code-complete program readiness, building CI/CD infrastructure,
+      or marketing, app store, GTM, and growth work.'
     description_hash: sha256:cecf1add7e36757b11b5672432c1d612bc9b0c29b85a63e108cbefa49e1ba51e
     body_hash: sha256:1acd4243ee4b429af8081ef5c48f3cee078ee55ab96a68af4ae8a68d89c259ec
     tags:
@@ -2415,12 +2415,11 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: '{"vision-engineer":"Use for production computer vision work involving video pipelines, object detection
-      models such as YOLO or SSD, TensorRT optimization, camera and RTSP streams, frame preprocessing, inference, NMS postprocessing,
-      tracking, and edge deployment on NVIDIA Jetson or similar accelerators. It specializes in real-time frame-to-detection
-      systems, including coordinate transforms, latency profiling, hardware decode, stream buffering, and SORT/DeepSORT-style
-      multi-object tracking. Avoid routing unrelated application, backend, or general ML tasks unless the core problem is
-      a deployed vision or video processing pipeline."}'
+    description_summary: Use for tasks involving computer vision pipelines, real-time video processing, object detection,
+      frame preprocessing, inference, postprocessing, tracking, camera/RTSP streams, TensorRT optimization, and edge deployment
+      on Jetson-class accelerators. It specializes in production vision systems where performance, coordinate transforms,
+      stream reliability, GPU memory movement, and detector-to-tracker behavior matter. Do not route unrelated application
+      work, general ML tasks outside vision, or backend/frontend changes unless they directly support a vision pipeline.
     description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
     body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
     tags:
