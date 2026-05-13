@@ -317,6 +317,10 @@ Until `staff sync` ships, the equivalent is `staff apply --agents <id> --force` 
 | `status` | clean | drift detected | invalid state | — | — | — | — | — |
 | `add` | OK | — | unknown id / bad input | — | dirty HR | one or more failed | already-staffed | — |
 | `remove` | OK | — | no lockfile / bad input | — | — | — | — | not-currently-staffed |
+| `promote` | OK / already-org | — | bad input / agent not in manifest | — | — | — | — | — |
+| `rif` | OK / no-op | — | bad input / agent not in manifest | — | — | — | — | — |
+
+`rif --global` additionally exits `8` when project lockfiles still reference the agent (override with `--force` after rif-ing those projects).
 
 The split between `1` (drift, syncable) and `2` (invalid, needs human) on `status` matters most for automation: SessionStart hooks can react to `1` by suggesting sync; `2` should always page the user.
 
@@ -399,6 +403,41 @@ staff suggest                                # uses local LLM
 ```
 
 `STAFF_LLM_API_KEY` is optional (some local servers require it).
+
+### "Move an agent between org and project scope"
+
+`scope: org` agents get installed at user scope by `install.sh` and load in every Claude Code session. `scope: project` agents stay in the HR repo and are pulled in per-project via `/staff apply`. `/staff promote` and `/staff rif` move an agent across that boundary without manual frontmatter editing.
+
+```bash
+# Promote: flip scope: org in the agent's frontmatter, regenerate
+# agent.manifest.yaml, re-run install.sh --link so the agent appears
+# at ~/.claude/agents/<id>.md. Idempotent.
+staff promote tech-lead
+
+# rif --project (default in a project with a lockfile): drop the agent
+# from this project only. Idempotent — exit 0 if not staffed.
+cd <project>
+staff rif go-engineer
+
+# rif --global: demote scope: project, remove the user-scope symlink
+# at ~/.claude/agents/<id>.md if and only if it's a symlink pointing
+# into the HR repo. Refuses without --force if the agent is still
+# referenced by any project lockfile under ~/.inc/projects/*/lock.yaml
+# OR the current --project-root's own lockfile.
+staff rif blog-writer --global
+staff rif blog-writer --global --force      # override the safety gate
+
+# Both at once
+staff rif blog-writer --everywhere
+```
+
+Safety summary:
+
+- `promote` never asks for confirmation — it's a strict superset (the agent is loaded everywhere it was before, plus globally).
+- `rif --global` refuses if the agent is still referenced by any project lockfile. The `--force` override exists for the case where you've already run `/staff rif --project` in each consumer.
+- `rif --global` will not delete a real file at `~/.claude/agents/<id>.md` — only its own symlinks. A user-edited copy is preserved with a warning so you can decide what to do with it.
+
+For tests, override the project-lockfile scan root with `STAFF_PROJECTS_DIR` and the user-scope agents dir with `STAFF_USER_AGENTS_DIR`.
 
 ---
 

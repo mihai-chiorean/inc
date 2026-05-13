@@ -18,6 +18,8 @@ Selects which agents from the canonical HR repo (`inc`) are staffed in the curre
 | `/staff remove <id>` | **MIT-284 — implemented** | Drop an agent |
 | `/staff audit` | **MIT-287 — implemented** | Scan multiple projects, identify retirement candidates in `~/.claude/agents/` |
 | `/staff sync` | **MIT-290 — implemented** | Refresh staffed agents against HR HEAD; per-agent diff + accept; preserves overlays; migrates alias renames; offers removal of agents retired upstream |
+| `/staff promote <id>` | **MIT-377 — implemented** | Flip an agent's frontmatter `scope` to `org`, regen manifest, re-run `install.sh --link`. Idempotent |
+| `/staff rif <id>` | **MIT-377 — implemented** | Un-staff an agent: `--project` drops it from the current project; `--global` demotes to `scope: project` + removes the user-scope symlink (refuses without `--force` if any project lockfile still uses it); `--everywhere` does both |
 
 ## /staff suggest
 
@@ -258,6 +260,49 @@ staff sync --allow-dirty-hr
 - **Not a three-way merge.** Sync replaces the HR base content. Manual edits to the merged file are detected (`MANUAL-EDIT` in the prompt) and overwritten only on explicit accept.
 - **Doesn't auto-add agents.** If HR has new agents the project doesn't currently staff, sync ignores them. Use `staff add` or `staff suggest` for that.
 - **Doesn't run an LLM.** Sync is deterministic: hash comparison + git show + atomic write.
+
+## /staff promote and /staff rif
+
+Move an agent across the org / project scope boundary. `promote` lifts a project-scope agent into the org set (installed at user scope by `install.sh`, loaded in every Claude Code session). `rif` is the symmetric counterpart — it un-staffs an agent at the project, global, or both scopes.
+
+```bash
+# Promote: edits frontmatter (scope: org), regens manifest, runs install.sh --link
+staff promote tech-lead
+
+# rif project-side (default when run inside a project with a lockfile):
+# removes from .claude/agents/<id>.md and the lockfile's staffed: map
+staff rif go-engineer
+
+# rif global: demote scope back to 'project', remove ~/.claude/agents/<id>.md
+# IF it's a symlink into this HR repo. Refuses without --force if any project
+# lockfile under ~/.inc/projects/*/lock.yaml OR the current --project-root's
+# own lockfile still references the agent.
+staff rif blog-writer --global
+staff rif blog-writer --global --force   # override
+
+# Both at once
+staff rif blog-writer --everywhere
+```
+
+`promote` is always safe — it's a strict superset of where the agent was loaded before. `rif --global` is destructive at the user-scope level; the `--force` gate exists to prevent removing an agent that some project's lockfile still claims.
+
+Safety constraints:
+
+- `rif --global` never deletes a real file at `~/.claude/agents/<id>.md`. It only removes symlinks whose resolved target lives under the HR repo. A hand-edited copy is preserved and the operation prints a warning.
+- Both commands are idempotent: re-running on a no-op state exits 0.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Done (or no-op) |
+| 2 | Bad args, agent not in manifest, HR repo not resolvable |
+| 8 | `rif --global` refused: other project lockfiles still reference the agent (re-run with `--force` after rif-ing those projects) |
+
+### Env overrides (mostly for tests)
+
+- `STAFF_PROJECTS_DIR` — where `rif --global` scans for project lockfiles (default: `~/.inc/projects/`)
+- `STAFF_USER_AGENTS_DIR` — user-scope agents dir (default: `~/.claude/agents/`)
 
 ## How matching works
 
