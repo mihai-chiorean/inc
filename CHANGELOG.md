@@ -25,7 +25,7 @@ A cluster of /staff-skill improvements landed after the first real cross-project
 
 ### Filed follow-ups
 
-- MIT-379 — evals harness for `/staff suggest` (regression battery with labelled project fixtures).
+- MIT-379 — extend the existing `/staff suggest` accuracy harness (`skills/staff/tests/eval_suggest_accuracy.py` + `labels.yaml`, currently 2 labelled projects, built to compare summary-vs-full strategies) into a regression battery: larger fixture set, baseline diff workflow, captures specific regressions like the MCP/OpenAI miss that started this cycle.
 - MIT-380 — defensive check for JSON-wrapped LLM summaries (would have caught the 4-agent artifact regen issue at compute time, not at codex review time).
 
 ## 2026-05-08 — Roster refactor: studio → product-company shape
