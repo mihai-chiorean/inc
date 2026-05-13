@@ -288,6 +288,60 @@ def test_missing_manifest(tmp: Path) -> None:
     expect("manifest" in result.stderr.lower(), "stderr mentions missing manifest")
 
 
+def test_package_json_openai_matches_ai_engineer(tmp: Path) -> None:
+    """A Node project with `openai` in package.json should trigger ai-engineer
+    via the regex hint, even when no README/CLAUDE.md mentions OpenAI."""
+    print("test_package_json_openai_matches_ai_engineer")
+    (tmp / "package.json").write_text(
+        '{"name":"api","dependencies":{"openai":"^4.0.0","express":"^4.18.0"}}\n'
+    )
+    out = run_suggest(tmp)
+    ai = next((p for p in out["suggested"] if p["id"] == "ai-engineer"), None)
+    expect(ai is not None, "ai-engineer suggested from package.json dep alone")
+    regex_matches = [m for m in ai["matches"] if m["type"] == "regex"]
+    expect(any(m.get("doc") == "package.json" for m in regex_matches),
+           "regex match is attributed to package.json")
+    expect(any("openai" in m.get("snippet", "").lower() for m in regex_matches),
+           "snippet contains the openai token")
+
+
+def test_requirements_txt_matches_python_deps(tmp: Path) -> None:
+    """Sanity check that requirements.txt is also scanned for regex hints."""
+    print("test_requirements_txt_matches_python_deps")
+    (tmp / "requirements.txt").write_text("openai==1.30.0\nrequests==2.32.0\n")
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("ai-engineer" in ids, "openai in requirements.txt triggers ai-engineer")
+
+
+def test_dep_file_in_node_modules_ignored(tmp: Path) -> None:
+    """A package.json under node_modules/ should not be scanned — only the
+    top-level project root file is. (Belt-and-suspenders: DEP_FILES only
+    checks project_root anyway, but the EXCLUDED_DIRS guard is the
+    documented invariant.)"""
+    print("test_dep_file_in_node_modules_ignored")
+    (tmp / "node_modules").mkdir()
+    (tmp / "node_modules" / "package.json").write_text(
+        '{"dependencies":{"openai":"^4.0.0"}}\n'
+    )
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("ai-engineer" not in ids,
+           "package.json inside node_modules is not scanned")
+
+
+def test_oversize_dep_file_skipped(tmp: Path) -> None:
+    """A package-lock.json larger than DEP_FILE_MAX_BYTES (5 MiB) is skipped
+    silently — no crash, no match."""
+    print("test_oversize_dep_file_skipped")
+    # Build a 6 MiB JSON-ish blob with 'openai' baked in
+    payload = '{"x":"' + ("openai " * 1) + ("a" * (6 * 1024 * 1024)) + '"}'
+    (tmp / "package-lock.json").write_text(payload)
+    out = run_suggest(tmp)
+    ids = {p["id"] for p in out["suggested"]}
+    expect("ai-engineer" not in ids, "oversize dep file skipped, no match emitted")
+
+
 def test_invalid_regex_in_manifest_does_not_crash(tmp: Path) -> None:
     """Ensure a malformed regex in a custom manifest doesn't crash the script."""
     print("test_invalid_regex_in_manifest_does_not_crash")
@@ -358,6 +412,10 @@ def main() -> int:
         test_malformed_config_ignored_when_overridden,
         test_malformed_manifest_shape,
         test_missing_manifest,
+        test_package_json_openai_matches_ai_engineer,
+        test_requirements_txt_matches_python_deps,
+        test_dep_file_in_node_modules_ignored,
+        test_oversize_dep_file_skipped,
         test_invalid_regex_in_manifest_does_not_crash,
     ]
 

@@ -37,6 +37,26 @@ import _llm  # type: ignore  # noqa: E402
 SUGGEST_SCHEMA_VERSION = 1
 
 DOC_FILES = ("CLAUDE.md", "README.md", "README.rst", "README", "AGENTS.md")
+# Dependency / build-manifest files at the project root. Scanned for regex
+# hints alongside DOC_FILES so signals like `(?i)\bopenai\b` fire on
+# package.json deps, not just on prose. Glob expansion is intentionally
+# skipped — these are well-known root filenames.
+DEP_FILES = (
+    # Node
+    "package.json", "package-lock.json",
+    # Python
+    "requirements.txt", "pyproject.toml", "Pipfile", "Pipfile.lock",
+    # Go
+    "go.mod", "go.sum",
+    # Rust
+    "Cargo.toml", "Cargo.lock",
+    # Ruby
+    "Gemfile", "Gemfile.lock",
+    # PHP
+    "composer.json",
+    # Java / Kotlin
+    "pom.xml", "build.gradle", "build.gradle.kts",
+)
 DOC_EXCERPT_BYTES = 4096  # per doc file when building the LLM prompt
 GLOB_DEPTH_LIMIT = 4
 EXCLUDED_DIRS = frozenset({
@@ -45,6 +65,11 @@ EXCLUDED_DIRS = frozenset({
     ".terraform", ".cache", ".next", ".nuxt", ".turbo",
 })
 DOC_FILE_MAX_BYTES = 1_048_576  # 1 MiB; refuse to scan larger docs
+# Lockfiles (package-lock.json, Cargo.lock) regularly exceed 1 MiB on real
+# projects. Give dep files more headroom so the regex scan still finds
+# direct deps in moderately large lockfiles, without enabling pathological
+# multi-hundred-MiB reads.
+DEP_FILE_MAX_BYTES = 5 * 1_048_576  # 5 MiB
 
 
 def load_manifest(hr_repo: Path) -> dict:
@@ -181,20 +206,25 @@ def file_match(project_root: Path, pattern: str) -> list[str]:
     return [str(m.relative_to(project_root)) for m in matches if m.exists()]
 
 
-def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
-    """Return (filename, snippet) for each doc file the regex matches."""
-    try:
-        rx = re.compile(pattern)
-    except re.error as exc:
-        print(f"warning: invalid regex {pattern!r}: {exc}", file=sys.stderr)
-        return []
+def _scan_files(
+    project_root: Path,
+    filenames: tuple[str, ...],
+    rx: re.Pattern[str],
+    max_bytes: int,
+) -> list[tuple[str, str]]:
+    """Return (filename, snippet) for each project-root file matching rx.
+
+    Files larger than max_bytes or under EXCLUDED_DIRS are skipped silently.
+    Only top-level files in project_root are considered (no glob)."""
     hits: list[tuple[str, str]] = []
-    for name in DOC_FILES:
+    for name in filenames:
         p = project_root / name
         if not p.is_file():
             continue
+        if _is_under_excluded(p, project_root):
+            continue
         try:
-            if p.stat().st_size > DOC_FILE_MAX_BYTES:
+            if p.stat().st_size > max_bytes:
                 continue
             text = p.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -202,6 +232,23 @@ def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
         m = rx.search(text)
         if m:
             hits.append((name, m.group(0)))
+    return hits
+
+
+def regex_match(project_root: Path, pattern: str) -> list[tuple[str, str]]:
+    """Return (filename, snippet) for each doc or dep file the regex matches.
+
+    Doc files (CLAUDE.md / README / AGENTS.md) and dependency manifests
+    (package.json, requirements.txt, go.mod, Cargo.toml, ...) at the project
+    root are both scanned. This lets hints like `(?i)\\bopenai\\b` fire on
+    package.json deps even when the prose docs never mention OpenAI."""
+    try:
+        rx = re.compile(pattern)
+    except re.error as exc:
+        print(f"warning: invalid regex {pattern!r}: {exc}", file=sys.stderr)
+        return []
+    hits = _scan_files(project_root, DOC_FILES, rx, DOC_FILE_MAX_BYTES)
+    hits.extend(_scan_files(project_root, DEP_FILES, rx, DEP_FILE_MAX_BYTES))
     return hits
 
 
