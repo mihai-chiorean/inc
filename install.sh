@@ -59,41 +59,40 @@ if (( DRY_RUN )); then
 fi
 
 # ---- Cleanup check (delegated to scripts/cleanup-prior-install.sh) ----
-# Detect prior-install leftovers BEFORE doing the install. The helper script
-# is non-destructive in 'inventory' mode and prompts in 'clean' mode.
+# Detect prior-install leftovers BEFORE doing the install. Uses the helper's
+# --status mode (exit 0 = clean, 10 = stale) instead of parsing summary text.
 CLEANUP_SCRIPT="${SCRIPT_DIR}/scripts/cleanup-prior-install.sh"
 maybe_run_cleanup() {
     [[ -x "$CLEANUP_SCRIPT" ]] || return 0
     [[ "$CLEANUP_MODE" == "skip" ]] && return 0
 
-    # Get the helper's inventory. We use its tail-line summary as the signal:
-    # "Summary: nothing to clean." means clean; otherwise stale items present.
-    local inventory_out
-    inventory_out="$("$CLEANUP_SCRIPT" inventory 2>&1 || true)"
+    # Machine-readable status check.
     local has_stale=0
-    if ! echo "$inventory_out" | grep -q "Summary: nothing to clean\."; then
-        has_stale=1
+    if ! "$CLEANUP_SCRIPT" --status 2>/dev/null; then
+        # Distinguish "stale found" (exit 10) from other errors.
+        local rc=$?
+        if [[ $rc -eq 10 ]]; then
+            has_stale=1
+        else
+            echo "${prefix}cleanup status check failed (rc=$rc); skipping cleanup gate." >&2
+            return 0
+        fi
     fi
 
-    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "auto" ]]; then
-        return 0   # quiet: nothing to do
-    fi
-    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "auto-yes" ]]; then
-        echo "${prefix}cleanup check: nothing to clean."
-        return 0
-    fi
-    if (( ! has_stale )) && [[ "$CLEANUP_MODE" == "force-prompt" ]]; then
-        echo "$inventory_out"
-        return 0   # nothing to clean even though user asked for prompt
+    if (( ! has_stale )); then
+        case "$CLEANUP_MODE" in
+            auto)            return 0 ;;   # quiet: nothing to do
+            auto-yes)        echo "${prefix}cleanup check: nothing to clean."; return 0 ;;
+            force-prompt)    "$CLEANUP_SCRIPT" inventory; return 0 ;;
+        esac
     fi
 
-    # has_stale=1 — surface and decide.
+    # has_stale=1 — show the inventory and decide.
     echo
-    echo "$inventory_out"
+    "$CLEANUP_SCRIPT" inventory
     echo
 
     local clean_args=("clean")
-    [[ "$ASSUME_YES_DEFAULT" == "1" ]] && true   # placeholder for future flag
     (( DRY_RUN )) && clean_args+=("--dry-run")
 
     case "$CLEANUP_MODE" in
@@ -106,17 +105,19 @@ maybe_run_cleanup() {
             # auto (with stale found) OR force-prompt: ask the user.
             while true; do
                 read -r -p "Clean up these leftovers before installing? [y/N/show] " ans
-                case "${ans:-n}" in
-                    y|Y|yes|YES)
+                # Normalize: trim whitespace, lowercase (bash 3.2-compatible).
+                ans="$(echo "$ans" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                case "$ans" in
+                    y|yes)
                         "$CLEANUP_SCRIPT" "${clean_args[@]}" --yes
                         echo
                         break ;;
-                    n|N|no|NO|"")
+                    n|no|"")
                         echo "Skipping cleanup; install will SKIP any conflicting targets."
                         echo
                         break ;;
-                    show|SHOW|s|S)
-                        echo "$inventory_out"
+                    show|s)
+                        "$CLEANUP_SCRIPT" inventory
                         echo
                         ;;
                     *)
@@ -128,7 +129,6 @@ maybe_run_cleanup() {
 }
 
 # Run cleanup gate before any install action.
-ASSUME_YES_DEFAULT=0
 maybe_run_cleanup
 
 if (( SKILLS_ONLY )); then
@@ -152,12 +152,17 @@ run() {
     fi
 }
 
-# Returns 0 if dst already points to src (i.e., no-op needed). Robust to
-# symlinks resolved through readlink -f (tracks both relative and absolute).
+# Returns 0 if dst already points to src (i.e., no-op needed).
+# Compares the symlink's raw target against src. install.sh creates symlinks
+# with absolute paths (the SCRIPT_DIR computation produces an absolute path),
+# so the target string equals src for our-symlinks. NOTE: this used to use
+# `readlink -f`, but that's a GNU extension — macOS readlink (BSD) doesn't
+# support -f, and `readlink -f` would silently fail with "illegal option" and
+# break the install on a fresh Mac.
 already_pointing_at() {
     local src="$1" dst="$2"
     [[ -L "${dst}" ]] || return 1
-    [[ "$(readlink -f "${dst}")" == "$(readlink -f "${src}")" ]]
+    [[ "$(readlink "${dst}")" == "${src}" ]]
 }
 
 # Install a file via ln or cp, depending on MODE. Idempotent: leaves existing

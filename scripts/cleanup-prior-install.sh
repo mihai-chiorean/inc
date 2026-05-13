@@ -38,11 +38,16 @@ BIN_TARGET="${HOME}/.local/bin"
 
 # Anything pointing at one of these substrings is considered "ours":
 OLD_WORKSPACE_PATTERN='*workspace/claude-agents*'
-INC_WORKSPACE_PATTERN="*workspace/$(basename "$INC_SCRIPT_DIR")*"
+# Exact absolute-prefix match against THIS inc clone. (Previously
+# *workspace/<basename>* — which would also match workspace/inc-old,
+# workspace/inc-backup, etc. Now uses the absolute path so different
+# checkouts don't collide.)
+INC_WORKSPACE_PATTERN="${INC_SCRIPT_DIR}/*"
 
 CMD="inventory"
 ASSUME_YES=0
 DRY_RUN=0
+STATUS_MODE=0   # if set, inventory prints nothing and exits 0 (clean) / 10 (stale)
 
 usage() {
     cat <<'EOF'
@@ -80,6 +85,7 @@ while [ $# -gt 0 ]; do
         inventory|clean) CMD="$1" ;;
         --yes|-y)        ASSUME_YES=1 ;;
         --dry-run)       DRY_RUN=1 ;;
+        --status)        STATUS_MODE=1; CMD="inventory" ;;
         -h|--help)       usage; exit 0 ;;
         *) printf 'cleanup-prior-install.sh: unknown argument %s\n' "$1" >&2; exit 2 ;;
     esac
@@ -135,38 +141,43 @@ agents_dir_classify() {
         return 0
     fi
     # Walk the tree. install.sh --link creates category directories
-    # (bonus/, engineering/, etc.) containing symlinks. So we have to
-    # recurse: a category dir is "clean" iff every file inside is a
-    # symlink into the current inc clone. A category dir is "stale" iff
-    # any entry inside is a regular file (copy) or a symlink pointing
-    # outside our inc clone.
+    # (bonus/, engineering/, etc.) containing symlinks. Recurse one level.
+    # A symlink is "clean" iff:
+    #   - its target matches INC_WORKSPACE_PATTERN (exact prefix), AND
+    #   - the target actually exists (broken inc-symlinks count as stale,
+    #     so the backup-move triggers and install.sh re-creates them).
     stale=0
     for entry in "$AGENTS_TARGET"/*; do
         [ -e "$entry" ] || [ -L "$entry" ] || continue
         if [ -L "$entry" ]; then
             target="$(readlink "$entry")"
-            case "$target" in
-                $INC_WORKSPACE_PATTERN) : ;;            # ours — clean
-                *) stale=$((stale + 1)) ;;
-            esac
+            if [ ! -e "$entry" ]; then
+                stale=$((stale + 1))   # broken — needs backup-and-re-link
+            else
+                case "$target" in
+                    $INC_WORKSPACE_PATTERN) : ;;        # ours — clean
+                    *) stale=$((stale + 1)) ;;
+                esac
+            fi
         elif [ -d "$entry" ]; then
-            # Recurse one level into the category dir.
             for sub in "$entry"/*; do
                 [ -e "$sub" ] || [ -L "$sub" ] || continue
                 if [ -L "$sub" ]; then
                     subtarget="$(readlink "$sub")"
-                    case "$subtarget" in
-                        $INC_WORKSPACE_PATTERN) : ;;    # ours — clean
-                        *) stale=$((stale + 1)) ;;
-                    esac
+                    if [ ! -e "$sub" ]; then
+                        stale=$((stale + 1))            # broken
+                    else
+                        case "$subtarget" in
+                            $INC_WORKSPACE_PATTERN) : ;;   # ours — clean
+                            *) stale=$((stale + 1)) ;;
+                        esac
+                    fi
                 else
-                    # Regular file (copy) — pre-link install leftover.
-                    stale=$((stale + 1))
+                    stale=$((stale + 1))               # copy (pre-link)
                 fi
             done
         else
-            # A regular file at the root (e.g. copied README.md).
-            stale=$((stale + 1))
+            stale=$((stale + 1))                       # regular file at root
         fi
     done
     if [ "$stale" -eq 0 ]; then
@@ -288,32 +299,79 @@ do_clean() {
             ;;
     esac
 
-    # 2) Delete broken + old-name symlinks under skills/ and bin/.
+    # 2) Delete symlinks under skills/ and bin/ that are EITHER:
+    #    - pointing at the old workspace path (claude-agents), broken or not, OR
+    #    - broken AND whose target matches an inc/claude-agents path
+    #
+    # Broken symlinks pointing at unrelated paths (e.g. a user's custom
+    # skill whose target is temporarily unavailable) are LEFT ALONE — we
+    # warn instead so the user can clean those up themselves.
+    leftover_broken_warnings=0
     for d in "$SKILLS_TARGET" "$BIN_TARGET"; do
         [ -d "$d" ] || continue
         for l in "$d"/*; do
             [ -L "$l" ] || continue
             target="$(readlink "$l")"
-            # Broken?
-            if [ ! -e "$l" ]; then
-                echo "${prefix}rm broken symlink: $l -> $target"
-                [ "$DRY_RUN" -eq 0 ] && rm "$l"
-                continue
-            fi
-            # Old name?
+            broken=0
+            [ ! -e "$l" ] && broken=1
+
+            is_old=0
+            is_inc=0
             case "$target" in
-                $OLD_WORKSPACE_PATTERN)
-                    echo "${prefix}rm old-name symlink: $l -> $target"
-                    [ "$DRY_RUN" -eq 0 ] && rm "$l"
-                    ;;
+                $OLD_WORKSPACE_PATTERN) is_old=1 ;;
             esac
+            case "$target" in
+                $INC_WORKSPACE_PATTERN) is_inc=1 ;;
+            esac
+
+            if [ "$is_old" -eq 1 ]; then
+                # Old-name symlink — delete whether broken or not.
+                echo "${prefix}rm old-name symlink: $l -> $target"
+                [ "$DRY_RUN" -eq 0 ] && rm "$l"
+            elif [ "$broken" -eq 1 ] && [ "$is_inc" -eq 1 ]; then
+                # Broken symlink pointing at our current inc — delete; install
+                # will re-create.
+                echo "${prefix}rm broken inc symlink: $l -> $target"
+                [ "$DRY_RUN" -eq 0 ] && rm "$l"
+            elif [ "$broken" -eq 1 ]; then
+                # Broken but unrelated to inc — warn, don't touch.
+                echo "${prefix}WARN: broken symlink (not ours, left alone): $l -> $target" >&2
+                leftover_broken_warnings=$((leftover_broken_warnings + 1))
+            fi
         done
     done
+
+    if [ "$leftover_broken_warnings" -gt 0 ]; then
+        echo "${prefix}Note: $leftover_broken_warnings broken symlink(s) NOT ours were left in place." >&2
+        echo "${prefix}Inspect with: ls -la $SKILLS_TARGET $BIN_TARGET" >&2
+    fi
 
     echo "${prefix}Done."
 }
 
 # ----- Main ---------------------------------------------------------------
+
+# --status: machine-readable exit-code mode for install.sh's gate.
+# Exit 0  if nothing to clean; exit 10 if stale items present.
+if [ "$STATUS_MODE" -eq 1 ]; then
+    total_symlinks=0
+    for d in "$SKILLS_TARGET" "$AGENTS_TARGET" "$BIN_TARGET"; do
+        for l in $(broken_symlinks "$d"); do
+            total_symlinks=$((total_symlinks + 1))
+        done
+        for line in $(old_name_symlinks "$d" 2>/dev/null); do
+            total_symlinks=$((total_symlinks + 1))
+        done
+    done
+    cls="$(agents_dir_classify)"
+    agents_needs_backup=0
+    case "$cls" in stale:*) agents_needs_backup=1 ;; esac
+    if [ "$total_symlinks" -eq 0 ] && [ "$agents_needs_backup" -eq 0 ]; then
+        exit 0
+    else
+        exit 10
+    fi
+fi
 
 case "$CMD" in
     inventory)
