@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-05-13 — /staff hardening: scope plumbing, matcher fixes, manifest hygiene
+
+A cluster of /staff-skill improvements landed after the first real cross-project use surfaced silent failure modes.
+
+### New /staff subcommands
+
+- `/staff promote <id>` — flip an agent's frontmatter `scope: org`, regenerate `agent.manifest.yaml`, re-run `install.sh --link` so the agent appears at user scope. Idempotent. (MIT-377, PR #34.)
+- `/staff rif <id>` — symmetric un-staff. Three modes:
+  - `--project` (default in a project with a lockfile) drops the agent from the current project's lockfile and `.claude/agents/<id>.md`.
+  - `--global` demotes back to `scope: project` and removes the user-scope symlink **only if it's a symlink whose target lives under the HR repo** — never deletes a real file at `~/.claude/agents/<id>.md`. Refuses without `--force` if any project lockfile (under `~/.inc/projects/*/lock.yaml` OR the current `--project-root`'s own lockfile) still references the agent. Exit code 8 on refusal.
+  - `--everywhere` does both.
+- `STAFF_PROJECTS_DIR` and `STAFF_USER_AGENTS_DIR` env vars are now honored by `rif` for test-isolation.
+
+### /staff suggest matcher fixes
+
+- **Regex hint scan extended to dependency manifests.** Previously `suggest` only scanned `CLAUDE.md` / `README.md` / `AGENTS.md` for regex matches. Now it also scans `package.json`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `requirements.txt`, `pyproject.toml`, `Pipfile{,.lock}`, `poetry.lock`, `uv.lock`, `setup.py`, `go.mod`, `go.sum`, `Cargo.toml`, `Cargo.lock`, `Gemfile{,.lock}`, `composer.json`, `pom.xml`, `build.gradle{,.kts}`. Fixes the real-world case where `ai-engineer`'s `(?i)\bopenai\b` regex failed to fire on a Node project that declared `"openai": "^4.x"` in `package.json` but never mentioned it in the README. Dep files get a 5 MiB byte cap vs 1 MiB for docs because lockfiles are routinely larger. (MIT-378, PR #33.)
+- **Empty-summary guardrail.** When a meaningful fraction of agents have empty `description_summary` (≥30% or ≥10), `/staff suggest` now emits a loud-but-non-fatal stderr warning naming the degradation and the exact fix (`python3 scripts/generate-manifest.py --llm-summaries`). Silent in `--no-llm` mode. (MIT-378, PR #33.)
+
+### Manifest hygiene
+
+- **`description_summary` backfilled for all 55 agents** (PR #32). Before this, 54 of 55 had empty summaries; `/staff suggest`'s LLM matcher was running on 200-char truncations of raw descriptions for those agents. The MCP/OpenAI ai-engineer miss that started this cycle was the visible failure mode.
+- **`scripts/generate-manifest.py` frontmatter parser hardened** (MIT-376, PR #31). Previously, adding any unrecognized YAML key (e.g. `scope:`) to an agent's frontmatter silently corrupted the previous field's value. The parser now emits a stderr warning with the source path and line number, distinguishes "treating as continuation of X" from "before any known field — line ignored", and scopes `DESCRIPTION_CONTENT_KEYS` (user/assistant/Context/commentary) suppression to inside `description:` only — a `user:` line appearing after `tools:` still warns. `scope` and `skills` are now part of `KNOWN_KEYS`.
+
+### Filed follow-ups
+
+- MIT-379 — extend the existing `/staff suggest` accuracy harness (`skills/staff/tests/eval_suggest_accuracy.py` + `labels.yaml`, currently 2 labelled projects, built to compare summary-vs-full strategies) into a regression battery: larger fixture set, baseline diff workflow, captures specific regressions like the MCP/OpenAI miss that started this cycle.
+- MIT-380 — defensive check for JSON-wrapped LLM summaries (would have caught the 4-agent artifact regen issue at compute time, not at codex review time).
+
 ## 2026-05-08 — Roster refactor: studio → product-company shape
 
 The project-management + product cluster was reshaped from a creative-studio frame to a product-company frame. Cleaner role boundaries for the LLM router; explicit anti-scope per agent so `/staff suggest` can route reliably; PM + tech-lead pairing pattern documented.
