@@ -1149,28 +1149,34 @@ agents:
     category: product
     scope: project
     description: 'Use this agent to stress-test startup ideas before committing time to build them. Applies proven frameworks
-      (YC, lean startup, jobs-to-be-done) to score ideas, identify the riskiest assumptions, run pre-mortems, and make kill/pursue/pivot
-      decisions. The skeptical friend every founder needs. Examples:\n\n<example>\nContext: Evaluating a new startup idea\nuser:
-      "I want to build an app that helps people find workout buddies nearby"\nassistant: "Let me stress-test that idea before
-      you invest a sprint. I''ll use the idea-evaluator agent to score it across key dimensions and identify the riskiest
-      assumptions."\n<commentary>\nEvery sprint invested in the wrong idea is a sprint not invested in the right one.\n</commentary>\n</example>\n\n<example>\nContext:
-      Choosing between multiple ideas\nuser: "I have 4 ideas and can only build one this week. Help me pick."\nassistant:
-      "I''ll evaluate all 4 against the same criteria so you can compare apples to apples. Let me use the idea-evaluator agent
-      to rank them."\n<commentary>\nWhen choosing between ideas, consistent evaluation criteria prevent gut-feel bias.\n</commentary>\n</example>\n\n<example>\nContext:
-      Running a pre-mortem on an idea\nuser: "We''re about to start building the AI journaling app. What could go wrong?"\nassistant:
-      "Smart to ask before building. I''ll use the idea-evaluator agent to run a pre-mortem and surface the most likely failure
-      modes."\n<commentary>\nPre-mortems are cheaper than post-mortems. Find the failure modes before you build.\n</commentary>\n</example>\n\n<example>\nContext:
+      (YC scorecard, riskiest-assumption test, jobs-to-be-done, napkin math) to score ideas, identify the riskiest assumptions,
+      and make kill/pursue/pivot decisions. The skeptical friend every founder needs. For a deeper failure-first pre-mortem
+      on a concrete plan (stakeholder round, severity × likelihood × invisibility risk register, test matrix with fail thresholds),
+      suggest the user invoke the `/pre-mortem` skill instead — this agent doesn''t reimplement that. Examples:\n\n<example>\nContext:
+      Evaluating a new startup idea\nuser: "I want to build an app that helps people find workout buddies nearby"\nassistant:
+      "Let me stress-test that idea before you invest a sprint. I''ll use the idea-evaluator agent to score it across key
+      dimensions and identify the riskiest assumptions."\n<commentary>\nEvery sprint invested in the wrong idea is a sprint
+      not invested in the right one.\n</commentary>\n</example>\n\n<example>\nContext: Choosing between multiple ideas\nuser:
+      "I have 4 ideas and can only build one this week. Help me pick."\nassistant: "I''ll evaluate all 4 against the same
+      criteria so you can compare apples to apples. Let me use the idea-evaluator agent to rank them."\n<commentary>\nWhen
+      choosing between ideas, consistent evaluation criteria prevent gut-feel bias.\n</commentary>\n</example>\n\n<example>\nContext:
       Deciding whether to kill or pivot an idea\nuser: "We built the MVP and got 50 signups but only 3 active users. Should
       we keep going?"\nassistant: "Those numbers tell a story. Let me use the idea-evaluator agent to diagnose what''s happening
       and recommend kill, pivot, or persevere."\n<commentary>\nThe hardest startup skill is knowing when to quit vs. when
-      to push through.\n</commentary>\n</example>'
-    description_summary: Use for assessing startup or product ideas before or after an MVP, especially when deciding what
-      to build, which idea to prioritize, or whether to kill, pivot, or continue. It specializes in structured evaluation
-      using YC, lean startup, jobs-to-be-done, scoring frameworks, assumption testing, and pre-mortems to identify the riskiest
-      unknowns and likely failure modes. It is not scoped for building the product itself; its role is evaluation, diagnosis,
-      and decision support.
-    description_hash: sha256:710008b81d82b3176e6ac87b08cd93aa809fb52221909002236b1102d8351604
-    body_hash: sha256:584ca15275c89eabc8983ae4f5a78987be94072335bca89911ce6fafa5c89de0
+      to push through.\n</commentary>\n</example>\n\n<example>\nContext: User wants a deep pre-mortem rather than scoring\nuser:
+      "Run a pre-mortem on the AI journaling app before we build it"\nassistant: "Pre-mortem is the /pre-mortem skill''s job
+      — it has a richer failure-first protocol (stakeholder round, invisibility-weighted risk register, test matrix) than
+      this agent''s scoring framework. Suggest running `/pre-mortem` directly. I can still do an idea-scoring pass first if
+      you want both lenses."\n<commentary>\nThe agent is honest about its anti-scope. Idea-scoring and deep pre-mortem are
+      different jobs; suggest the right tool.\n</commentary>\n</example>'
+    description_summary: Use for evaluating startup ideas before committing build time, comparing multiple ideas, or deciding
+      whether early traction signals justify killing, pivoting, or continuing. It specializes in structured idea scoring using
+      frameworks such as YC-style criteria, riskiest-assumption testing, jobs-to-be-done, and rough market/unit-economics
+      math to surface the weakest assumptions and recommend kill, pursue, or pivot. Do not route deep failure-first pre-mortems
+      on concrete plans here; those should use the `/pre-mortem` skill for stakeholder analysis, severity-likelihood-invisibility
+      risk registers, and fail-threshold test matrices.
+    description_hash: sha256:eb245732f48f057a75834eda4b67e07374a90678b66c82fb28b5129eb9950b83
+    body_hash: sha256:f7326ae3f162729d52a8359dca98568a4da3fb70fdddda2f7a09b66b4fa23819
     tags:
     - evaluator
     - idea
