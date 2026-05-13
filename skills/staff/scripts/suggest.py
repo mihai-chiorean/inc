@@ -71,6 +71,14 @@ DOC_FILE_MAX_BYTES = 1_048_576  # 1 MiB; refuse to scan larger docs
 # multi-hundred-MiB reads.
 DEP_FILE_MAX_BYTES = 5 * 1_048_576  # 5 MiB
 
+# Guardrail threshold for empty description_summary: fire if ≥30% of
+# manifest agents have empty summaries, or ≥10 agents do (whichever
+# triggers first). The LLM matcher's fallback truncates raw descriptions
+# to this many chars when description_summary is empty.
+EMPTY_SUMMARY_PCT_THRESHOLD = 0.30
+EMPTY_SUMMARY_COUNT_THRESHOLD = 10
+EMPTY_SUMMARY_FALLBACK_CHARS = 200
+
 
 def load_manifest(hr_repo: Path) -> dict:
     p = hr_repo / "agent.manifest.yaml"
@@ -388,7 +396,7 @@ def build_llm_prompt(
         else:
             text = (entry.get("description_summary") or "").strip()
             if not text:
-                text = (entry.get("description") or "").strip().replace("\n", " ")[:200] + "..."
+                text = (entry.get("description") or "").strip().replace("\n", " ")[:EMPTY_SUMMARY_FALLBACK_CHARS] + "..."
         parts.append(f"  [{cat}] {aid}: {text}")
 
     parts.append("")
@@ -442,6 +450,59 @@ def llm_proposals(
             "source": "llm" if det is None else "llm+deterministic",
         })
     return sorted(out, key=lambda p: p["id"])
+
+
+def _empty_summary_agents(manifest: dict) -> list[str]:
+    """Return sorted IDs whose description_summary is empty/missing."""
+    out: list[str] = []
+    for aid, entry in (manifest.get("agents") or {}).items():
+        if not (entry.get("description_summary") or "").strip():
+            out.append(aid)
+    return sorted(out)
+
+
+def should_warn_empty_summaries(manifest: dict) -> tuple[bool, int, int]:
+    """Decide whether the manifest is in degraded-summary state.
+
+    Returns (warn, empty_count, total). Fires when ≥30% of agents have empty
+    description_summary, or ≥10 do, whichever triggers first. Returns
+    (False, 0, 0) for an empty manifest so the warning never fires on
+    pathological inputs."""
+    empties = _empty_summary_agents(manifest)
+    total = len(manifest.get("agents") or {})
+    if total == 0:
+        return (False, 0, 0)
+    pct_trips = (len(empties) / total) >= EMPTY_SUMMARY_PCT_THRESHOLD
+    count_trips = len(empties) >= EMPTY_SUMMARY_COUNT_THRESHOLD
+    return (pct_trips or count_trips, len(empties), total)
+
+
+def _emit_empty_summary_warning(empty_count: int, total: int) -> None:
+    """Print a loud-but-not-fatal warning to stderr."""
+    pct = (empty_count / total * 100) if total else 0
+    print(
+        "warning: degraded manifest — "
+        f"{empty_count}/{total} agents ({pct:.0f}%) have empty "
+        "description_summary.",
+        file=sys.stderr,
+    )
+    print(
+        "  The LLM matcher will fall back to a "
+        f"{EMPTY_SUMMARY_FALLBACK_CHARS}-char truncation of each affected "
+        "agent's raw description,",
+        file=sys.stderr,
+    )
+    print(
+        "  which degrades recall — especially for agents whose "
+        "differentiating signal lives in their <example> blocks.",
+        file=sys.stderr,
+    )
+    print(
+        "  Fix (run from the HR repo root):\n"
+        "    python3 scripts/generate-manifest.py --llm-summaries",
+        file=sys.stderr,
+    )
+    print("  Proceeding anyway.", file=sys.stderr)
 
 
 def collect_proposals(manifest: dict, project_root: Path) -> tuple[list[dict], list[str]]:
@@ -545,6 +606,9 @@ def main() -> int:
         proposals = [{**p, "source": "deterministic"} for p in deterministic]
         provider_name = None
     else:
+        warn, empty_count, total = should_warn_empty_summaries(manifest)
+        if warn:
+            _emit_empty_summary_warning(empty_count, total)
         try:
             provider = _llm.get_provider(args.llm_provider)
             proposals = llm_proposals(project_root, manifest, deterministic, provider, args.strategy)

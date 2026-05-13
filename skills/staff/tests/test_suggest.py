@@ -342,6 +342,133 @@ def test_oversize_dep_file_skipped(tmp: Path) -> None:
     expect("ai-engineer" not in ids, "oversize dep file skipped, no match emitted")
 
 
+def test_empty_summary_guardrail_fires_under_llm(tmp: Path) -> None:
+    """When the manifest is in degraded-summary state and we're in LLM mode,
+    a warning is emitted to stderr. Use a stub --llm-provider that fails
+    after the warning so we don't need a real LLM; the warning still fires."""
+    print("test_empty_summary_guardrail_fires_under_llm")
+    # Build a custom HR with 12 agents, all with empty description_summary.
+    fake_hr = tmp / "fake-hr"
+    fake_hr.mkdir()
+    agents = {}
+    for i in range(12):
+        agents[f"agent-{i:02d}"] = {
+            "file": f"engineering/agent-{i:02d}.md",
+            "category": "engineering",
+            "description": "x" * 50,
+            "description_summary": "",
+            "description_hash": "sha256:0",
+            "body_hash": "sha256:0",
+            "tags": ["x"],
+            "project_hints": {"files": [], "regex": []},
+            "conflicts": [],
+            "introduced": "2026-01-01",
+            "aliases": [],
+        }
+    import yaml as _yaml
+    (fake_hr / "agent.manifest.yaml").write_text(
+        _yaml.safe_dump({"schema_version": 1, "agents": agents})
+    )
+    project = tmp / "proj"
+    project.mkdir()
+    cmd = [
+        sys.executable, str(SCRIPT),
+        "--project-root", str(project),
+        "--hr-repo", str(fake_hr),
+        "--llm-provider", "definitely-not-a-real-provider",
+        "--json",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    # The LLM call will fail (bad provider), but the warning must already be
+    # on stderr by then.
+    expect("degraded manifest" in result.stderr,
+           "stderr names the degraded-manifest condition")
+    expect("12/12 agents" in result.stderr,
+           "stderr reports the empty-summary count + total")
+    expect("generate-manifest.py --llm-summaries" in result.stderr,
+           "stderr names the exact fix command")
+    expect("Proceeding anyway" in result.stderr,
+           "warning is loud but explicitly non-fatal")
+
+
+def test_empty_summary_guardrail_silent_under_no_llm(tmp: Path) -> None:
+    """When --no-llm is passed, the LLM matcher won't run and the
+    truncation fallback is irrelevant — warning must NOT fire."""
+    print("test_empty_summary_guardrail_silent_under_no_llm")
+    fake_hr = tmp / "fake-hr"
+    fake_hr.mkdir()
+    agents = {}
+    for i in range(12):
+        agents[f"agent-{i:02d}"] = {
+            "file": f"engineering/agent-{i:02d}.md",
+            "category": "engineering",
+            "description": "x" * 50,
+            "description_summary": "",
+            "description_hash": "sha256:0",
+            "body_hash": "sha256:0",
+            "tags": ["x"],
+            "project_hints": {"files": [], "regex": []},
+            "conflicts": [],
+            "introduced": "2026-01-01",
+            "aliases": [],
+        }
+    import yaml as _yaml
+    (fake_hr / "agent.manifest.yaml").write_text(
+        _yaml.safe_dump({"schema_version": 1, "agents": agents})
+    )
+    project = tmp / "proj"
+    project.mkdir()
+    cmd = [
+        sys.executable, str(SCRIPT),
+        "--project-root", str(project),
+        "--hr-repo", str(fake_hr),
+        "--no-llm", "--json",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    expect(result.returncode == 0, "no-llm path exits 0")
+    expect("degraded manifest" not in result.stderr,
+           "no degraded-manifest warning under --no-llm")
+
+
+def test_empty_summary_guardrail_quiet_when_populated(tmp: Path) -> None:
+    """When summaries are populated for all agents, the warning must not fire
+    even in LLM mode."""
+    print("test_empty_summary_guardrail_quiet_when_populated")
+    fake_hr = tmp / "fake-hr"
+    fake_hr.mkdir()
+    agents = {}
+    for i in range(5):
+        agents[f"agent-{i:02d}"] = {
+            "file": f"engineering/agent-{i:02d}.md",
+            "category": "engineering",
+            "description": "x" * 50,
+            "description_summary": f"summary for agent {i}",
+            "description_hash": "sha256:0",
+            "body_hash": "sha256:0",
+            "tags": ["x"],
+            "project_hints": {"files": [], "regex": []},
+            "conflicts": [],
+            "introduced": "2026-01-01",
+            "aliases": [],
+        }
+    import yaml as _yaml
+    (fake_hr / "agent.manifest.yaml").write_text(
+        _yaml.safe_dump({"schema_version": 1, "agents": agents})
+    )
+    project = tmp / "proj"
+    project.mkdir()
+    cmd = [
+        sys.executable, str(SCRIPT),
+        "--project-root", str(project),
+        "--hr-repo", str(fake_hr),
+        "--llm-provider", "definitely-not-a-real-provider",
+        "--json",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    expect("degraded manifest" not in result.stderr,
+           "no warning when summaries are populated")
+
+
 def test_invalid_regex_in_manifest_does_not_crash(tmp: Path) -> None:
     """Ensure a malformed regex in a custom manifest doesn't crash the script."""
     print("test_invalid_regex_in_manifest_does_not_crash")
@@ -416,6 +543,9 @@ def main() -> int:
         test_requirements_txt_matches_python_deps,
         test_dep_file_in_node_modules_ignored,
         test_oversize_dep_file_skipped,
+        test_empty_summary_guardrail_fires_under_llm,
+        test_empty_summary_guardrail_silent_under_no_llm,
+        test_empty_summary_guardrail_quiet_when_populated,
         test_invalid_regex_in_manifest_does_not_crash,
     ]
 
