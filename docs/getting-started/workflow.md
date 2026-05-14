@@ -41,7 +41,7 @@ The setup is **deliberately built for one engineer**. The vocabulary borrows fro
 - `decisions/NNNN-<slug>.md` — design docs (ADR-numbered).
 - `~/.inc/projects/<slug>/` — per-project telemetry + restore points (see §6).
 
-> **Next action:** open [CLAUDE.md](../../CLAUDE.md) and read the six rules end-to-end. They are short on purpose. Everything that follows in this doc is a worked example of those rules in action.
+> **Next action:** open [CLAUDE.md](../../CLAUDE.md) and read the seven rules end-to-end. They are short on purpose. Everything that follows in this doc is a worked example of those rules in action.
 
 ---
 
@@ -376,6 +376,8 @@ The `accepted` status is now persistent. Coding may begin.
 
 You have an accepted design doc. Now the actual code.
 
+> **Note:** this section assumes the ticket is implementation-shaped. For investigation, spike, audit, or "figure out X" tickets, the deliverable is a markdown report attached to the Linear issue — see §6's "Ticket shape: implementation vs investigation" subsection.
+
 The conventions here are *not* in CLAUDE.md yet — they're stated explicitly in the [Defer](../../CLAUDE.md#defer-not-in-this-claudemd-yet) section: codex review × N rounds and the coverage gate live by convention, not by rule. They get promoted into CLAUDE.md only if their absence costs real time. They haven't yet, so they don't.
 
 That said, the actual lived convention this repo has settled on:
@@ -452,6 +454,39 @@ On merge:
 
 The four things above (sitrep, work-breakdown, design-doc, coding) are the day's spine. The conventions below cut across all of them.
 
+### Ticket shape: implementation vs investigation
+
+Not every Linear ticket is implementation work. A meaningful share — spikes, audits, design explorations, "figure out X" tickets, research questions — wants a markdown report as the deliverable, not a code PR. CLAUDE.md Rule 7 makes this explicit; this section is the longer "how."
+
+**Classify before branching.** When you pick up a ticket, ask: is the ask code, or is the ask understanding (an answer or a recommendation)? Read the ticket body first — don't classify off the title alone. Apply the classifier *before* asking the user; only ask if reading the body left the shape genuinely ambiguous.
+
+- **Implementation-shaped:** "add X", "fix Y", "ship Z", "refactor W to do U", "migrate from A to B." Output is a PR closing the issue.
+- **Investigation-shaped:** "figure out", "audit", "diagnose", "triage", "root-cause", "assess", "inventory", "map", "survey", "spike", "research", "explore", "what would it take to", "compare options for", "evaluate whether to." Output is a markdown report attached to the issue.
+
+**Mixed-shape gotchas:**
+
+- *Audit-then-fix.* "Audit X and fix what you find" is genuinely two tickets — the audit is investigation-shaped, the fixes are implementation-shaped. Default behavior: produce the audit report, then surface the proposed fixes as separate tickets (or as a list at the bottom of the report) and let the user decide which to implement. Don't bundle.
+- *Refactor with discovery.* Some refactors need a discovery pass before the actual code change — "refactor the certificate flow" might start with a map of who calls what. If the discovery is non-trivial, do the discovery as a short report inline in the PR description (not a separate Linear attachment) and proceed with the code. The ticket is still implementation-shaped; the discovery is plumbing, not the deliverable.
+
+If, after reading the body, a ticket is still ambiguous, ask one clarifying question before branching: "report-shaped or PR-shaped?" Cheap, and avoids both the wasted-PR failure mode (investigation work becomes a code-shaped PR) and the wasted-report failure mode (implementation work stalls because someone wrote prose instead of code).
+
+**Investigation flow:**
+
+1. **Write the report to a working file.** Convention: `~/.inc/projects/<slug>/reports/<MIT-NNN>-<slug>.md` (the same `~/.inc/projects/<slug>/` namespace used for non-git operational state). The path is local; the Linear attachment is the long-term artifact.
+2. **Cover what a reviewer needs:**
+   - **Question.** What the ticket actually asked. Quote the ticket if it helps.
+   - **Method.** What you read, who you talked to, what you ran. So the reviewer can sanity-check the path to the conclusion.
+   - **Findings.** The substantive answer. State positions, don't hedge ("X is the right call because…" beats "we could consider X or Y or Z").
+   - **Recommendations.** What should happen next. If implementation work falls out, name it as a separate ticket — don't blur into a PR from the investigation ticket.
+   - **Unknowns / next-action options.** What you didn't answer and why. The "this needs more research" or "this needs a decision from you" surfaces here.
+3. **Attach to the Linear issue.** `linear issue attach MIT-NNN <path-to-md>`. The CLI will upload the file and surface it on the issue.
+4. **Optionally add a comment** summarizing the headline findings: `linear issue comment add MIT-NNN -m "..."`. The inbox view shows the comment preview; pure-attachment-only issues look empty in the queue.
+5. **Move the issue forward.** Close it if the answer is final, or leave it open with the next action named in a comment if it kicks off implementation work (which should become a separate ticket — see "One issue per PR" above).
+
+**Override path.** If the user explicitly asks for code from an investigation ticket ("implement what you found", "turn this into a PR"), do that instead. The default is "report"; the override is "code". The reverse — implementation ticket becoming a report — is rarer and almost always means the ticket was misclassified upstream; in that case, push back rather than silently switching.
+
+**Why this rule exists.** The reflexive `ticket → branch → PR` pattern is the default agent behavior because it's the default code-assistant pattern. Without an explicit convention, every investigation ticket would silently become a PR — with branch overhead, conflict-resolution risk, and a code-review-shaped review for something that wasn't code. The artifact-attached-to-Linear pattern keeps research findings searchable in the same place as implementation history, and keeps the inbox semantics ("this issue's deliverable lives here") consistent across shapes.
+
 ### Linear-as-inbox
 
 Linear is the queue and the history. CLAUDE.md Rule 3 makes this explicit: *"The inbox is anything assigned to the user, any open PR awaiting their review, and any design doc flagged for review. `/sitrep` surfaces all three."*
@@ -509,7 +544,7 @@ If the doc is being audited from outside a git repo, the slug falls back to `_or
 
 Telemetry writes are **best-effort** — a write failure emits a stderr warning, but the audit (or whatever operation was running) still PASSes. Restore-point writes are **required** — a restore write failure fails the audit. Acceptance without a rollback path is the failure mode we explicitly refuse.
 
-### The six CLAUDE.md rules
+### The seven CLAUDE.md rules
 
 Restated here as a single block, because they cut across every section above. The full text and rationale live in [CLAUDE.md](../../CLAUDE.md):
 
@@ -519,10 +554,11 @@ Restated here as a single block, because they cut across every section above. Th
 4. **Break down non-trivial work before doing it.** Planning intent ("let's build", "we should ship") triggers `/work-breakdown`. Immediate-execution intent does not.
 5. **Surface conflicts, don't average them.** When two parts of the system disagree, pick one explicitly and say why. State both positions, pick one, flag the other as a follow-up. Distinguish material from cosmetic disagreement.
 6. **Fail loud.** "Completed" is wrong if anything was silently skipped. "Tests pass" is wrong if any were skipped/xfail'd. "Works" is wrong if you didn't verify the edge case. Caveats go in the same sentence as the success claim, not buried in a paragraph.
+7. **Investigation tickets ship markdown reports, not PRs.** Research/spike/audit/"figure out X" tickets produce a markdown report attached to the Linear issue, not a code PR. Override only when the user explicitly asks for code. If shape is ambiguous, ask one clarifying question before branching.
 
-Every rule has earned its place by closing a failure mode observed in this repo. Rules 5 and 6 are the most recent additions — they came in via PR #21, after codex caught silent-skip behavior twice in Week 1. Rules that have *not* yet earned a place: codex review × 3 (convention, not rule), 80% coverage gate (Makefile-level, not constitution-level), boil-the-lake stance (handoff doc), ETHOS principles (deferred).
+Every rule has earned its place by closing a failure mode observed in this repo. Rules 5 and 6 came in via PR #21, after codex caught silent-skip behavior twice in Week 1. Rule 7 is the most recent — closes the reflexive `ticket → branch → PR` failure mode that would otherwise turn every investigation ticket into a wasted PR. Rules that have *not* yet earned a place: codex review × 3 (convention, not rule), 80% coverage gate (Makefile-level, not constitution-level), boil-the-lake stance (handoff doc), ETHOS principles (deferred).
 
-The discipline of CLAUDE.md is to keep it short. Six rules is the current ceiling. Anything new needs to displace something old, or close a failure mode no existing rule covers.
+The discipline of CLAUDE.md is to keep it short. Seven rules is the current ceiling. Anything new needs to displace something old, or close a failure mode no existing rule covers.
 
 > **Next action:** if you've just read this end-to-end, run `/sitrep` to land back in the loop, then keep going from there. Six months from now this doc should still make sense — if it doesn't, the workflow has drifted and the doc needs an update, not the other way around.
 

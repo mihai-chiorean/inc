@@ -61,6 +61,14 @@ When you cannot verify something worked, **say so explicitly in the same sentenc
 
 This rule has teeth because codex review caught silent-skip behavior twice during Week 1 of the gstack-borrow initiative. Promoting it from "we happen to catch this" to "expected default."
 
+## Rule 7 — Investigation tickets ship markdown reports, not PRs
+
+When picking up a Linear ticket whose **primary ask is to answer a question or produce a recommendation** — research, investigation, spike, audit, diagnose, triage, root-cause, assess, inventory, map, survey, exploration, "figure out X," "compare options for," "evaluate whether to" — the deliverable is **a markdown report attached to the Linear issue**, not a code PR. Use `linear issue attach MIT-NNN <path-to-md>`.
+
+Override only when the user explicitly asks for code changes ("implement what you found", "turn this into a PR"). If the ticket's shape is ambiguous, ask one clarifying question before branching: "report-shaped or PR-shaped?"
+
+This prevents the reflexive `ticket → branch → PR` pattern that mismatches investigation work — where the artifact IS the deliverable, and a PR is overhead. The longer "how" (classification, report shape, file path convention) lives in `docs/getting-started/workflow.md` §6 "Ticket shape: implementation vs investigation."
+
 ---
 
 ## Defer (not in this CLAUDE.md, yet)
