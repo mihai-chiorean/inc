@@ -458,12 +458,17 @@ The four things above (sitrep, work-breakdown, design-doc, coding) are the day's
 
 Not every Linear ticket is implementation work. A meaningful share — spikes, audits, design explorations, "figure out X" tickets, research questions — wants a markdown report as the deliverable, not a code PR. CLAUDE.md Rule 7 makes this explicit; this section is the longer "how."
 
-**Classify before branching.** When you pick up a ticket, ask: is the ask code, or is the ask understanding?
+**Classify before branching.** When you pick up a ticket, ask: is the ask code, or is the ask understanding (an answer or a recommendation)? Read the ticket body first — don't classify off the title alone. Apply the classifier *before* asking the user; only ask if reading the body left the shape genuinely ambiguous.
 
-- **Implementation-shaped:** "add X", "fix Y", "ship Z", "refactor W to do U." Output is a PR closing the issue.
-- **Investigation-shaped:** "figure out", "audit", "spike", "research", "explore", "what would it take to", "compare options for", "evaluate whether to." Output is a markdown report attached to the issue.
+- **Implementation-shaped:** "add X", "fix Y", "ship Z", "refactor W to do U", "migrate from A to B." Output is a PR closing the issue.
+- **Investigation-shaped:** "figure out", "audit", "diagnose", "triage", "root-cause", "assess", "inventory", "map", "survey", "spike", "research", "explore", "what would it take to", "compare options for", "evaluate whether to." Output is a markdown report attached to the issue.
 
-If a ticket is genuinely ambiguous, ask one clarifying question before branching: "report-shaped or PR-shaped?" Cheap, and avoids both the wasted-PR failure mode (investigation work becomes a code-shaped PR) and the wasted-report failure mode (implementation work stalls because someone wrote prose instead of code).
+**Mixed-shape gotchas:**
+
+- *Audit-then-fix.* "Audit X and fix what you find" is genuinely two tickets — the audit is investigation-shaped, the fixes are implementation-shaped. Default behavior: produce the audit report, then surface the proposed fixes as separate tickets (or as a list at the bottom of the report) and let the user decide which to implement. Don't bundle.
+- *Refactor with discovery.* Some refactors need a discovery pass before the actual code change — "refactor the certificate flow" might start with a map of who calls what. If the discovery is non-trivial, do the discovery as a short report inline in the PR description (not a separate Linear attachment) and proceed with the code. The ticket is still implementation-shaped; the discovery is plumbing, not the deliverable.
+
+If, after reading the body, a ticket is still ambiguous, ask one clarifying question before branching: "report-shaped or PR-shaped?" Cheap, and avoids both the wasted-PR failure mode (investigation work becomes a code-shaped PR) and the wasted-report failure mode (implementation work stalls because someone wrote prose instead of code).
 
 **Investigation flow:**
 

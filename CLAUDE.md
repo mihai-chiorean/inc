@@ -63,7 +63,7 @@ This rule has teeth because codex review caught silent-skip behavior twice durin
 
 ## Rule 7 — Investigation tickets ship markdown reports, not PRs
 
-When picking up a Linear ticket whose ask is research, investigation, spike, audit, exploration, or "figure out X," the deliverable is **a markdown report attached to the Linear issue**, not a code PR. Use `linear issue attach MIT-NNN <path-to-md>`.
+When picking up a Linear ticket whose **primary ask is to answer a question or produce a recommendation** — research, investigation, spike, audit, diagnose, triage, root-cause, assess, inventory, map, survey, exploration, "figure out X," "compare options for," "evaluate whether to" — the deliverable is **a markdown report attached to the Linear issue**, not a code PR. Use `linear issue attach MIT-NNN <path-to-md>`.
 
 Override only when the user explicitly asks for code changes ("implement what you found", "turn this into a PR"). If the ticket's shape is ambiguous, ask one clarifying question before branching: "report-shaped or PR-shaped?"
 
