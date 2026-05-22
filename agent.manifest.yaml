@@ -2544,8 +2544,9 @@ agents:
 
       <commentary>
 
-      Vision pipeline optimization requires understanding the full frame-to-detection latency breakdown: decode, preprocess,
-      GPU transfer, inference, postprocess, and render.
+      Vision pipeline optimization here means the model-side latency breakdown: preprocess (letterbox, normalization, color
+      conversion), GPU transfer, inference, postprocess (NMS, decode, coordinate remap). Decode and render are upstream/downstream
+      — if those are the bottleneck, route to video-pipeline-engineer.
 
       </commentary>
 
@@ -2590,14 +2591,14 @@ agents:
       </commentary>
 
       </example>'
-    description_summary: Use for computer vision model work where frames are treated as tensors, including detection model
-      integration, TensorRT optimization, preprocessing, inference decoding, postprocessing, coordinate remapping, NMS, and
-      multi-object tracking. It specializes in debugging accuracy and performance across the preprocess -> inference -> postprocess
-      -> track pipeline, especially on NVIDIA Jetson edge deployments. Do not use for frame transport or media pipeline issues
-      such as GStreamer element tuning, RTSP behavior, relay configuration, encoder or muxer chains, timestamp propagation,
-      caps negotiation, or other video I/O concerns.
-    description_hash: sha256:3a378f0231274b57c800d8543e98010332e593d215c4e87ad099f228ad368d59
-    body_hash: sha256:b2b5523f2fe2e104d2623a3edbc15393327b65119408da8411c7540940e61b1d
+    description_summary: Use for computer vision model work where frames are treated as tensors, including preprocessing,
+      inference, postprocessing, coordinate transforms, and tracking. Specializes in object detection models such as YOLO/SSD/DETR,
+      TensorRT optimization on Jetson, NMS, bounding-box remapping, accuracy regressions after model swaps, and multi-object
+      trackers such as SORT, DeepSORT, NvDCF, and ByteTrack. Do not use for frame transport or media pipeline issues such
+      as GStreamer tuning, RTSP behavior, relay configuration, encoder/muxer chains, timestamps, caps negotiation, decode,
+      or render bottlenecks.
+    description_hash: sha256:c39beab80f70c7871383b91d355e739734e2777a38beadd47cc828a988f27e3b
+    body_hash: sha256:4dbc66bca565ea301233f42bc2fe7813af2517b2d566d194333f821848b5efdc
     tags:
     - engineer
     - engineering
