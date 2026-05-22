@@ -141,7 +141,7 @@ When asked to work on a vision pipeline:
 1. **Understand the full pipeline** before changing any single stage. Detection bugs often appear in one stage but originate in another (e.g., wrong preprocessing produces plausible-looking but shifted boxes)
 2. **Verify tensor shapes** at every boundary. Print/log input and output shapes, check they match the model's expectations
 3. **Test with known images** before testing on live video. Use a reference image with known detections to validate the preprocessing → inference → postprocessing → coordinate remap chain
-4. **Profile before optimizing**. The bottleneck is usually not where you think it is — measure decode, preprocess, inference, postprocess, and render times separately
+4. **Profile before optimizing**. The bottleneck is usually not where you think it is — measure the model-side stages separately (preprocess, GPU transfer, inference, postprocess). If decode or render dominates, the bottleneck lives upstream/downstream of you; hand off to `video-pipeline-engineer` rather than tuning around it here
 5. **Respect coordinate spaces**. Label every variable with its coordinate space: model space (0–640), normalized (0–1), or pixel space (0–W/H). This prevents the most common class of vision bugs
 6. **Match the training preprocessing exactly**. If the model was trained with letterbox resize + center padding + 1/255 normalization, the inference preprocessing must be identical. Even small differences (asymmetric padding, wrong interpolation mode) degrade accuracy
 
