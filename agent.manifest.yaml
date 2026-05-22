@@ -2336,14 +2336,181 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  video-analytics-engineer:
+    file: engineering/video-analytics-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent when working on video analytics that reason ACROSS frames or ACROSS cameras — offline/batch
+      processing of recorded clips, SOTA promptable/open-vocabulary models (SAM 2/3, Grounding DINO, T-Rex, YOLO-World, OWL-ViT),
+      scene/shot detection, temporal action detection, video understanding (VideoMAE, InternVideo), spatio-temporal tracking,
+      cross-camera ReID, multi-camera fusion, auto-labeling pipelines (Autodistill, CVAT/Nuclio model serving), and the input-data
+      sourcing question (live feed vs recorded clips vs cloud-archived video) that comes BEFORE the labeling job runs. Owns
+      the frames-as-spacetime layer: the model+algorithm work that needs temporal context, multi-view geometry, or large pretrained
+      foundation vision models, including encode/decode choices that are specific to analytics (NVDEC batch decode of MP4s,
+      keyframe-aligned clip extraction, codec selection for re-encoding clips for archival/labeling). This agent''s runtime
+      shape is usually BATCH (a directory of clips, a GPU host like a Spark or a cloud node, hours of compute, evaluation
+      against a held-out set) rather than per-frame live. Examples:\n\n<example>\nContext: Auto-labeling a batch of recorded
+      driveway clips with GroundedSAM2 on a Grace-Blackwell host\nuser: "I have ~2k MP4 clips at ~/workspace/clip-labeler/inbox/.
+      Need to auto-label vehicles, people, packages with Autodistill GroundedSAM2 + Grounding DINO + SAM 3.1 on spark-3883,
+      then export to CVAT for human review."\nassistant: "Batch labeling with Grounding DINO + SAM 3.1 needs three pieces
+      lined up: prompt engineering for the open-vocab detector (the difference between ''car'' and ''parked sedan'' changes
+      recall), the SAM mask prompt strategy (box vs point vs box+point), and the throughput shape (per-clip frame sampling,
+      batched inference on the 128 GB UMA, NVDEC for decode). Let me use the video-analytics-engineer agent to design the
+      prompt set, the per-clip sampling cadence (every Nth frame vs scene-change-triggered), and the CVAT export schema with
+      track-ids preserved across the sampled frames."\n<commentary>\nThis is the frames-as-spacetime job: open-vocab foundation
+      model, batch shape, sampling/prompting decisions, archive-format output. Not vision-engineer (no edge inference, not
+      a YOLO/TensorRT problem). Not video-pipeline-engineer (no live transport, no relay). The decode of input MP4s is incidental
+      to the analytics; the analytics IS the job.\n</commentary>\n</example>\n\n<example>\nContext: Input-data sourcing decision
+      for a labeling effort\nuser: "Should I label from the live detector feed or from the Tapo-cloud recorded clips? Both
+      are available, the live feed is what production sees but the cloud has richer history."\nassistant: "This is an input-data
+      sourcing decision and it''s mine to call. Let me use the video-analytics-engineer agent to compare: (a) live-feed labels
+      match the production distribution (same camera intrinsics, same lighting, same encoding artifacts the deployed model
+      will see) but require a tap on the live pipeline and a frame-buffer; (b) Tapo cloud clips are pre-segmented around motion
+      events (so positive-class density is higher, useful for rare classes) but the encoding chain differs from the live feed
+      (re-encoded by cloud, possibly different chroma subsampling) which can introduce a train/serve skew. The recommendation
+      usually depends on the rare-class distribution — if motorcycles are 0.5% of frames live but 8% of cloud clips, the cloud
+      path is the right one even with the skew risk, mitigated by mixing in a smaller live-feed sample."\n<commentary>\nThe
+      sourcing question lives at the analytics-pipeline level, before the labeler runs. It needs judgment on distribution
+      shift, rare-class density, and encoding-chain differences. Pure vision-engineer would skip the sourcing question and
+      go straight to model selection. Pure video-pipeline-engineer doesn''t reason about class distributions.\n</commentary>\n</example>\n\n<example>\nContext:
+      Cross-camera ReID for multi-camera driveway+street setup\nuser: "Person walks from the driveway camera into the street
+      camera FOV. I want a stable global track-id across the handoff. Both cameras have NvDCF per-camera tracking already."\nassistant:
+      "Cross-camera ReID over a non-overlapping or partially-overlapping handoff is a different problem from single-camera
+      tracking. NvDCF gives you per-camera tracks; the handoff needs an appearance-feature ReID model (OSNet, TransReID, or
+      a CLIP-style embedding) plus a spatio-temporal gate (was a track lost on camera A within T seconds of a track appearing
+      on camera B, in a plausible direction?). Let me use the video-analytics-engineer agent to pick the ReID backbone, design
+      the feature gallery + similarity threshold, and the temporal gating policy."\n<commentary>\nCross-camera anything is
+      this agent. Per-camera tracking (NvDCF/ByteTrack tuning, association thresholds on a single stream) is vision-engineer.
+      The boundary is whether the reasoning crosses camera boundaries.\n</commentary>\n</example>\n\n<example>\nContext: Scene/shot
+      detection on a long archived recording before downstream classification\nuser: "Got a 6-hour recording. Need to segment
+      it into ''driveway empty'' / ''vehicle present'' / ''person present'' / ''package event'' scenes before running the
+      classifier."\nassistant: "Scene segmentation on a long clip is a frames-as-spacetime job — you want change-point detection
+      on a low-cost signal (motion energy, optical flow magnitude, or a small classifier''s confidence trajectory) and then
+      aggregate into contiguous scenes with a hysteresis policy. Let me use the video-analytics-engineer agent to pick the
+      change-point method (PySceneDetect for cuts, or a learned scene-classifier with temporal smoothing for semantic segments),
+      the smoothing window, and the output schema (start_ts, end_ts, scene_label) that the downstream classifier consumes."\n<commentary>\nTemporal
+      segmentation, change-point detection, scene reasoning over time. Not a per-frame inference question. The deliverable
+      is intervals, not boxes. Vision-engineer would tune the per-frame classifier; this agent designs the temporal layer
+      on top.\n</commentary>\n</example>\n\n<example>\nContext: Choosing between SAM 2 and SAM 3 for a labeling pipeline\nuser:
+      "Autodistill supports both SAM 2 and SAM 3.1 as the mask refiner behind Grounding DINO. Which one for our use case (vehicles,
+      people, packages on residential cameras, ~720p clips)?"\nassistant: "SAM 2 vs SAM 3 tradeoffs depend on whether you
+      need (a) video propagation (SAM 2''s mem-bank video segmentation across frames is a real win for tracklets; SAM 3 is
+      per-frame strong but adds promptable concept-grounding), (b) compute budget (SAM 3.1 is heavier), (c) prompt modality
+      (SAM 3 takes text prompts directly, SAM 2 needs Grounding DINO to produce boxes first). Let me use the video-analytics-engineer
+      agent to map your three classes onto the prompt-strategy decision and benchmark a 50-clip sample both ways before committing
+      the full 2k-clip job."\n<commentary>\nSOTA foundation-model selection with a "benchmark a sample first" discipline.
+      Vision-engineer can deploy a chosen model; this agent picks among them and validates the choice on a held-out sample.\n</commentary>\n</example>\n\n<example>\nContext:
+      Encode/decode for analytics archival, not for live transport\nuser: "We''re keeping a 30-day rolling archive of clips
+      for retroactive labeling. What codec/container/bitrate should we re-encode the camera feed to before storing?"\nassistant:
+      "Archive-for-analytics encoding is a different problem from live-transport encoding. Live wants low latency and tolerates
+      lossy GOP shapes; archive wants frame-accurate seek (so keyframe interval matters for clip extraction), preserved chroma
+      (4:2:0 is fine for most analytics, but if you''re running ReID off color features you want to verify the model''s training-time
+      chroma), and storage cost. Let me use the video-analytics-engineer agent to pick the codec (H.265 main10 if your downstream
+      can decode it, H.264 high otherwise), GOP shape (short enough for sub-clip extraction without re-encode, long enough
+      not to blow the bitrate), and the resolution/bitrate tradeoff against the 30-day storage budget."\n<commentary>\nEncode/decode
+      choices specifically for analytics consumption (seek accuracy, chroma preservation, downstream model compatibility)
+      rather than for live transport. video-pipeline-engineer owns the live encoder; this agent owns the archival re-encoder
+      when the downstream is "a labeling job runs over this in 2 weeks."\n</commentary>\n</example>'
+    description_summary: Use for video analytics tasks that require reasoning across frames, time, or multiple cameras, especially
+      offline or batch workflows over recorded clips. Specializes in open-vocabulary and promptable vision models, temporal
+      segmentation, action/video understanding, spatio-temporal tracking, cross-camera ReID, multi-camera fusion, auto-labeling
+      pipelines, and analytics-specific encode/decode or data-sourcing decisions. Do not route per-frame live inference, edge
+      deployment, single-camera tracker tuning, or live video transport/relay work unless the core problem depends on temporal
+      context, multi-view reasoning, or batch foundation-model analytics.
+    description_hash: sha256:8a11f8d89132a7975deb9ed6168ec2f69f9bf2b97d407297ce329dbad63054c8
+    body_hash: sha256:0933092c8aefd3a251c36a248f210ddf263e26c1dc0357efff3560a83f169537
+    tags:
+    - analytics
+    - engineer
+    - engineering
+    - video
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-22'
+    aliases: []
+  video-pipeline-engineer:
+    file: engineering/video-pipeline-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent when working on GStreamer pipelines, RTSP / RTP / RTCP / SDP, go2rtc / mediamtx relays, ffmpeg
+      / libav, NVIDIA DeepStream elements (nvv4l2decoder, nvvideoconvert, nvstreammux, nvinfer, nvtracker), encoder/muxer
+      chains (x264enc, h264parse, qtmux, splitmuxsink), HLS / LL-HLS / fragmented MP4, WebRTC signaling (SDP/ICE/DTLS-SRTP)
+      on the device side, tee/queue topology, leaky-queue tuning, framerate negotiation, caps negotiation failures (not-negotiated),
+      or PTS/DTS propagation across NVMM↔system memory boundaries. Owns the *plumbing* that moves frames and packets from
+      camera to inference and from inference to disk/relay — not the model, not the kernel, not the OS, not the UI. Examples:\n\n<example>\nContext:
+      Encoder output triggers Buffer-has-no-PTS warnings at the muxer\nuser: "splitmuxsink keeps logging `Buffer has no PTS`
+      after I added x264enc tune=zerolatency behind a leaky queue"\nassistant: "Missing PTS at the muxer almost always means
+      an upstream element is emitting CLOCK_TIME_NONE — could be the source, the queue''s interaction with PTS, or the encoder
+      under back-pressure. Let me use the video-pipeline-engineer agent to verify PTS at each pad (source src, queue src,
+      encoder sink, encoder src, muxer sink) and fix the rate/buffering shape where the timestamp is actually lost."\n<commentary>\nInserting
+      `videorate skip-to-first=true drop-only=true` looks plausible but breaks caps negotiation; the real fix depends on where
+      PTS first becomes invalid, which only a pad-by-pad probe walk will tell you. Generalists guess; this agent measures.\n</commentary>\n</example>\n\n<example>\nContext:
+      RTSP camera silently stops streaming after idle period; detector watchdog fires\nuser: "Our RTSP feed disconnects after
+      ~60s of low motion. rtspsrc has latency=100 protocols=tcp drop-on-latency=true. The detector watchdog catches it but
+      I don''t know if the camera, relay, or rtspsrc is at fault."\nassistant: "Long-idle RTSP drops have multiple suspects
+      — RTSP keepalive (which rtspsrc enables by default but the camera or an intervening NAT/relay may not honor), RTCP RR
+      flow, the camera''s session-timeout firmware behavior, or transport-layer TCP timeouts. Let me use the video-pipeline-engineer
+      agent to capture `tshark` evidence (RTSP OPTIONS pings, RTCP RR cadence, TCP keepalive), check the camera firmware''s
+      known idle behavior, and identify which hop is closing the session. The detector is the symptom here, not the suspect."\n<commentary>\nRTSP
+      session lifecycle, RTCP evidence, and keepalive plumbing against firmware-specific camera quirks is this agent''s lane.
+      The detector is the consumer; the failure is upstream. Not vision-engineer (no model). Not embedded-device (no wendy-agent
+      code path).\n</commentary>\n</example>\n\n<example>\nContext: Two separate rtspsrc pipelines causing decoder buffer
+      pool churn; need single-pipeline fan-out\nuser: "We have two rtspsrc pipelines pulling the same camera (one for detection,
+      one for motion diff). The NVDEC/NVMM decoder buffer pool keeps churning under racing rebuilds. Should we merge?"\nassistant:
+      "Yes — racing rtspsrc rebuilds against a shared decoder buffer pool is a known anti-pattern. Let me use the video-pipeline-engineer
+      agent to design a single-pipeline `rtspsrc → nvv4l2decoder → tee → N branches` topology with the right queue shape per
+      branch and bus-message source filtering (`GST_MESSAGE_SRC`) so a branch failure doesn''t tear down the upstream."\n<commentary>\nPipeline
+      topology design — tee semantics, per-branch queue isolation, bus-message routing, NVMM buffer-pool lifecycle across
+      multiple consumers — is this agent''s core competency. Not gpu-engineer (the pool issue is element/pipeline shape, not
+      CUDA kernel work).\n</commentary>\n</example>\n\n<example>\nContext: Property tuning for an nvstreammux + nvinfer single-stream
+      pipeline\nuser: "Our nvstreammux is set to batch-size=1 batched-push-timeout=40000 live-source=1, and inference latency
+      spikes when the camera drops a frame. What should we tune?"\nassistant: "batched-push-timeout interacting with live-source
+      under intermittent frame drops is exactly the kind of property-pair bug that hides in plain sight. Let me use the video-pipeline-engineer
+      agent to walk the streammux config, the upstream queue''s max-size-time, and the nvinfer batch input timing — and decide
+      whether to relax the timeout, add an explicit `queue max-size-time=` upstream, or change `attach-sys-ts` semantics."\n<commentary>\nProperty-level
+      tuning of pipeline elements is the agent''s daily work — knowing which knob does what and which silent default will
+      bite you. Not a model question (vision-engineer), not a kernel question (gpu-engineer).\n</commentary>\n</example>\n\n<example>\nContext:
+      Relay producer/consumer ordering audit\nuser: "We run go2rtc with WebRTC for dashboard + RTSP fan-out to detector. Sometimes
+      the detector starts before the relay has a source. Is on-demand pulling wired right?"\nassistant: "Producer/consumer
+      ordering and on-demand vs eager pulls are the two knobs that matter. Let me use the video-pipeline-engineer agent to
+      walk the go2rtc YAML (streams, sources, listeners, preload settings) and recommend either eager pulls with a health
+      gate or a startup-retry shape — but the fix lives in the relay config and rtspsrc retry properties, not in the detector''s
+      process orchestration."\n<commentary>\nRelay YAML, source/listener/path lifecycle, and the consumer-side rtspsrc retry
+      shape is this agent''s lane. The detector''s process startup logic itself (systemd, supervisor, container restart policy)
+      belongs to embedded-device or swift-backend depending on where the orchestration lives.\n</commentary>\n</example>'
+    description_summary: 'Use for tasks involving video transport and media pipeline plumbing: GStreamer, RTSP/RTP/RTCP/SDP,
+      relays such as go2rtc or mediamtx, ffmpeg/libav, DeepStream elements, encoder/muxer chains, HLS/fMP4, WebRTC device-side
+      signaling, tee/queue topology, caps/framerate negotiation, timestamps, and NVMM/system-memory boundary issues. It specializes
+      in diagnosing and tuning how frames and packets move from cameras to inference and onward to disk, relay, or streaming
+      outputs, including pad-level timestamp tracing, relay producer/consumer ordering, queue isolation, and element property
+      interactions. Do not use it for model behavior, CUDA/kernel work, OS or process supervision, UI, or detector application
+      logic except where those are symptoms of upstream media plumbing failures.'
+    description_hash: sha256:bc370e64e0bcbfbb15ca335b9584f8bb4ee9ef82af7197fec7d42a2759530bbb
+    body_hash: sha256:76e75d4f9860ce5707f92747c5ce4b7e99f2ed2287080b1883f0757ef4c2687a
+    tags:
+    - engineer
+    - engineering
+    - pipeline
+    - video
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-05-22'
+    aliases: []
   vision-engineer:
     file: engineering/vision-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on computer vision pipelines, video processing, object detection models (YOLO,
-      SSD, etc.), TensorRT optimization, camera/RTSP stream handling, frame preprocessing, model inference, NMS postprocessing,
-      multi-object tracking, or edge deployment of vision models on NVIDIA Jetson or similar accelerators. This agent specializes
-      in building production vision systems that process video at real-time frame rates. Examples:
+    description: 'Use this agent when working on computer vision MODELS and frame-as-tensor problems — object detection models
+      (YOLO, SSD, DETR), TensorRT engine building/optimization for vision, frame preprocessing (letterbox, normalization,
+      color conversion), NMS and coordinate remapping, multi-object tracking algorithms (SORT, DeepSORT, NvDCF, ByteTrack),
+      or accuracy debugging of edge-deployed vision models on NVIDIA Jetson. This agent owns the model and the frame-as-data
+      pipeline (preprocess → inference → postprocess → track). For the *transport* of frames into and out of that pipeline
+      (GStreamer element/property tuning, RTSP keepalive, go2rtc/mediamtx relay config, encoder/muxer chains, PTS/DTS propagation,
+      caps negotiation failures), route to `video-pipeline-engineer`. Examples:
 
 
       <example>
@@ -2377,8 +2544,9 @@ agents:
 
       <commentary>
 
-      Vision pipeline optimization requires understanding the full frame-to-detection latency breakdown: decode, preprocess,
-      GPU transfer, inference, postprocess, and render.
+      Vision pipeline optimization here means the model-side latency breakdown: preprocess (letterbox, normalization, color
+      conversion), GPU transfer, inference, postprocess (NMS, decode, coordinate remap). Decode and render are upstream/downstream
+      — if those are the bottleneck, route to video-pipeline-engineer.
 
       </commentary>
 
@@ -2406,28 +2574,31 @@ agents:
 
       <example>
 
-      Context: Video stream processing and RTSP integration
+      Context: Detection accuracy regression after model swap
 
-      user: "Our RTSP camera feed drops frames and the detector gets stale data"
+      user: "We swapped YOLO11n for YOLOv8n and mAP dropped from 0.42 to 0.31 on our validation set"
 
-      assistant: "RTSP reliability depends on transport protocol, buffering, and frame queue management. Let me use the vision-engineer
-      agent to diagnose the stream pipeline and implement proper frame pacing."
+      assistant: "Accuracy regressions after a model swap usually come from preprocessing mismatch (the two models were trained
+      with different letterbox/normalization conventions) or output-tensor decoding (transposed vs non-transposed). Let me
+      use the vision-engineer agent to compare the two models'' expected input/output shapes and validate the preprocessing
+      chain against each."
 
       <commentary>
 
-      Video stream handling involves FFmpeg/GStreamer configuration, hardware vs software decode, frame rate control, and
-      managing the backpressure between decode speed and inference speed.
+      The unit of analysis here is the frame as a tensor — preprocessing, inference, postprocessing — not the GStreamer pipeline
+      that delivers the frame. Transport-layer issues (RTSP, GStreamer, relays) go to video-pipeline-engineer.
 
       </commentary>
 
       </example>'
-    description_summary: Use for tasks involving computer vision pipelines, real-time video processing, object detection,
-      frame preprocessing, inference, postprocessing, tracking, camera/RTSP streams, TensorRT optimization, and edge deployment
-      on Jetson-class accelerators. It specializes in production vision systems where performance, coordinate transforms,
-      stream reliability, GPU memory movement, and detector-to-tracker behavior matter. Do not route unrelated application
-      work, general ML tasks outside vision, or backend/frontend changes unless they directly support a vision pipeline.
-    description_hash: sha256:7fd501079baa0b5dec8a20fc9842e9b706772b95e82e59bf4fb79b658bfa54ef
-    body_hash: sha256:41e33a331919e3f53c16c945f9949f2de3ab70212084bf02af48811d4264a32e
+    description_summary: Use for computer vision model work where frames are treated as tensors, including preprocessing,
+      inference, postprocessing, coordinate transforms, and tracking. Specializes in object detection models such as YOLO/SSD/DETR,
+      TensorRT optimization on Jetson, NMS, bounding-box remapping, accuracy regressions after model swaps, and multi-object
+      trackers such as SORT, DeepSORT, NvDCF, and ByteTrack. Do not use for frame transport or media pipeline issues such
+      as GStreamer tuning, RTSP behavior, relay configuration, encoder/muxer chains, timestamps, caps negotiation, decode,
+      or render bottlenecks.
+    description_hash: sha256:c39beab80f70c7871383b91d355e739734e2777a38beadd47cc828a988f27e3b
+    body_hash: sha256:8360e3c294aa6e52f446a649bf7c5a9f787ae6ed3209596a5fe1ea51768856a1
     tags:
     - engineer
     - engineering

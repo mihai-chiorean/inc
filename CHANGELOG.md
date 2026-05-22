@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-05-22 — Roster: split `vision-engineer` into three lanes (MIT-391)
+
+`vision-engineer` was conflating three different kinds of work that share a "video" surface but otherwise need different expertise, different runtime shape, and different anti-scope. Split into:
+
+### `vision-engineer` (existing, narrowed)
+
+Owns model + frame-as-tensor: preprocess → inference → postprocess → per-camera tracking. DeepStream *inference-side* config (`network-mode`, `model-engine-file`, `output-blob-names`, `num-detected-classes`). Per-camera tracker tuning (NvDCF / ByteTrack association thresholds). Examples revised: dropped the RTSP-stream-handling example (now lives in `video-pipeline-engineer`); added an accuracy-regression-after-model-swap example to anchor the new scope.
+
+Explicit anti-scope: GStreamer plumbing around `nvinfer` (caps, NVMM buffer types, batched-push-timeout, pipeline topology), RTSP transport, encoder/muxer chains → `video-pipeline-engineer`. Cross-frame / cross-camera / batch / foundation models → `video-analytics-engineer`.
+
+### `video-pipeline-engineer` (new, sonnet)
+
+Owns transport plumbing: GStreamer property-level tuning, RTSP/RTP/RTCP/SDP protocol mechanics, relays (go2rtc, mediamtx), ffmpeg/libav, HLS/LL-HLS/fragmented MP4, device-side WebRTC signaling, encoder/muxer chains, PTS/DTS propagation across NVMM↔system memory boundaries, leaky-queue tuning, caps negotiation, multi-source clock sync (NTP via RTCP, PTP). Hands frames to a TensorRT engine as a black box.
+
+Examples cover the property-tuning hell that separates "works on a developer's desk" from "survives 24/7 against a consumer IP camera": PTS-loss debugging at the muxer, RTSP keepalive against camera firmware quirks, single-pipeline tee fan-out vs racing rtspsrc rebuilds, `nvstreammux` `batched-push-timeout` interaction with `live-source`, relay producer/consumer ordering.
+
+### `video-analytics-engineer` (new, opus)
+
+Owns frames-as-spacetime: foundation/SOTA vision models (SAM 2/3, Grounding DINO, T-Rex, YOLO-World, OWL-ViT, VideoMAE, InternVideo, V-JEPA), auto-labeling pipelines (Autodistill GroundedSAM, CVAT/Nuclio model serving), cross-camera ReID (OSNet, TransReID, CLIP-ReID), multi-camera fusion, scene/shot detection, spatio-temporal tracking, dataset hygiene + evaluation.
+
+Owns the **input-data sourcing question** that comes before the labeling job (live feed vs recorded clips vs cloud-archived video, distribution-shift reasoning, rare-class density). Owns archival encode/decode choices (codec / GOP / chroma) specific to *consumption by analytics*, distinct from live-transport encoding owned by `video-pipeline-engineer`.
+
+Runtime shape is batch (a directory of clips, a GPU host, hours of compute, eval against held-out set), not per-frame live.
+
+### Manifest
+
+Regenerated. Two net new agents (55 → 57). All three involved entries have non-empty `description_summary` (regenerated via `--llm-summaries`; verified non-JSON-wrapped per MIT-380's known failure mode).
+
+### Filed follow-ups (not in this PR)
+
+- Backfill `project_hints.regex` for `video-pipeline-engineer` and `video-analytics-engineer` so `/staff suggest` deterministic match fires.
+- `/staff` lockfile alias from `vision-engineer` → the new triple for any project currently staffing it (none today, worth checking before any project regen).
+- Workflow-optimizer pass to confirm the split doesn't introduce other overlaps in the roster.
+
 ## 2026-05-13 — /staff hardening: scope plumbing, matcher fixes, manifest hygiene
 
 A cluster of /staff-skill improvements landed after the first real cross-project use surfaced silent failure modes.
