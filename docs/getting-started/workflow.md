@@ -41,7 +41,7 @@ The setup is **deliberately built for one engineer**. The vocabulary borrows fro
 - `decisions/NNNN-<slug>.md` — design docs (ADR-numbered).
 - `~/.inc/projects/<slug>/` — per-project telemetry + restore points (see §6).
 
-> **Next action:** open [CLAUDE.md](../../CLAUDE.md) and read the seven rules end-to-end. They are short on purpose. Everything that follows in this doc is a worked example of those rules in action.
+> **Next action:** open [CLAUDE.md](../../CLAUDE.md) and read the eight rules end-to-end. They are short on purpose. Everything that follows in this doc is a worked example of those rules in action.
 
 ---
 
@@ -454,6 +454,36 @@ On merge:
 
 The four things above (sitrep, work-breakdown, design-doc, coding) are the day's spine. The conventions below cut across all of them.
 
+### Validators for agent + manifest changes
+
+Touched an agent .md file, the manifest, or any file under the category directories (`engineering/`, `product/`, etc.)? Run the two local checks before pushing — CLAUDE.md Rule 8 makes this expected:
+
+```bash
+python3 scripts/validate-agents.py    # strict YAML + spec checks per MIT-392
+python3 scripts/generate-manifest.py  # regen + commit if anything changed
+```
+
+**What `validate-agents.py` checks:**
+
+- **HARD**: every agent's frontmatter parses with strict YAML (`yaml.safe_load`). Failing means Claude Code's loader will degrade silently — descriptions get truncated at the first parse failure, examples disappear from routing, no error surfaces anywhere. Exit non-zero.
+- **WARN**: description is ≤ 1024 chars (Anthropic spec). 52 agents currently violate; MIT-393 tracks the rewrite.
+- **WARN**: description contains no XML tags (Anthropic spec). Same cohort; same ticket.
+
+Hard failures block the push (CI rejects them). Warnings count and report but exit 0 — they're the Tier 2 progress meter.
+
+**Iteration loop while editing an agent:**
+
+```bash
+# Edit engineering/foo-agent.md ...
+python3 scripts/validate-agents.py     # quick check; fix any HARD before continuing
+python3 scripts/generate-manifest.py   # may need --llm-summaries if description changed
+git diff agent.manifest.yaml           # confirm only the agent you touched changed
+```
+
+If `validate-agents.py` shows a hard failure, the most common cause is an unquoted `description:` that contains a literal `: ` (e.g., an `<example>` block with `Context: ...` or `user: "..."`). The fix is to use a double-quoted single-line description with `\n` escapes, matching the pattern landed in MIT-392. The fully-broken file from `vision-engineer` is a worked example in the MIT-392 PR history.
+
+**CI runs the same checks** via `.github/workflows/validate.yml`, plus the staff skill test suite. Hard failures block merge. The CI gate is a safety net; the local pre-push run is the discipline that keeps the gate green most of the time.
+
 ### Ticket shape: implementation vs investigation
 
 Not every Linear ticket is implementation work. A meaningful share — spikes, audits, design explorations, "figure out X" tickets, research questions — wants a markdown report as the deliverable, not a code PR. CLAUDE.md Rule 7 makes this explicit; this section is the longer "how."
@@ -544,7 +574,7 @@ If the doc is being audited from outside a git repo, the slug falls back to `_or
 
 Telemetry writes are **best-effort** — a write failure emits a stderr warning, but the audit (or whatever operation was running) still PASSes. Restore-point writes are **required** — a restore write failure fails the audit. Acceptance without a rollback path is the failure mode we explicitly refuse.
 
-### The seven CLAUDE.md rules
+### The eight CLAUDE.md rules
 
 Restated here as a single block, because they cut across every section above. The full text and rationale live in [CLAUDE.md](../../CLAUDE.md):
 
@@ -555,10 +585,11 @@ Restated here as a single block, because they cut across every section above. Th
 5. **Surface conflicts, don't average them.** When two parts of the system disagree, pick one explicitly and say why. State both positions, pick one, flag the other as a follow-up. Distinguish material from cosmetic disagreement.
 6. **Fail loud.** "Completed" is wrong if anything was silently skipped. "Tests pass" is wrong if any were skipped/xfail'd. "Works" is wrong if you didn't verify the edge case. Caveats go in the same sentence as the success claim, not buried in a paragraph.
 7. **Investigation tickets ship markdown reports, not PRs.** Research/spike/audit/"figure out X" tickets produce a markdown report attached to the Linear issue, not a code PR. Override only when the user explicitly asks for code. If shape is ambiguous, ask one clarifying question before branching.
+8. **Run the validators before pushing agent or manifest changes.** `python3 scripts/validate-agents.py` (strict YAML + spec) and `python3 scripts/generate-manifest.py` (regen + commit) before any push that touches agent .md files or the manifest. CI runs the same checks and blocks merge on hard-fail.
 
-Every rule has earned its place by closing a failure mode observed in this repo. Rules 5 and 6 came in via PR #21, after codex caught silent-skip behavior twice in Week 1. Rule 7 is the most recent — closes the reflexive `ticket → branch → PR` failure mode that would otherwise turn every investigation ticket into a wasted PR. Rules that have *not* yet earned a place: codex review × 3 (convention, not rule), 80% coverage gate (Makefile-level, not constitution-level), boil-the-lake stance (handoff doc), ETHOS principles (deferred).
+Every rule has earned its place by closing a failure mode observed in this repo. Rules 5 and 6 came in via PR #21, after codex caught silent-skip behavior twice in Week 1. Rule 7 closed the reflexive `ticket → branch → PR` failure mode. Rule 8 is the most recent — closes the silent-degradation failure mode where 52 of 57 agents had invalid YAML and Claude Code's loader truncated their descriptions without surfacing an error (MIT-392). Rules that have *not* yet earned a place: codex review × 3 (convention, not rule), 80% coverage gate (Makefile-level, not constitution-level), boil-the-lake stance (handoff doc), ETHOS principles (deferred).
 
-The discipline of CLAUDE.md is to keep it short. Seven rules is the current ceiling. Anything new needs to displace something old, or close a failure mode no existing rule covers.
+The discipline of CLAUDE.md is to keep it short. Eight rules is the current ceiling. Anything new needs to displace something old, or close a failure mode no existing rule covers.
 
 > **Next action:** if you've just read this end-to-end, run `/sitrep` to land back in the loop, then keep going from there. Six months from now this doc should still make sense — if it doesn't, the workflow has drifted and the doc needs an update, not the other way around.
 

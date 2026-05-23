@@ -57,93 +57,41 @@ CATEGORIES = [
 ]
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-# The parser has to deal with a non-canonical YAML reality: 16 of our 55
-# agents have multi-line descriptions containing column-0 lines like
-# `user: "..."` or `Context: ...` (inside `<example>` blocks). Those are
-# CONTENT, not YAML keys. A naive "any column-0 key:value is a new field"
-# parser would truncate those descriptions.
-#
-# Compromise: an allowlist of recognized top-level keys. Anything in the
-# allowlist becomes a new field. Anything NOT in it is treated as
-# continuation of the previous field BUT prints a stderr warning — so the
-# original MIT-376 failure mode (adding `scope:` and silently corrupting
-# `name`) is no longer silent. The user sees the warning and adds the key.
-#
-# Long-term cleaner fix: normalize all descriptions to single-line with
-# literal `\n`, then drop the allowlist. Filed as a follow-up under
-# MIT-376's open questions.
-KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
-KNOWN_KEYS = {"name", "description", "model", "color", "tools", "scope", "skills"}
-# Required fields: every agent must have these.
 REQUIRED_KEYS = {"name", "description"}
-# Heuristic: keys that look like agent-frontmatter content rather than
-# YAML structure. Used to suppress the unknown-key warning for noisy
-# false positives (HTML-like content in multi-line descriptions).
-DESCRIPTION_CONTENT_KEYS = {
-    "user", "assistant", "Context", "context", "commentary",
-}
 
 
-def parse_frontmatter_permissive(raw: str, source: str = "<frontmatter>") -> dict:
-    """Parse the agent frontmatter without choking on unquoted descriptions
-    that contain embedded ': ' sequences.
+def parse_frontmatter_strict(raw: str, source: str = "<frontmatter>") -> dict:
+    """Parse agent frontmatter with strict YAML.
 
-    Recognizes the KNOWN_KEYS set as top-level fields. Any other column-0
-    line that matches `key:value` shape is treated as a CONTINUATION of the
-    previous field (because that's almost always content inside a multi-line
-    description, like `user: "..."` or `Context: ...` in an `<example>` block).
-    HOWEVER, if the unrecognized key looks like it could be a real
-    frontmatter field, emit a stderr warning so the user knows to add it to
-    KNOWN_KEYS rather than silently losing it.
+    Per MIT-392, every agent's frontmatter must be valid YAML — that's
+    what Claude Code's loader (and `/staff suggest`'s router) actually
+    consumes. The permissive parser this replaced existed to tolerate
+    multi-line unquoted descriptions with embedded `: ` sequences; those
+    are now swept into double-quoted single-line form so strict YAML works.
 
-    Suppression of the warning for DESCRIPTION_CONTENT_KEYS only applies
-    while we're inside a `description:` field. A `user:` or `Context:`
-    line appearing after `tools:` (or any other field) is still surfaced —
-    it's almost certainly a real frontmatter key being mis-attached.
-
-    The previous bug (MIT-375): adding `scope:` to frontmatter without
-    updating KNOWN_KEYS silently corrupted the `name` field. The warning
-    catches that case.
-
-    Returns dict with at least 'name' and 'description'; fails loudly otherwise.
+    `scripts/validate-agents.py` is the supporting check; it's also called
+    out as a pre-push gate in CLAUDE.md Rule 8.
     """
-    out: dict[str, str] = {}
-    current_key: str | None = None
-    unknown_keys_seen: set[str] = set()
-    for lineno, line in enumerate(raw.splitlines(), start=1):
-        m = KEY_LINE_RE.match(line)
-        if m and m.group(1) in KNOWN_KEYS:
-            current_key = m.group(1)
-            out[current_key] = m.group(2)
-            continue
-        if m:
-            k = m.group(1)
-            # Only suppress the warning for content-keys when we're actually
-            # inside a description body; outside that scope they're suspect.
-            suppress = current_key == "description" and k in DESCRIPTION_CONTENT_KEYS
-            if not suppress and k not in unknown_keys_seen:
-                unknown_keys_seen.add(k)
-                if current_key is None:
-                    print(
-                        f"warning: {source}:{lineno}: unrecognized frontmatter key {k!r} "
-                        f"before any known field — line ignored. "
-                        f"If this is a real field, add {k!r} to KNOWN_KEYS in "
-                        f"scripts/generate-manifest.py.",
-                        file=sys.stderr,
-                    )
-                else:
-                    print(
-                        f"warning: {source}:{lineno}: unrecognized frontmatter key {k!r}. "
-                        f"Treating as continuation of {current_key!r}. "
-                        f"If this is a real field, add {k!r} to KNOWN_KEYS in "
-                        f"scripts/generate-manifest.py.",
-                        file=sys.stderr,
-                    )
-        if current_key is not None:
-            out[current_key] += "\n" + line
+    try:
+        parsed = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        raise ValueError(
+            f"{source}: strict YAML parse failed — {exc}\n"
+            "Run `python3 scripts/validate-agents.py` for the full report."
+        ) from exc
+    if not isinstance(parsed, dict):
+        raise ValueError(
+            f"{source}: frontmatter did not parse to a YAML mapping "
+            f"(got {type(parsed).__name__})"
+        )
     for required in REQUIRED_KEYS:
-        if required not in out or not out[required].strip():
-            raise ValueError(f"frontmatter missing required {required!r} field")
+        val = parsed.get(required)
+        if not val or not str(val).strip():
+            raise ValueError(f"{source}: frontmatter missing required {required!r} field")
+    # Coerce all values to strings (model/color/tools/scope sometimes come
+    # back as YAML scalars of varying types). The manifest writer expects
+    # strings; preserving the YAML-native type would break downstream code.
+    out = {k: str(v) if not isinstance(v, str) else v for k, v in parsed.items()}
     return out
 
 
@@ -158,7 +106,7 @@ def parse_agent_file(path: Path) -> tuple[dict, str]:
     m = FRONTMATTER_RE.match(text)
     if not m:
         raise ValueError(f"{path}: no frontmatter found")
-    frontmatter = parse_frontmatter_permissive(m.group(1), source=str(path))
+    frontmatter = parse_frontmatter_strict(m.group(1), source=str(path))
     body = m.group(2)
     return frontmatter, body
 
