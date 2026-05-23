@@ -37,6 +37,12 @@ FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
 DESCRIPTION_MAX_CHARS = 1024
 XML_TAG_RE = re.compile(r"<[a-zA-Z/]")
+# Keys the manifest writer (scripts/generate-manifest.py build_entry)
+# actually consumes. Anything else parses cleanly via strict YAML but is
+# silently ignored downstream — almost always a typo or a forgotten
+# manifest-writer update. The permissive parser (pre-MIT-392) warned on
+# this via its own allowlist; this is the strict-YAML equivalent.
+KNOWN_KEYS = {"name", "description", "model", "color", "tools", "scope", "skills"}
 
 
 def collect_agent_files() -> list[Path]:
@@ -80,10 +86,10 @@ def validate_one(path: Path) -> dict:
     if parsed is not None:
         name = parsed.get("name")
         desc = parsed.get("description")
-        if not name:
-            hard.append("missing required 'name' field")
-        if not desc:
-            hard.append("missing required 'description' field")
+        if not isinstance(name, str) or not name.strip():
+            hard.append("missing required 'name' field (or non-string / whitespace-only)")
+        if not isinstance(desc, str) or not desc.strip():
+            hard.append("missing required 'description' field (or non-string / whitespace-only)")
         else:
             if len(desc) > DESCRIPTION_MAX_CHARS:
                 warn.append(
@@ -94,6 +100,13 @@ def validate_one(path: Path) -> dict:
                 warn.append(
                     "description contains XML tags (Anthropic spec: none); see MIT-393"
                 )
+        unknown = sorted(k for k in parsed.keys() if k not in KNOWN_KEYS)
+        if unknown:
+            warn.append(
+                f"unrecognized frontmatter keys {unknown!r} — parsed cleanly but "
+                "scripts/generate-manifest.py build_entry() does not consume them. "
+                "Likely a typo or a missing manifest-writer update."
+            )
 
     return {"file": rel, "hard_errors": hard, "warnings": warn}
 
