@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-05-22 — Strict YAML across all 57 agents + CI gate (MIT-392)
+
+After MIT-391 landed, the user's tool flagged that `vision-engineer.md` "still won't load" in Claude Code despite the frontmatter cleanup. Investigation revealed the problem was much larger than vision-engineer:
+
+**52 of 57 agent files failed strict YAML parsing.** Their `description:` field contained unquoted `<example>` blocks with literal `: ` sequences (`Context: ...`, `user: "..."`, `assistant: "..."`) that strict YAML rejects with "mapping values are not allowed here." Claude Code's loader did error recovery — it took whatever parsed before the failure and continued — so descriptions were silently truncated at the first `: ` inside an `<example>` block. Routing-by-description was degraded for 52 of 57 agents, with no surfaced error.
+
+### Tier 1 fix (this PR)
+
+- **Mechanical sweep**: wrapped every broken `description:` in a single-line double-quoted YAML string with `\n` escapes. No content change — same description text after YAML parse, just YAML-safe. 52 agents updated.
+- **`scripts/generate-manifest.py`** now uses strict `yaml.safe_load` for frontmatter (replacing the permissive line-by-line parser that existed precisely because of this bug). Failure is loud — the manifest write refuses to proceed on any parse failure.
+- **New `scripts/validate-agents.py`** runs three checks:
+  - **HARD**: strict YAML parse. Failing exit non-zero.
+  - **WARN**: description >1024 chars (Anthropic spec).
+  - **WARN**: description contains `<` (XML tags — Anthropic spec).
+- **New `.github/workflows/validate.yml`** runs the validator + manifest-drift check + the staff skill test suite on every PR. Hard failures block merge.
+- **CLAUDE.md Rule 8** (new): run the validators before pushing agent or manifest changes.
+- **workflow.md §6**: new subsection covering the validator + the local iteration loop.
+
+After the sweep: 57/57 pass strict YAML. 52 still warn-only on length + XML tags — that's the Tier 2 work (MIT-393).
+
+Manifest is byte-identical to pre-sweep. Description hashes unchanged → no summary regeneration needed → no `--llm-summaries` cost. The sweep was semantically lossless.
+
+### Filed-separately (Tier 2)
+
+- **MIT-393** — bring agent descriptions into Anthropic spec compliance: ≤1024 chars, no XML tags, examples moved from frontmatter to body. Incremental per-agent rewrite; the validator's WARN count is the progress meter.
+
+### Superseded
+
+- **PR #39** (`mit-391-vision-frontmatter-fix`) — closed without merge. That PR collapsed vision-engineer's multi-line examples to single-line `\n` escapes but didn't quote them, so it didn't actually fix strict YAML. Superseded by this PR which fixes vision-engineer plus 51 others.
+
 ## 2026-05-22 — Roster: split `vision-engineer` into three lanes (MIT-391)
 
 `vision-engineer` was conflating three different kinds of work that share a "video" surface but otherwise need different expertise, different runtime shape, and different anti-scope. Split into:

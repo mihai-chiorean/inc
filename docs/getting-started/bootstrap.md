@@ -515,7 +515,7 @@ The Linear dependency is the most opinionated. If you don't use Linear, most of 
 **Worth reading, not forking**:
 
 - The agent files themselves (e.g. `engineering/swift-backend.md`). These are tuned to one lab's workloads. Read for the *structure* of a good system prompt and the YAML-frontmatter conventions; write your own with your own examples.
-- [`CLAUDE.md`](../../CLAUDE.md). It's seven rules, each backed by a specific observed failure mode in this repo. Borrow rules whose failure modes match yours; don't copy the whole file wholesale — every rule that doesn't earn its place becomes noise the model learns to skip.
+- [`CLAUDE.md`](../../CLAUDE.md). It's eight rules, each backed by a specific observed failure mode in this repo. Borrow rules whose failure modes match yours; don't copy the whole file wholesale — every rule that doesn't earn its place becomes noise the model learns to skip.
 - [`research/gstack-borrow-2026-05-11.md`](../../research/gstack-borrow-2026-05-11.md). The handoff doc for the gstack-borrow initiative. Walks through *why* each lifted concept was picked and what was deliberately dropped. Useful as a worked example of evaluating an external system before adopting it.
 
 **Best ignored**:

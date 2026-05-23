@@ -69,6 +69,19 @@ Override only when the user explicitly asks for code changes ("implement what yo
 
 This prevents the reflexive `ticket → branch → PR` pattern that mismatches investigation work — where the artifact IS the deliverable, and a PR is overhead. The longer "how" (classification, report shape, file path convention) lives in `docs/getting-started/workflow.md` §6 "Ticket shape: implementation vs investigation."
 
+## Rule 8 — Run the validators before pushing agent or manifest changes
+
+When you've touched an agent .md file, the manifest, or anything under `engineering/` / `product/` / `marketing/` / `testing/` / `writing/` / `design/` / `project-management/` / `studio-operations/` / `bonus/`, run the two local checks before pushing:
+
+```bash
+python3 scripts/validate-agents.py    # strict YAML + spec checks per MIT-392
+python3 scripts/generate-manifest.py  # regen + commit if anything changed
+```
+
+CI runs the same checks via `.github/workflows/validate.yml` and blocks merge on hard-fail. Running locally first surfaces problems before the round-trip through PR.
+
+This rule has teeth because MIT-392 found that 52 of 57 agent files had silently been failing strict YAML, with Claude Code's loader truncating descriptions at the first parse failure. Without the validator, the next person to add a multi-line `<example>` block to a description would re-introduce the same bug invisibly.
+
 ---
 
 ## Defer (not in this CLAUDE.md, yet)

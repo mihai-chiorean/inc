@@ -1,0 +1,67 @@
+name: validate
+
+# Hard-gates agent + manifest hygiene. Blocks merge if any check fails.
+#
+# Local equivalents (per CLAUDE.md Rule 8):
+#   python3 scripts/validate-agents.py
+#   python3 scripts/generate-manifest.py
+#   git diff --exit-code agent.manifest.yaml
+#
+# Adding a new agent? Run the validator BEFORE pushing; the manifest
+# regen will fail your push if your agent doesn't parse with strict
+# YAML (MIT-392).
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate agent frontmatter (strict YAML + spec checks)
+        run: python3 scripts/validate-agents.py
+
+      - name: Regenerate manifest and check for drift
+        # If agent.manifest.yaml is out of date with the agent .md files,
+        # this step exits non-zero. The fix is to run
+        # `python3 scripts/generate-manifest.py` locally and commit the
+        # regenerated manifest before pushing.
+        run: |
+          python3 scripts/generate-manifest.py
+          git diff --exit-code agent.manifest.yaml \
+            || { echo "::error::agent.manifest.yaml is stale. Re-run scripts/generate-manifest.py locally and commit."; exit 1; }
+
+  staff-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run staff skill test suite
+        # Each test file is invoked directly (no pytest framework convention
+        # in this repo). Fail fast if any one suite fails.
+        run: |
+          set -e
+          for t in skills/staff/tests/test_*.py; do
+            echo "::group::$(basename "$t")"
+            python3 "$t"
+            echo "::endgroup::"
+          done
