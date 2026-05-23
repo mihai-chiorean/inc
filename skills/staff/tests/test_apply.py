@@ -233,10 +233,18 @@ def test_suggest_to_apply_pipeline(root: Path) -> None:
     project = root / "proj-pipeline"
     project.mkdir()
     (project / "go.mod").write_text("module example.com/x\n", encoding="utf-8")
+    # Use --no-llm so the test is deterministic and CI-portable: the LLM
+    # provider (codex by default) isn't available in GH Actions, and even
+    # locally we don't want this end-to-end pipeline test depending on an
+    # external network/binary. The deterministic regex path is enough to
+    # produce go-engineer for a project with a go.mod file, which is what
+    # this test exercises (the suggest→apply data flow, not the LLM matcher
+    # itself — that has its own dedicated tests in test_suggest.py).
     suggest = subprocess.run(
         [sys.executable, str(SUGGEST_SCRIPT),
          "--project-root", str(project),
          "--hr-repo", str(REPO_ROOT),
+         "--no-llm",
          "--json"],
         capture_output=True, text=True, check=True,
     )
