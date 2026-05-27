@@ -1133,7 +1133,7 @@ agents:
       stale `.md` definitions through codex CLI iteration. In audit mode it is read-only and should produce prioritized findings
       rather than file changes; it should not create duplicate agents without first proving existing coverage is insufficient.'
     description_hash: sha256:3be5b42dfe3f0037ae0a3f77ac652015d658ef637cf02ceaeb8d3ff654dd231d
-    body_hash: sha256:8736940aa76b1aa8b3949af8e431e7ca71c64ffebd905dc0eaf2568b4cb9e6e5
+    body_hash: sha256:d5080bdbde0215257e702e2efa969c4e32e2b03d59dab0a32d67e76356f2a3f4
     tags:
     - hiring
     - manager

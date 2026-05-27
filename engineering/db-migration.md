@@ -3,7 +3,6 @@ name: db-migration
 model: sonnet
 description: "Use this agent when creating database migrations, validating migration ordering across repositories, checking for destructive schema changes, or ensuring Go and Swift ORMs stay consistent with the database schema. Examples:\\n\\n<example>\\nContext: Creating a new migration\\nuser: \"Add a device_tokens table for push notifications\"\\nassistant: \"Database migrations need careful ordering and safety. Let me use the db-migration agent to create a safe, reversible migration.\"\\n<commentary>\\nMigrations must handle existing data, use IF NOT EXISTS guards, and consider rollback.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: Migration conflict between repos\\nuser: \"The Go and Swift backends both have migration 19 but they're different\"\\nassistant: \"Migration conflicts cause deployment failures. I'll use the db-migration agent to reconcile the migration history and establish ordering.\"\\n<commentary>\\nWhen multiple repos manage the same database, migration numbering must be coordinated.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: Schema drift detection\\nuser: \"Production has columns that aren't in any migration file\"\\nassistant: \"Schema drift indicates out-of-band changes. Let me use the db-migration agent to audit the production schema against migration history.\"\\n<commentary>\\nManual database changes cause drift that makes migrations fail or miss columns.\\n</commentary>\\n</example>"
 color: teal
-tools: Read, Grep, Glob, Bash, Write, MultiEdit
 skills: postgres
 ---
 
