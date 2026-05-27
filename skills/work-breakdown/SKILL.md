@@ -3,9 +3,11 @@ name: work-breakdown
 description: |
   Classify an idea by size (S/M/L/XL) and break it down into Linear artifacts at the right granularity — issue / project + issues / initiative + projects + issues / multi-repo coordination. Recommends specialist agents (PM, tech-lead, TPM) and planning gates (design-doc, plan-eng-review). Adoption bridge for the work-breakdown procedure that currently lives in user's head.
 
-  Use when the user says "let's build X" / "we should X" and X is non-trivial (more than a one-line fix), "how do we break this down", "this is going to be big", or any time the ask visibly spans multiple files, areas, or repos. When in doubt, fire — classifying as S still produces a useful single issue.
-
   Adapted from gstack's /autoplan but explicitly narrower: classification + Linear orchestration only. PM → tech-lead → TPM full coordinator orchestration is deferred until one real use shows the seams.
+when_to_use: |
+  Fires when the user says "let's build X" / "we should X" and X is non-trivial (more than a one-line fix), "how do we break this down", "this is going to be big", or any time the ask visibly spans multiple files, areas, or repos. When in doubt, fire — classifying as S still produces a useful single issue.
+argument-hint: '[one-line idea description]'
+disable-model-invocation: true
 version: 0
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion
 ---

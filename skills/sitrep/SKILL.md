@@ -2,8 +2,8 @@
 name: sitrep
 description: |
   Session bootstrap and operational landing page. Run at session start (or on demand) to surface "where you are, what's next, and what's blocked on you" for the current project. Reads STATUS.md, Linear (assigned-to-you), GitHub (PRs awaiting your review, your open PRs), and recent commits. Writes back updates to STATUS.md.
-
-  Use when the user says "sitrep", "where am I", "what's the status", "what's next", or any session-start orientation request. Also use proactively at session start per CLAUDE.md rule 1.
+when_to_use: |
+  Fires when the user says "sitrep", "where am I", "what's the status", "what's next", or any session-start orientation request. Also fires proactively at session start per CLAUDE.md rule 1.
 version: 0
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep
 ---
