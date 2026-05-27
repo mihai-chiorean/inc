@@ -4,116 +4,100 @@
     {
       "file": "engineering/ai-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/backend-architect.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/db-migration.md",
       "non_spec_keys": [
         "color",
-        "skills",
-        "tools"
+        "skills"
       ]
     },
     {
       "file": "engineering/devops-automator.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/embedded-device.md",
       "non_spec_keys": [
         "color",
-        "skills",
-        "tools"
+        "skills"
       ]
     },
     {
       "file": "engineering/embedded-linux.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/frontend-developer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/go-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/gpu-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/grpc-contracts.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/infra-reviewer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/mobile-app-builder.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/rapid-prototyper.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/security-auditor.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/swift-backend.md",
       "non_spec_keys": [
         "color",
-        "skills",
-        "tools"
+        "skills"
       ]
     },
     {
       "file": "engineering/tech-lead.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
@@ -125,246 +109,211 @@
     {
       "file": "engineering/video-analytics-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/video-pipeline-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "engineering/vision-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/competitive-intel.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/customer-interviewer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/feedback-synthesizer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/idea-evaluator.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/market-validator.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/product-manager.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "product/trend-researcher.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "marketing/app-store-optimizer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "marketing/tiktok-strategist.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "testing/agent-eval-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "testing/api-tester.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "testing/performance-benchmarker.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "testing/test-results-analyzer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "testing/tool-evaluator.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "writing/blog-writer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "writing/social-amplifier.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "design/brand-guardian.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "design/ui-designer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "design/ux-researcher.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "design/visual-storyteller.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "design/whimsy-injector.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "project-management/experiment-tracker.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "project-management/release-engineer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "project-management/tpm.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/analytics-reporter.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/finance-tracker.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/hiring-manager.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/infrastructure-maintainer.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/legal-compliance-checker.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "studio-operations/support-responder.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "bonus/bay-value-hunter.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     },
     {
       "file": "bonus/joker.md",
       "non_spec_keys": [
-        "color",
-        "tools"
+        "color"
       ]
     }
   ],
