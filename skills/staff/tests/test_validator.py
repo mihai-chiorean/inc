@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Tests for scripts/validate-agents.py.
+
+MIT-413: Verify the validator matches Anthropic's published spec for agent
+and skill frontmatter (research/agent-skill-spec-ground-truth-MIT-410.md):
+spec-correct fields don't warn, non-spec fields warn (will tighten to HARD
+after MIT-412), skill description+when_to_use cap is enforced at 1,536
+chars, and the inc-repo `scope:` carve-out on agents is silent.
+
+We invoke the validator as a subprocess against a temp tree to avoid
+coupling tests to the live repo's category dirs and skill set."""
+
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+VALIDATOR = REPO_ROOT / "scripts/validate-agents.py"
+
+
+def run_validator(root: Path) -> tuple[int, dict]:
+    """Run the validator with REPO_ROOT pointed at `root`. The validator
+    resolves REPO_ROOT from __file__, so we copy it into the temp tree."""
+    # Mirror the repo layout the validator expects: scripts/ + category dirs
+    # + skills/ at the same parent.
+    tmp_validator = root / "scripts" / "validate-agents.py"
+    tmp_validator.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy(VALIDATOR, tmp_validator)
+    result = subprocess.run(
+        [sys.executable, str(tmp_validator), "--json"],
+        capture_output=True, text=True, check=False,
+    )
+    payload = json.loads(result.stdout) if result.stdout.strip() else {}
+    return result.returncode, payload
+
+
+def write_agent(root: Path, category: str, name: str, body: str) -> Path:
+    """Write an agent .md under root/<category>/<name>.md."""
+    (root / category).mkdir(parents=True, exist_ok=True)
+    p = root / category / f"{name}.md"
+    p.write_text(body)
+    return p
+
+
+def write_skill(root: Path, name: str, body: str) -> Path:
+    """Write a SKILL.md under root/skills/<name>/SKILL.md."""
+    skill_dir = root / "skills" / name
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    p = skill_dir / "SKILL.md"
+    p.write_text(body)
+    return p
+
+
+def _find(payload: dict, file_suffix: str) -> dict:
+    """Locate the result entry for a file path ending with `file_suffix`."""
+    for r in payload["results"]:
+        if r["file"].endswith(file_suffix):
+            return r
+    raise AssertionError(f"no result entry ending with {file_suffix!r}; "
+                         f"got {[r['file'] for r in payload['results']]}")
+
+
+class TestAgentValidation(unittest.TestCase):
+    def test_agent_with_only_spec_fields_is_clean(self) -> None:
+        """An agent using `name`, `description`, `model`, `allowed-tools`
+        — all in Anthropic's spec — should validate clean."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Does the alpha thing.\n"
+                        "model: sonnet\nallowed-tools: Read Write\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "engineering/alpha.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertEqual(r["warnings"], [])
+
+    def test_agent_with_allowed_tools_does_not_warn(self) -> None:
+        """`allowed-tools` is spec-correct — must not trip the non-spec warn."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Alpha.\n"
+                        "allowed-tools: Read, Write\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            r = _find(payload, "engineering/alpha.md")
+            self.assertEqual(r["warnings"], [],
+                             f"unexpected warns: {r['warnings']}")
+
+    def test_agent_with_tools_field_warns(self) -> None:
+        """`tools:` is NOT in Anthropic's agent spec — must warn."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Alpha.\n"
+                        "tools: Read, Write\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            # Today: WARN, not HARD (grandfathered for MIT-412).
+            self.assertEqual(code, 0)
+            r = _find(payload, "engineering/alpha.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertTrue(any("non-spec frontmatter keys" in w
+                                and "'tools'" in w
+                                for w in r["warnings"]),
+                            f"expected non-spec warn for 'tools', got {r['warnings']}")
+
+    def test_agent_with_scope_does_not_warn(self) -> None:
+        """`scope:` is an inc-repo extension consumed by install.sh — carve-out."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Alpha.\nscope: org\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            r = _find(payload, "engineering/alpha.md")
+            self.assertEqual(r["warnings"], [],
+                             f"scope carve-out failed: {r['warnings']}")
+            self.assertEqual(r["hard_errors"], [])
+
+    def test_agent_with_long_description_warns(self) -> None:
+        """Agents with description > 2000 chars get a WARN (no spec cap)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            long_desc = "x" * 2100
+            write_agent(root, "engineering", "verbose",
+                        f"---\nname: verbose\ndescription: {long_desc}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "engineering/verbose.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertTrue(any("description is 2100 chars" in w for w in r["warnings"]),
+                            f"expected long-description warn, got {r['warnings']}")
+
+
+class TestSkillValidation(unittest.TestCase):
+    def test_skill_with_when_to_use_is_clean(self) -> None:
+        """`when_to_use` is spec — must NOT warn."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "good",
+                        "---\nname: good\ndescription: Does the good thing.\n"
+                        "when_to_use: When user mentions good.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/good/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertEqual(r["warnings"], [])
+
+    def test_skill_combined_over_cap_hard_fails(self) -> None:
+        """Combined description + when_to_use > 1536 chars: HARD-fail."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            desc = "a" * 1000
+            wtu = "b" * 600  # combined = 1600 > 1536
+            write_skill(root, "fat",
+                        f"---\nname: fat\ndescription: {desc}\n"
+                        f"when_to_use: {wtu}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1, "skill over 1536 char cap must HARD-fail")
+            r = _find(payload, "skills/fat/SKILL.md")
+            self.assertTrue(any("1600 chars" in e for e in r["hard_errors"]),
+                            f"expected 1600-char hard error, got {r['hard_errors']}")
+
+    def test_skill_combined_at_cap_is_clean(self) -> None:
+        """Combined description + when_to_use ≤ 1536 chars: no hard, no warn."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            desc = "a" * 1000
+            wtu = "b" * 500  # combined = 1500 ≤ 1536
+            write_skill(root, "lean",
+                        f"---\nname: lean\ndescription: {desc}\n"
+                        f"when_to_use: {wtu}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/lean/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertEqual(r["warnings"], [])
+
+    def test_skill_with_non_spec_field_warns(self) -> None:
+        """`version` etc. on skills warns (lighter than agents)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "verz",
+                        "---\nname: verz\ndescription: Verz.\nversion: 1.2.3\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/verz/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertTrue(any("'version'" in w for w in r["warnings"]),
+                            f"expected version warn, got {r['warnings']}")
+
+
+class TestSummaryShape(unittest.TestCase):
+    """Validator should report agents and skills separately."""
+
+    def test_summary_breaks_down_kinds(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Alpha.\n---\n\n")
+            write_skill(root, "good",
+                        "---\nname: good\ndescription: Good.\n---\n\n")
+            _code, payload = run_validator(root)
+            self.assertIn("agents", payload)
+            self.assertIn("skills", payload)
+            self.assertEqual(payload["agents"]["clean"], 1)
+            self.assertEqual(payload["skills"]["clean"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
