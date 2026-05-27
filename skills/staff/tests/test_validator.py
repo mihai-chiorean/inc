@@ -57,6 +57,25 @@ def write_skill(root: Path, name: str, body: str) -> Path:
     return p
 
 
+def write_baseline(
+    root: Path,
+    grandfathered_agents: list[dict] | None = None,
+    grandfathered_skills: list[dict] | None = None,
+) -> Path:
+    """Write the grandfather baseline next to where the validator will look
+    for it (root/scripts/validate-agents-baseline.json). Each entry has
+    keys {file, non_spec_keys}; missing entries → new debt → HARD-fail."""
+    (root / "scripts").mkdir(parents=True, exist_ok=True)
+    baseline = {
+        "_comment": "test baseline",
+        "grandfathered_agents": grandfathered_agents or [],
+        "grandfathered_skills": grandfathered_skills or [],
+    }
+    p = root / "scripts" / "validate-agents-baseline.json"
+    p.write_text(json.dumps(baseline) + "\n")
+    return p
+
+
 def _find(payload: dict, file_suffix: str) -> dict:
     """Locate the result entry for a file path ending with `file_suffix`."""
     for r in payload["results"]:
@@ -93,22 +112,36 @@ class TestAgentValidation(unittest.TestCase):
             self.assertEqual(r["warnings"], [],
                              f"unexpected warns: {r['warnings']}")
 
-    def test_agent_with_tools_field_warns(self) -> None:
-        """`tools:` is NOT in Anthropic's agent spec — must warn."""
+    def test_agent_with_tools_field_new_file_hard_fails(self) -> None:
+        """`tools:` on a fresh (non-grandfathered) agent: NEW debt → HARD."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             write_agent(root, "engineering", "alpha",
                         "---\nname: alpha\ndescription: Alpha.\n"
                         "tools: Read, Write\n---\n\nBody.\n")
             code, payload = run_validator(root)
-            # Today: WARN, not HARD (grandfathered for MIT-412).
-            self.assertEqual(code, 0)
+            self.assertEqual(code, 1, "non-spec key on non-grandfathered file must HARD-fail")
+            r = _find(payload, "engineering/alpha.md")
+            self.assertTrue(any("'tools'" in e for e in r["hard_errors"]),
+                            f"expected HARD on 'tools', got {r['hard_errors']}")
+
+    def test_agent_with_tools_field_grandfathered_warns(self) -> None:
+        """`tools:` on a grandfathered agent (listed in baseline): WARN only."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: alpha\ndescription: Alpha.\n"
+                        "tools: Read, Write\n---\n\nBody.\n")
+            write_baseline(root, grandfathered_agents=[
+                {"file": "engineering/alpha.md", "non_spec_keys": ["tools"]},
+            ])
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0, "grandfathered non-spec key must NOT HARD-fail")
             r = _find(payload, "engineering/alpha.md")
             self.assertEqual(r["hard_errors"], [])
-            self.assertTrue(any("non-spec frontmatter keys" in w
-                                and "'tools'" in w
+            self.assertTrue(any("grandfathered" in w and "'tools'" in w
                                 for w in r["warnings"]),
-                            f"expected non-spec warn for 'tools', got {r['warnings']}")
+                            f"expected grandfather warn for 'tools', got {r['warnings']}")
 
     def test_agent_with_scope_does_not_warn(self) -> None:
         """`scope:` is an inc-repo extension consumed by install.sh — carve-out."""
@@ -181,18 +214,105 @@ class TestSkillValidation(unittest.TestCase):
             self.assertEqual(r["hard_errors"], [])
             self.assertEqual(r["warnings"], [])
 
-    def test_skill_with_non_spec_field_warns(self) -> None:
-        """`version` etc. on skills warns (lighter than agents)."""
+    def test_skill_with_non_spec_field_new_hard_fails(self) -> None:
+        """`version` on a fresh (non-grandfathered) skill: NEW debt → HARD."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             write_skill(root, "verz",
                         "---\nname: verz\ndescription: Verz.\nversion: 1.2.3\n---\n\nBody.\n")
             code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "skills/verz/SKILL.md")
+            self.assertTrue(any("'version'" in e for e in r["hard_errors"]),
+                            f"expected HARD on 'version', got {r['hard_errors']}")
+
+    def test_skill_with_non_spec_field_grandfathered_warns(self) -> None:
+        """Grandfathered skills WARN, not HARD, on listed non-spec keys."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "verz",
+                        "---\nname: verz\ndescription: Verz.\nversion: 1.2.3\n---\n\nBody.\n")
+            write_baseline(root, grandfathered_skills=[
+                {"file": "skills/verz/SKILL.md", "non_spec_keys": ["version"]},
+            ])
+            code, payload = run_validator(root)
             self.assertEqual(code, 0)
             r = _find(payload, "skills/verz/SKILL.md")
+            self.assertTrue(any("'version'" in w and "grandfathered" in w
+                                for w in r["warnings"]))
+
+    def test_agent_name_optional_per_spec(self) -> None:
+        """Per Anthropic spec, `name` is optional for agents — must not HARD-fail."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "noname",
+                        "---\ndescription: An agent with no explicit name.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0, "missing `name` should NOT HARD-fail")
+            r = _find(payload, "engineering/noname.md")
             self.assertEqual(r["hard_errors"], [])
-            self.assertTrue(any("'version'" in w for w in r["warnings"]),
-                            f"expected version warn, got {r['warnings']}")
+
+    def test_skill_name_optional_per_spec(self) -> None:
+        """Skills have `name` optional (defaults to directory name)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "noname",
+                        "---\ndescription: A skill with no explicit name.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/noname/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+
+    def test_skill_description_body_fallback(self) -> None:
+        """Per spec, skills with no frontmatter description fall back to first
+        markdown paragraph. Validator should WARN (recommend explicit) but not HARD."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "fallback",
+                        "---\nname: fallback\n---\n\n"
+                        "This is the first paragraph of the body. It serves as the "
+                        "fallback description per Anthropic's skill spec.\n\n"
+                        "Second paragraph follows.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0, "body-fallback description should NOT HARD-fail")
+            r = _find(payload, "skills/fallback/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertTrue(any("falling back" in w.lower() or "fallback" in w.lower()
+                                for w in r["warnings"]),
+                            f"expected fallback-mention warn, got {r['warnings']}")
+
+    def test_skill_no_description_no_body_hard_fails(self) -> None:
+        """No frontmatter description AND no body content → HARD-fail."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "empty", "---\nname: empty\n---\n\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "skills/empty/SKILL.md")
+            self.assertTrue(any("description" in e.lower() for e in r["hard_errors"]))
+
+    def test_agent_with_disallowed_tools_clean(self) -> None:
+        """`disallowed-tools` is spec — should not warn."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "restricted",
+                        "---\nname: restricted\ndescription: Restricted agent.\n"
+                        "disallowed-tools: Bash, Write\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            r = _find(payload, "engineering/restricted.md")
+            self.assertEqual(r["warnings"], [])
+
+    def test_agent_with_when_to_use_warns(self) -> None:
+        """`when_to_use` is a skills-only spec field. On agents → WARN."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "confused",
+                        "---\nname: confused\ndescription: Description.\n"
+                        "when_to_use: When user asks.\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            r = _find(payload, "engineering/confused.md")
+            self.assertTrue(any("when_to_use" in w for w in r["warnings"]),
+                            f"expected when_to_use warn on agent, got {r['warnings']}")
 
 
 class TestSummaryShape(unittest.TestCase):

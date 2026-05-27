@@ -56,6 +56,13 @@ CATEGORIES = [
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 XML_TAG_RE = re.compile(r"<[a-zA-Z/]")
 
+# Grandfather baseline: files that currently carry non-spec frontmatter
+# keys. Listed here → WARN (existing repo debt; tracked by MIT-412 + MIT-415).
+# Not listed but carrying non-spec keys → HARD-fail (new debt). Shrinks as
+# MIT-412 and MIT-415 progress; when both lists are empty, delete the file
+# and tighten the check globally.
+BASELINE_PATH = Path(__file__).resolve().parent / "validate-agents-baseline.json"
+
 # Per Anthropic sub-agents.md spec
 # (https://code.claude.com/docs/en/sub-agents.md).
 AGENT_SPEC_KEYS = {
@@ -95,11 +102,34 @@ AGENT_DESCRIPTION_MAX_CHARS = 2000
 SKILL_DESCRIPTION_MAX_CHARS = 1536
 
 
-# TODO(MIT-412): tighten the `tools/color/skills` non-spec-field check on
-# agents from WARN to HARD once the existing 51 agents are swept off the
-# (spec-incorrect) `tools` field. Today, hard-failing those would block
-# every PR. Keep as WARN until that sweep merges, then flip the default
-# here and let CI enforce.
+# Grandfathered debt is tracked in scripts/validate-agents-baseline.json:
+# files listed there get WARN on non-spec keys (existing debt, tracked by
+# MIT-412 and MIT-415); files NOT listed get HARD-fail (new debt). This
+# keeps the validator honest about the spec while letting the existing 52
+# agents migrate gradually. When the baseline empties, delete it and the
+# code path here collapses to "all non-spec keys hard-fail."
+
+
+def load_baseline() -> dict[str, set[str]]:
+    """Read the grandfather baseline. Returns {file_path: {non_spec_keys}}.
+    Missing file → empty (no grandfathered debt; all non-spec keys hard-fail)."""
+    if not BASELINE_PATH.is_file():
+        return {}
+    data = json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+    out: dict[str, set[str]] = {}
+    for entry in data.get("grandfathered_agents", []) + data.get("grandfathered_skills", []):
+        out[entry["file"]] = set(entry["non_spec_keys"])
+    return out
+
+
+def _extract_first_paragraph(text: str) -> str:
+    """For skills missing a frontmatter description, Anthropic's spec says
+    the first paragraph of markdown content is the fallback. Used to avoid
+    hard-failing spec-valid skills that rely on this behavior."""
+    m = FRONTMATTER_RE.match(text)
+    body = text[m.end():] if m else text
+    paras = re.split(r"\n\s*\n", body.lstrip(), maxsplit=1)
+    return paras[0].strip() if paras else ""
 
 
 def collect_agent_files() -> list[Path]:
@@ -155,8 +185,12 @@ def _parse_frontmatter(path: Path) -> tuple[dict | None, list[str], list[str]]:
     return parsed, hard, warn
 
 
-def validate_agent(path: Path) -> dict:
-    """Check a single agent file. Returns hard_errors and warnings."""
+def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
+    """Check a single agent file. Returns hard_errors and warnings.
+
+    Per Anthropic sub-agents.md, `name` is optional (defaults to the
+    filename-derived identifier). `description` is the only required
+    field — without it the router can't route to the agent."""
     rel = path.relative_to(REPO_ROOT).as_posix()
     parsed, hard, warn = _parse_frontmatter(path)
     if parsed is None:
@@ -164,8 +198,9 @@ def validate_agent(path: Path) -> dict:
 
     name = parsed.get("name")
     desc = parsed.get("description")
-    if not isinstance(name, str) or not name.strip():
-        hard.append("missing required 'name' field (or non-string / whitespace-only)")
+    # name is optional per spec; only WARN if present-but-malformed
+    if "name" in parsed and (not isinstance(name, str) or not name.strip()):
+        warn.append("'name' field present but non-string / whitespace-only")
     if not isinstance(desc, str) or not desc.strip():
         hard.append("missing required 'description' field (or non-string / whitespace-only)")
     else:
@@ -175,26 +210,55 @@ def validate_agent(path: Path) -> dict:
                 f"≤{AGENT_DESCRIPTION_MAX_CHARS}); see MIT-415"
             )
         if XML_TAG_RE.search(desc):
-            warn.append("description contains XML tags (Anthropic spec: none); see MIT-393")
+            warn.append("description contains XML tags (Anthropic spec: none); see MIT-415")
+        # `when_to_use` is a SKILLS-only spec field. If an agent has it,
+        # it's silently ignored — almost certainly a copy-paste from a
+        # skill. WARN so the author notices.
+        if "when_to_use" in parsed:
+            warn.append(
+                "'when_to_use' is a skills-spec field; on agents it's silently "
+                "ignored. Did you mean to put this on a SKILL.md, or fold it "
+                "into 'description'?"
+            )
 
-    # Non-spec keys. Allow inc carve-outs (`scope`) silently. Everything
-    # else is a WARN today (TODO above: tighten to HARD post-MIT-412).
+    # Non-spec keys. Allow `scope` (inc carve-out). For other non-spec keys
+    # (tools, color, skills, etc.): grandfathered files get WARN, new files
+    # get HARD. This stops new debt while allowing the existing 52 agents
+    # to migrate gradually via MIT-412 / MIT-415.
     allowed = AGENT_SPEC_KEYS | INC_EXTENSION_KEYS
     unknown = sorted(k for k in parsed.keys() if k not in allowed)
     if unknown:
-        warn.append(
-            f"non-spec frontmatter keys {unknown!r} on agent — Anthropic's "
-            "sub-agents.md does not list these. `tools` in particular is "
-            "silently ignored by Claude Code; the spec field is "
-            "`allowed-tools`. Tracked under MIT-412 (will HARD-fail after "
-            "the sweep merges)."
-        )
+        grandfathered_keys = baseline.get(rel, set())
+        new_debt = [k for k in unknown if k not in grandfathered_keys]
+        existing_debt = [k for k in unknown if k in grandfathered_keys]
+        if new_debt:
+            hard.append(
+                f"non-spec frontmatter keys {new_debt!r} on agent — Anthropic's "
+                "sub-agents.md does not list these (e.g. `tools` is silently "
+                "ignored; spec field is `allowed-tools`). This file is not "
+                "in scripts/validate-agents-baseline.json so we treat the "
+                "key as NEW debt and HARD-fail. Either use the spec-correct "
+                "field name, or add the file to the baseline if grandfathering "
+                "is intentional."
+            )
+        if existing_debt:
+            warn.append(
+                f"non-spec frontmatter keys {existing_debt!r} on agent — "
+                "grandfathered per scripts/validate-agents-baseline.json. "
+                "Tracked under MIT-412 (tools field) / MIT-415 (rewrite); "
+                "shrink the baseline as those land."
+            )
 
     return {"kind": "agent", "file": rel, "hard_errors": hard, "warnings": warn}
 
 
-def validate_skill(path: Path) -> dict:
-    """Check a single SKILL.md. Returns hard_errors and warnings."""
+def validate_skill(path: Path, baseline: dict[str, set[str]]) -> dict:
+    """Check a single SKILL.md. Returns hard_errors and warnings.
+
+    Per Anthropic skills.md, `name` is optional (defaults to directory name)
+    and `description` is "recommended" — if omitted it falls back to the
+    first paragraph of the markdown body. Validator only hard-fails when
+    there is no usable routing text from either source."""
     rel = path.relative_to(REPO_ROOT).as_posix()
     parsed, hard, warn = _parse_frontmatter(path)
     if parsed is None:
@@ -203,12 +267,33 @@ def validate_skill(path: Path) -> dict:
     name = parsed.get("name")
     desc = parsed.get("description")
     when_to_use = parsed.get("when_to_use", "")
-    if not isinstance(name, str) or not name.strip():
-        hard.append("missing required 'name' field (or non-string / whitespace-only)")
-    if not isinstance(desc, str) or not desc.strip():
-        hard.append("missing required 'description' field (or non-string / whitespace-only)")
+    if "name" in parsed and (not isinstance(name, str) or not name.strip()):
+        warn.append("'name' field present but non-string / whitespace-only")
+    if "when_to_use" in parsed and not isinstance(when_to_use, str):
+        warn.append("'when_to_use' field present but not a string")
+        when_to_use = ""
+    # Description has a body-fallback per spec. Only hard-fail when both
+    # frontmatter description and body first-paragraph are empty.
+    has_fm_desc = isinstance(desc, str) and bool(desc.strip())
+    body_fallback = ""
+    if not has_fm_desc:
+        text = path.read_text(encoding="utf-8")
+        body_fallback = _extract_first_paragraph(text)
+    effective_desc = desc if has_fm_desc else body_fallback
+    if not effective_desc.strip():
+        hard.append(
+            "missing 'description' field AND no usable first-paragraph body "
+            "fallback. Per Anthropic skills.md, description is recommended "
+            "but can fall back to body content."
+        )
     else:
-        desc_len = len(desc)
+        if not has_fm_desc:
+            warn.append(
+                "frontmatter 'description' missing — falling back to first "
+                "paragraph of body per spec, but explicit frontmatter is "
+                "strongly recommended."
+            )
+        desc_len = len(effective_desc)
         wtu_len = len(when_to_use) if isinstance(when_to_use, str) else 0
         combined = desc_len + wtu_len
         if combined > SKILL_DESCRIPTION_MAX_CHARS:
@@ -217,19 +302,27 @@ def validate_skill(path: Path) -> dict:
                 f"({desc_len} + {wtu_len}); Anthropic spec caps this at "
                 f"{SKILL_DESCRIPTION_MAX_CHARS} (router truncates above)."
             )
-        if XML_TAG_RE.search(desc):
-            warn.append("description contains XML tags (Anthropic spec: none); see MIT-393")
+        if XML_TAG_RE.search(effective_desc):
+            warn.append("description contains XML tags (Anthropic spec: none); see MIT-415")
 
-    # Non-spec keys on skills are WARN (we're more lenient than on agents —
-    # skills less standardised in the repo, several use `version`/
-    # `references`/`dependencies` for human bookkeeping).
+    # Non-spec keys on skills: same grandfather model as agents. Listed
+    # files WARN; new files HARD.
     unknown = sorted(k for k in parsed.keys() if k not in SKILL_SPEC_KEYS)
     if unknown:
-        warn.append(
-            f"non-spec frontmatter keys {unknown!r} on skill — Anthropic's "
-            "skills.md does not list these; they parse but are ignored by "
-            "Claude Code's loader."
-        )
+        grandfathered_keys = baseline.get(rel, set())
+        new_debt = [k for k in unknown if k not in grandfathered_keys]
+        existing_debt = [k for k in unknown if k in grandfathered_keys]
+        if new_debt:
+            hard.append(
+                f"non-spec frontmatter keys {new_debt!r} on skill — Anthropic's "
+                "skills.md does not list these. NEW debt (file not in baseline) "
+                "HARD-fails."
+            )
+        if existing_debt:
+            warn.append(
+                f"non-spec frontmatter keys {existing_debt!r} on skill — "
+                "grandfathered per scripts/validate-agents-baseline.json."
+            )
 
     return {"kind": "skill", "file": rel, "hard_errors": hard, "warnings": warn}
 
@@ -292,10 +385,12 @@ def emit_text(results: list[dict], quiet: bool) -> None:
     grandfathered = _count_grandfathered(results)
     if grandfathered:
         print(
-            f"\nNote: MIT-412 in progress — {grandfathered} agents currently "
-            "carry non-spec frontmatter keys (e.g. `tools`, `color`, "
-            "`skills`). These WARN today; once MIT-412's sweep merges this "
-            "validator will be tightened to HARD-fail on those keys."
+            f"\nNote: {grandfathered} grandfathered files currently carry "
+            "non-spec frontmatter keys (tracked via "
+            "scripts/validate-agents-baseline.json). New debt HARD-fails; "
+            "existing debt WARNs and is tracked by MIT-412 (tools field) "
+            "and MIT-415 (agent rewrite). When the baseline empties, delete "
+            "it and tighten the validator globally."
         )
 
     if a_hard or s_hard:
@@ -326,9 +421,10 @@ def main() -> int:
         print("error: no agent or skill files found", file=sys.stderr)
         return 2
 
+    baseline = load_baseline()
     results: list[dict] = []
-    results.extend(validate_agent(p) for p in agent_files)
-    results.extend(validate_skill(p) for p in skill_files)
+    results.extend(validate_agent(p, baseline) for p in agent_files)
+    results.extend(validate_skill(p, baseline) for p in skill_files)
     hard_count = sum(1 for r in results if r["hard_errors"])
 
     if args.json:
