@@ -46,8 +46,6 @@ REPO_DEFAULTS = {
 LOCKFILE_SCHEMA_VERSION = 1
 SUGGEST_SCHEMA_VERSION_SUPPORTED = 1
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
-KNOWN_AGENT_KEYS = {"name", "description", "model", "color", "tools"}
-KEY_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s?(.*)$")
 OVERLAY_BEGIN = "<!-- BEGIN STAFF OVERLAY -->"
 OVERLAY_END = "<!-- END STAFF OVERLAY -->"
 
@@ -67,27 +65,39 @@ def sha256_bytes(b: bytes) -> str:
     return "sha256:" + hashlib.sha256(b).hexdigest()
 
 
-def parse_agent_frontmatter_permissive(raw: str) -> dict:
-    out: dict[str, str] = {}
-    current_key: str | None = None
-    for line in raw.splitlines():
-        m = KEY_LINE_RE.match(line)
-        if m and m.group(1) in KNOWN_AGENT_KEYS:
-            current_key = m.group(1)
-            out[current_key] = m.group(2)
-        elif current_key is not None:
-            out[current_key] += "\n" + line
-    return out
-
-
 def split_agent_file(text: str) -> tuple[str, str, dict]:
-    """Returns (raw_frontmatter_block, body, parsed_frontmatter)."""
+    """Returns (raw_frontmatter_block, body, parsed_frontmatter).
+
+    Frontmatter must parse with strict YAML — this is the post-MIT-392
+    invariant enforced by scripts/validate-agents.py and the CI gate.
+    Using strict YAML here (rather than the previous permissive
+    line-by-line parser) means the description string we hash matches
+    what generate-manifest.py records in agent.manifest.yaml, which is
+    what status.py compares against. MIT-411 was the spurious HR-DRIFT
+    caused by the parser mismatch between apply (permissive: captured
+    surrounding quotes and literal `\\n` chars) and generate-manifest
+    (strict: real YAML-decoded value)."""
     m = FRONTMATTER_RE.match(text)
     if not m:
         raise ValueError("agent file has no frontmatter")
     fm_block = m.group(1)
     body = m.group(2)
-    fm = parse_agent_frontmatter_permissive(fm_block)
+    try:
+        fm = yaml.safe_load(fm_block)
+    except yaml.YAMLError as exc:
+        raise ValueError(
+            f"agent frontmatter failed strict YAML parse: {exc}. "
+            "Run `python3 scripts/validate-agents.py` on the HR repo."
+        ) from exc
+    if not isinstance(fm, dict):
+        raise ValueError(
+            f"agent frontmatter did not parse to a YAML mapping "
+            f"(got {type(fm).__name__})"
+        )
+    # Coerce scalar values to strings (model/color/etc may come back as
+    # native YAML types). description/name are always strings in practice
+    # but defensive-cast for consistency.
+    fm = {k: str(v) if not isinstance(v, str) else v for k, v in fm.items()}
     return fm_block, body, fm
 
 
