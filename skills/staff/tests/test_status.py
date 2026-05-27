@@ -29,7 +29,11 @@ _FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.DOTALL)
 
 def _build_manifest_for_fake_hr(hr: Path) -> dict:
     """Mirror what scripts/generate-manifest.py would produce, but for an
-    arbitrary repo root (the script hardcodes the real repo's path)."""
+    arbitrary repo root (the script hardcodes the real repo's path).
+
+    Uses strict YAML to match generate-manifest.py post-MIT-392. The previous
+    permissive line-by-line parser produced different description hashes
+    than the real generator, which let MIT-411 slip through tests."""
     agents: dict[str, dict] = {}
     for cat_dir in sorted(hr.iterdir()):
         if not cat_dir.is_dir():
@@ -39,18 +43,10 @@ def _build_manifest_for_fake_hr(hr: Path) -> dict:
             m = _FRONTMATTER_RE.match(text)
             assert m, f"{p} has no frontmatter"
             fm_block, body = m.group(1), m.group(2)
-            # permissive parse of name + description
-            name = None
-            desc = None
-            current = None
-            for line in fm_block.splitlines():
-                key_match = re.match(r"^(name|description|model|color|tools):\s?(.*)$", line)
-                if key_match:
-                    current = key_match.group(1)
-                    if current == "name":
-                        name = key_match.group(2).strip()
-                    elif current == "description":
-                        desc = key_match.group(2)
+            fm = yaml.safe_load(fm_block)
+            assert isinstance(fm, dict), f"{p} frontmatter is not a YAML mapping"
+            name = fm.get("name")
+            desc = fm.get("description")
             assert name and desc, f"{p} missing name or description"
             agents[name] = {
                 "file": str(p.relative_to(hr).as_posix()),
@@ -166,6 +162,50 @@ def test_clean_status_after_apply(root: Path) -> None:
     expect(len(s["staffed"]) == 2, "two agents in status")
     expect(all(a["ok"] for a in s["staffed"]), "both agents OK")
     expect(s["orphan_files"] == [], "no orphans")
+
+
+def test_clean_status_after_apply_real_shape_description(root: Path) -> None:
+    """MIT-411 regression. The real agents we ship use double-quoted single-line
+    descriptions with literal `\\n` escapes and embedded `<example>` blocks
+    (the post-MIT-392 shape). Before MIT-411, apply.py's permissive parser
+    captured the description WITH surrounding quotes and literal `\\n` chars,
+    while generate-manifest.py's strict YAML parser captured the decoded value.
+    Different strings → different description_hash → status.py spuriously
+    reported HR-DRIFT despite the file matching HR.
+
+    This test reproduces that shape with a tiny fake HR and asserts a fresh
+    apply→status round-trip reports clean."""
+    print("test_clean_status_after_apply_real_shape_description")
+    hr = root / "hr"
+    hr.mkdir()
+    (hr / "engineering").mkdir()
+    # Description in the post-MIT-392 shape: double-quoted, single-line,
+    # `\n` escapes, and embedded `<example>` content with `Context:`/`user:`
+    # lines that would have broken the old permissive parser's hashing.
+    (hr / "engineering" / "gamma.md").write_text(
+        '---\n'
+        'name: gamma\n'
+        'description: "Use this agent when X. Examples:\\n\\n<example>\\nContext: foo\\nuser: \\"bar\\"\\nassistant: \\"baz\\"\\n</example>"\n'
+        'model: sonnet\n'
+        '---\n\n'
+        'You are gamma.\n',
+    )
+    manifest = _build_manifest_for_fake_hr(hr)
+    (hr / "agent.manifest.yaml").write_text(yaml.safe_dump(manifest))
+    git(["init", "-q", "-b", "main"], cwd=hr)
+    git(["add", "-A"], cwd=hr)
+    git(["commit", "-q", "-m", "initial"], cwd=hr)
+
+    project = root / "proj"
+    project.mkdir()
+    apply_agents(project, hr, ["gamma"])
+
+    s = run_status(project, hr=hr, expect_exit=0)
+    g = find_status(s, "gamma")
+    expect(g is not None, "gamma in status")
+    expect(g["ok"], "gamma OK (no spurious HR-DRIFT on real-shape description)")
+    expect("HR-DRIFT" not in g.get("flags", []),
+           "no HR-DRIFT flag despite multi-`: ` description content")
 
 
 def test_hr_drift_detected(root: Path) -> None:
@@ -397,6 +437,7 @@ def main() -> int:
         return 1
     tests = [
         test_clean_status_after_apply,
+        test_clean_status_after_apply_real_shape_description,
         test_hr_drift_detected,
         test_manual_edit_detected,
         test_missing_generated_file,
