@@ -3,9 +3,9 @@ name: prioritize
 description: |
   Rank in-flight work + backlog items and surface the top 3 to do next, with rationale. Reads STATUS.md + `sitrep-linear inbox`; asks the user about effort/impact/blockers/deadlines for high-signal items; emits an ordered list. Single-project, single-pass — each invocation is from scratch (no persistent priority cache).
 
-  Use when the user says "what should I work on next", "/prioritize", "rank the inbox", "what's most important", or any version of "I have too many things, help me pick." Also use at sprint-equivalent transitions (e.g. an initiative wraps and you need to choose the next thread).
-
   Last of the gstack-borrow week-skills. `/retro` and `/triage` were explicitly dropped (indulgent or overlapping); `/prioritize` is the single Week-4 deliverable.
+when_to_use: |
+  Fires when the user says "what should I work on next", "/prioritize", "rank the inbox", "what's most important", or any version of "I have too many things, help me pick." Also fires at sprint-equivalent transitions (e.g. an initiative wraps and you need to choose the next thread).
 version: 0
 allowed-tools: Bash, Read, Edit, AskUserQuestion
 ---

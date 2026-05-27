@@ -3,9 +3,11 @@ name: design-doc
 description: |
   Scaffold a design doc with three mandatory diagram sections (user-flow + state-machine + data-flow) plus problem, goals/non-goals, implementation alternatives, failure modes, and open questions. Writes the doc to `decisions/NNNN-<slug>.md` by default; user can override the path. After scaffolding, the user iterates on content — this skill does not generate the diagrams or fill in the sections.
 
-  Use when the user says "design doc", "let me write a design doc", "scaffold a design doc for X", "/design-doc", or any time `/work-breakdown` recommends a design-doc gate (M+ classification). Also use proactively when an L or XL ask is about to start coding without a design doc on record.
-
   This skill creates. Audit / hard-gate is the job of `plan-eng-review` (Week 3b, ships separately).
+when_to_use: |
+  Fires when the user says "design doc", "let me write a design doc", "scaffold a design doc for X", "/design-doc", or any time `/work-breakdown` recommends a design-doc gate (M+ classification). Also use proactively when an L or XL ask is about to start coding without a design doc on record.
+argument-hint: '[slug]'
+disable-model-invocation: true
 version: 0
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion
 ---

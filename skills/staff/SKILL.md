@@ -1,6 +1,8 @@
 ---
 name: staff
-description: 'Per-project agent staffing for Claude Code. Use when: (1) a project needs a curated subset of agents from the HR repo (inc) instead of loading all user-scope agents, (2) "staff this project" / "what agents should this project use" is asked, (3) re-syncing project-level .claude/agents/ after the HR repo has been updated, (4) adding or removing an agent from a project, (5) inspecting which agents are staffed and whether they''re drifting from HR HEAD. Operates on .claude/staff/ for state and .claude/agents/ for generated agent files Claude Code loads.'
+description: 'Per-project agent staffing for Claude Code. Selects which agents from the canonical HR repo are staffed in the current project; subcommands cover suggest/apply/status/add/remove/audit/sync/promote/rif. Operates on .claude/staff/ for state and .claude/agents/ for generated agent files Claude Code loads.'
+when_to_use: 'Fires when: (1) a project needs a curated subset of agents from the HR repo (inc) instead of loading all user-scope agents, (2) the user says "staff this project" / "what agents should this project use", (3) re-syncing project-level .claude/agents/ after the HR repo has been updated, (4) adding or removing an agent from a project, (5) inspecting which agents are staffed and whether they''re drifting from HR HEAD.'
+disable-model-invocation: true
 ---
 
 # /staff — per-project agent staffing
