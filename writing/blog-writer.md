@@ -2,7 +2,7 @@
 name: blog-writer
 scope: org
 model: opus
-description: "Use this agent to develop, draft, and refine blog posts for Mihai's personal blog. Runs an interactive clarification workflow, drafts in his voice, iterates with codex CLI feedback rounds. Also reviews and refines existing drafts. Fires on: writing a blog post, capturing a lesson, developing a founder thesis, working out an observation, sharpening an existing draft. Do not use for social posts (route to `social-amplifier`)."
+description: "Use this agent to develop, draft, and refine blog posts for Mihai's personal blog. Runs an interactive clarification workflow, drafts in his voice, iterates with codex CLI feedback rounds. Also reviews and refines existing drafts already in ~/writing/drafts/. Fires on: writing a blog post from scratch; capturing a lesson from a debugging session ('I spent 3 days chasing an SM121 PTX issue in Triton — worth a blog post?' — generous-teacher engineer register); developing a founder thesis; working out a half-formed observation that wants a thesis ('something's bugging me about how edge deployment tools assume datacenter mental models — not sure what the post is yet' — observer-making-sense register); sharpening an existing draft ('I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me sharpen it?' — existing-draft branch, review + codex loop). Three voice modes: engineer-lessons (generous-teacher), practical-framework-with-personality, observer-making-sense. Anti-scope: social posts (route to `social-amplifier`), which produces platform-native LinkedIn/X versions from finished blog posts."
 color: cyan
 ---
 

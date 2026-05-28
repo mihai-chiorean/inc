@@ -374,13 +374,20 @@ agents:
     scope: org
     description: 'Use this agent to develop, draft, and refine blog posts for Mihai''s personal blog. Runs an interactive
       clarification workflow, drafts in his voice, iterates with codex CLI feedback rounds. Also reviews and refines existing
-      drafts. Fires on: writing a blog post, capturing a lesson, developing a founder thesis, working out an observation,
-      sharpening an existing draft. Do not use for social posts (route to `social-amplifier`).'
-    description_summary: Use for developing, drafting, reviewing, and refining personal blog posts, especially when the task
-      involves capturing a lesson, shaping a founder thesis, working through an observation, or sharpening an existing draft.
-      It specializes in an interactive clarification workflow, writing in Mihai's voice, and iterating through Codex CLI feedback
-      rounds. Do not use for social posts; route those to `social-amplifier`.
-    description_hash: sha256:13aa32d51483557bed143dca678cca04a9b2f6c1cf295586170754845e63e40e
+      drafts already in ~/writing/drafts/. Fires on: writing a blog post from scratch; capturing a lesson from a debugging
+      session (''I spent 3 days chasing an SM121 PTX issue in Triton — worth a blog post?'' — generous-teacher engineer register);
+      developing a founder thesis; working out a half-formed observation that wants a thesis (''something''s bugging me about
+      how edge deployment tools assume datacenter mental models — not sure what the post is yet'' — observer-making-sense
+      register); sharpening an existing draft (''I have a rough draft in ~/writing/drafts/jetson-flash.md — can you help me
+      sharpen it?'' — existing-draft branch, review + codex loop). Three voice modes: engineer-lessons (generous-teacher),
+      practical-framework-with-personality, observer-making-sense. Anti-scope: social posts (route to `social-amplifier`),
+      which produces platform-native LinkedIn/X versions from finished blog posts.'
+    description_summary: Use for developing, drafting, reviewing, and refining long-form posts for Mihai's personal blog,
+      whether starting from a debugging lesson, founder thesis, half-formed observation, or an existing draft in ~/writing/drafts/.
+      It specializes in interactive clarification, matching Mihai's voice across engineer-lessons, practical-framework-with-personality,
+      and observer-making-sense modes, then iterating with Codex CLI feedback rounds. Do not use for platform-native social
+      posts; finished blog posts should be routed to social-amplifier for LinkedIn or X adaptation.
+    description_hash: sha256:6eb0de4eaef8bff54a03fa882a3e08e8fa7b0cf466bf172877f02aef2aff5e94
     body_hash: sha256:6a63df48ce33ff2d9dea6a1939cff1f6726ff31a3482234ef83d250a9feb186c
     tags:
     - blog
@@ -1095,15 +1102,22 @@ agents:
     file: studio-operations/hiring-manager.md
     category: studio-operations
     scope: org
-    description: Use this agent to analyze the current agent roster, spot gaps or redundancy exposed by real work, draft new
-      role definitions, and refresh existing role .md files when scope drifts. Iterates with codex CLI on new-role drafts.
-      Do not use for cross-team execution coordination, schedule and dependency tracking (route to `tpm`), or hiring humans.
-    description_summary: Use when a task involves evaluating the existing Claude Code agent roster, identifying role gaps
-      or redundancy revealed by actual work, or updating agent role definitions whose scope has drifted. It specializes in
-      drafting and refining new or existing agent `.md` definitions, including iterating on new-role drafts with the Codex
-      CLI. Do not route cross-team execution coordination, schedule or dependency tracking, or human hiring tasks here; those
-      belong elsewhere such as `tpm` for coordination work.
-    description_hash: sha256:afb5bae27936944ab8d173d1d30333605446754bee683cdf71bcc9dd6e56f64b
+    description: 'Use this agent to analyze the current agent roster, spot gaps or redundancy exposed by real work, draft
+      new role definitions, and refresh existing role .md files when scope drifts. Iterates with codex CLI on new-role drafts.
+      Fires on: concrete gap tests after a debugging session (''we just spent three hours on X — neither agent A nor B had
+      it cleanly — do we need a new agent?'' — three-way decision: extend / split / no-op); deciding whether to add a proposed
+      agent vs extend an existing one (''do we need a vision-engineer? or edge-vision-engineer?'' — first checks coverage
+      in existing scopes before drafting); existing agent scope drift (''agent X keeps getting pulled into Y work that''s
+      a separate thing'' — split or refine via codex rounds); periodic roster audits in read-only mode (surfaces overlap pairs,
+      rot — agents whose description keywords don''t match what the repo now actually has — and missing coverage, as a prioritized
+      list). Default move is NOT to create — first checks if an existing agent''s scope already covers the gap. Anti-scope:
+      cross-team execution coordination, schedule and dependency tracking (route to `tpm`), or hiring humans.'
+    description_summary: 'Use for evaluating whether the current subagent roster has a real coverage gap, overlap, or drift
+      based on observed project work. It specializes in auditing existing role scopes, deciding whether to extend, split,
+      create, or leave roles unchanged, and drafting or refreshing role definition files through codex CLI iteration. Its
+      default is conservative: check existing coverage before proposing a new role. Do not use for cross-team execution coordination,
+      schedule or dependency tracking, or hiring humans.'
+    description_hash: sha256:d1ceddc58c553cba8090451420114983caeeee63a9b358c564c12e1e50794dec
     body_hash: sha256:101ffd9ebd549281fa39b4470ae9b207ea21cc42470a4c2f611abbbbc3ae16c4
     tags:
     - hiring
@@ -1553,15 +1567,25 @@ agents:
     file: product/product-manager.md
     category: product
     scope: org
-    description: Use this agent to prioritize the roadmap, frame user value, synthesize customer-discovery inputs, make ship/kill
-      calls, or scope work with named tradeoffs. Pairs with `tech-lead` through code-complete (PM owns the WHY; TL owns the
-      HOW). Do not use for schedule and dependency tracking (`tpm`), scoring raw inbound ideas (`idea-evaluator`), experiment
-      readouts (`experiment-tracker` recommends; PM decides), or technical design (`tech-lead`).
-    description_summary: 'Use for roadmap prioritization, product scoping, ship/kill decisions, and translating customer-discovery
-      input into user value and explicit tradeoffs. Specializes in owning the product rationale: why a problem matters, which
-      outcomes to pursue, and how to frame scope so engineering can decide the implementation approach. Do not use for schedule
-      or dependency tracking, raw idea scoring, experiment readouts, or technical design.'
-    description_hash: sha256:93e698ed1730619e319010d130f5ec72f7985113f4cff3a435fba8beb35e706f
+    description: 'Use this agent to prioritize the roadmap, frame user value, synthesize customer-discovery inputs, make ship/kill
+      calls on features and experiments, or scope work by user value and success criteria with named tradeoffs. Fires on:
+      prioritizing a finite cycle against many requests (''we have 50 feature requests but one cycle'' — RICE, Kano, JTBD
+      scoring with explicit rationale per item and named tradeoffs); integrating discovery agents into problem statements
+      (''we''ve done 12 customer interviews and have a folder of feedback — now what?'' — pulls customer-interviewer, feedback-synthesizer,
+      market-validator, competitive-intel into a single problem statement); ship/kill calls on experiment readouts (''variant
+      B beat A by 4.2% with p<0.05 — ship?'' — stat-sig is evidence, PM decides on lift vs scope vs rollback risk vs roadmap
+      commitments); mid-flight scope changes (''stakeholder X wants to add video calling to this milestone'' — refuses to
+      add without removing, with explicit rationale). Two re-entry points after code-complete: go/no-go before `release-engineer`
+      rolls out (binary, before any data); ship/kill/extend after `experiment-tracker` delivers readout (conditional on evidence).
+      Pairs with `tech-lead` through code-complete (PM owns the WHY; TL owns the HOW). Anti-scope: schedule and dependency
+      tracking (`tpm`); raw inbound idea scoring (`idea-evaluator`); experiment readouts themselves (`experiment-tracker`
+      recommends, PM decides); technical design (`tech-lead`).'
+    description_summary: Use for roadmap prioritization, feature scoping, ship/kill decisions, and translating customer discovery
+      into user-value-focused problem statements with success criteria. Specializes in weighing finite capacity against competing
+      requests using explicit frameworks and tradeoffs, deciding whether experiment results justify shipping, extending, or
+      killing work, and enforcing scope discipline when new stakeholder demands appear. Do not use for schedule or dependency
+      tracking, raw inbound idea triage, producing experiment readouts, or technical design.
+    description_hash: sha256:692fdbc67f46128e68eee21ab33e7dd545f07b02bf346b891f76da06088b818c
     body_hash: sha256:6dc4a8249afd189ec48d8738b6e42685e95776c039aad2c1a991efe4c9018b9c
     tags:
     - manager
@@ -1680,14 +1704,25 @@ agents:
     file: engineering/security-auditor.md
     category: engineering
     scope: org
-    description: Use this agent when reviewing code or infrastructure for security vulnerabilities, auditing PKI/mTLS configurations,
+    description: 'Use this agent when reviewing code or infrastructure for security vulnerabilities, auditing PKI/mTLS configurations,
       validating certificate lifecycles, or checking for OWASP-style issues. Specializes in finding header injection, open
-      redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations.
-    description_summary: Use for security-focused review of application code, infrastructure, PKI/mTLS setups, certificate
-      lifecycle handling, and OWASP-style vulnerability checks. It specializes in identifying issues such as header injection,
-      open redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations. No explicit anti-scope
-      is specified.
-    description_hash: sha256:ab4e40b6c5d016c43eb0100238e5c282acbc20d633341da75e2ba86508e18f87
+      redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations. Fires on: mTLS with ALB or
+      load-balancer header forwarding (high spoofing risk — validates the entire chain ingress-to-backend, header parsing
+      identical across Go and Swift backends, X-Client-Cert-* cannot be spoofed); OAuth or browser-to-CLI enrollment flow
+      review (open redirects, token theft, CSRF, redirect_uri restriction, single-use enrollment tokens); certificate revocation
+      paths (when ALBs don''t check CRLs, backends must — DB / CRL / OCSP); SAN URI parsing safety; CSR validation before
+      signing; JWT validation completeness (not existence-only), RBAC and privilege escalation; gRPC channel TLS and metadata
+      propagation; Terraform / gcloud IAM least-privilege review; Cloud Run ingress restrictions, secrets not in env / logs
+      / VCS; OWASP coverage (SQLi, command injection in shell-outs, XSS, SSRF, insecure deserialization, broken access control,
+      security misconfig, insufficient logging); constant-time comparison gaps, timing side-channels, race conditions in auth
+      state transitions, error messages that leak.'
+    description_summary: Use for reviewing application code, infrastructure, and certificate-based systems for security vulnerabilities
+      and misconfigurations. It specializes in PKI/mTLS, OAuth and browser-to-CLI enrollment flows, certificate revocation
+      and signing paths, JWT/RBAC validation, gRPC TLS, IAM least privilege, Cloud Run ingress and secrets handling, and OWASP-style
+      issues such as injection, SSRF, XSS, broken access control, and insecure deserialization. It is also suited to subtle
+      auth and crypto risks including spoofable forwarded certificate headers, unsafe SAN URI parsing, timing side channels,
+      auth race conditions, and error-message leakage; no explicit anti-scope is defined.
+    description_hash: sha256:9518bf9ee0972d2779f7d814702d1845e66e66cf483e57289372457a012de447
     body_hash: sha256:e63b4eca1fe4748048d01d9e09f848c4b26c90f06c5dea4a28b5f4aaa2d44c51
     tags:
     - auditor
@@ -1703,15 +1738,20 @@ agents:
     file: writing/social-amplifier.md
     category: writing
     scope: org
-    description: Use this agent to turn finished or near-finished blog posts into platform-native LinkedIn and X posts that
+    description: 'Use this agent to turn finished or near-finished blog posts into platform-native LinkedIn and X posts that
       sound like Mihai, or to draft standalone social posts when a thought is worth sharing but not worth a full blog post.
-      Produces different posts per platform (not the same post reformatted) and runs a codex CLI feedback loop. Do not use
-      for blog drafts (route to `blog-writer`).
-    description_summary: Use for converting finished or near-finished blog posts into platform-native LinkedIn and X posts,
-      or for drafting standalone social posts from ideas that do not warrant a full blog post. It specializes in producing
-      distinct posts per platform in Mihai's voice and incorporating a codex CLI feedback loop. Do not route blog drafting
-      tasks here; send those to `blog-writer`.
-    description_hash: sha256:37b1e85e409ab8feb3c7c686278dc2fafd4a691b9b36cfca9a08c888e0bcbb23
+      Produces DIFFERENT posts per platform (not the same post reformatted) and runs a codex CLI feedback loop. Fires on:
+      blog post just finished (''the Triton SM121 post is done — make the social versions'' — drafts LinkedIn and X from the
+      final post); standalone thought worth posting but not full-blog material (''quick thought about edge inference latency
+      I want to post — not a full blog, just social'' — standalone branch); single-platform requests (''I want a LinkedIn
+      post about shipping the Jetson flash pipeline — skip X'' — single-platform mode). LinkedIn vs X are distinct formats
+      with distinct hooks, opening lines, and thread judgment. Does not post — writes drafts for Mihai to publish. Anti-scope:
+      long-form blog drafts (route to `blog-writer`, which is the source for from-blog mode here).'
+    description_summary: Use when a finished or near-finished blog post needs platform-native social drafts, or when a standalone
+      idea should become a LinkedIn and/or X post instead of a full article. Specializes in writing distinct posts per platform
+      in Mihai’s voice, including different hooks, openings, and thread decisions rather than simple reformatting. It only
+      drafts content for publication and does not post; long-form blog writing is out of scope and should go to `blog-writer`.
+    description_hash: sha256:661a53e3e6ef7409900620686155e6563e466d64fdb716fcccefd340cd9f327b
     body_hash: sha256:f057356d6a618912fd410979ccbb1d9856c359e625b1455a66dc5ce8fd5fd989
     tags:
     - amplifier
@@ -1809,15 +1849,23 @@ agents:
     category: engineering
     scope: org
     description: 'Use this agent to frame the technical approach for a non-trivial feature: write the design doc, pick the
-      implementation approach, sequence work across components, own execution quality. Pairs with `product-manager` (PM frames
-      the WHY; TL frames the HOW). Do not use for deep specialist work (route to `backend-architect`, `swift-backend`, `frontend-developer`,
-      `infra-reviewer`, `security-auditor`, etc.), schedule and dependency tracking (`tpm`), or rollout (`release-engineer`).'
-    description_summary: 'Use for non-trivial feature work that needs a technical approach: design documentation, implementation
-      strategy, sequencing across components, and quality ownership. It specializes in framing how the work should be built
-      and coordinating the engineering shape of execution, especially alongside product input that defines the why. Do not
-      route deep specialist implementation or review work here, including backend, Swift, frontend, infrastructure, or security
-      tasks; also avoid schedule/dependency tracking and rollout ownership.'
-    description_hash: sha256:fa5f8c2c04987d402fc4b828c45c6281e302a403b0b719ac3537870e6d9091d8
+      implementation approach, sequence work across components, own execution quality, pull domain specialists in for depth
+      on their slice. Fires on: ''PM has the user-value framing — we need a design''; cross-cutting technical decisions with
+      non-obvious tradeoffs (SSE vs WebSockets, sync vs async, REST vs gRPC); cross-PR coherence review where the seams between
+      specialist PRs need to hold (backend''s contract matches frontend''s expectation, migration safe, rollout plan executes
+      against the deployed shape); surfacing technical reality to PM when timeline or scope conflicts with implementation
+      honesty (rather than absorbing the constraint silently). Pairs with `product-manager` through code-complete (PM frames
+      the WHY; TL frames the HOW). Anti-scope: deep specialist work goes to `backend-architect`, `swift-backend`, `frontend-developer`,
+      `infra-reviewer`, `security-auditor`, `gpu-engineer`, `embedded-linux`, `vision-engineer`, `video-pipeline-engineer`,
+      etc. — TL owns the *shape* of the feature, specialists own the *depth* of their slice. Schedule and dependency tracking
+      belongs to `tpm` (TL does not track dates). Rollout belongs to `release-engineer` (TL hands off at code-complete). TL
+      is generalist; pulls specialists in for depth and trusts them within their slice.'
+    description_summary: Use for non-trivial feature work that needs a technical design, implementation approach, cross-component
+      sequencing, or coherence review across specialist PRs. It specializes in framing the overall technical shape, evaluating
+      tradeoffs such as protocols or execution models, and reconciling implementation reality with product scope. Do not route
+      deep domain implementation, schedule tracking, dependency tracking, or rollout ownership here; those belong to specialist
+      agents, TPM, or release engineering.
+    description_hash: sha256:87440e2d02a609112ce4ed05a62bf2ca0cb0aff8c6845c4406d843b450b1f7cb
     body_hash: sha256:ceed9e163a777d8e8218a35a147b90c31ff04c3f7cc140db329031b6ed492ae2
     tags:
     - engineering
@@ -2032,15 +2080,25 @@ agents:
     file: project-management/tpm.md
     category: project-management
     scope: org
-    description: Use this Technical Program Manager when tracking program readiness across teams or workstreams, mapping cross-team
-      dependencies, surfacing schedule risk, or coordinating multi-component work toward a milestone. Owns the WHEN, not the
-      WHAT or HOW. Do not use for priority decisions (`product-manager`), rollout (`release-engineer` from code-complete onward),
-      or motivational language (`tpm` is execution machinery).
-    description_summary: 'Use for tracking readiness across teams or workstreams, mapping cross-team dependencies, identifying
-      schedule risk, and coordinating multi-component work toward a milestone. Specializes in execution timing, dependency
-      management, and milestone coordination: the when, not the what or how. Do not use for priority or product decisions,
-      post-code-complete rollout work, implementation planning, or motivational/status-polishing language.'
-    description_hash: sha256:c5e43a53451d36a39cea8db7566d615063cf596fe24328ff3b47b88f02f3a443
+    description: 'Use this Technical Program Manager when tracking program readiness across teams or workstreams, mapping
+      cross-team dependencies, surfacing schedule risk, identifying blockers before they become slips, or coordinating multi-agent
+      / multi-component work toward a milestone. Owns the WHEN, not the WHAT or HOW. Fires on: multi-component initiatives
+      crossing domains (''we need swift-backend auth changes and frontend-developer onboarding flow live by the milestone''
+      — produces dependency map + latest-no-later-than per component + slip-risk identification at the handoff seams); schedule
+      risk surfacing (''infra-reviewer found three issues taking a week to address — we''re already cutting it close'' — quantifies
+      the slip in days, identifies the smallest scope cut that absorbs it, tees up the conversation for `product-manager`
+      to decide); pre-milestone health checks (''three days from the milestone — how are we tracking?'' — readout marking
+      each component on-track / at-risk / blocked, identifies the long pole); cross-team handoff orchestration where contracts
+      between specialists need explicit tracking. Quantifies risk, surfaces options with named tradeoffs, asks PM to decide
+      — never changes scope unilaterally. Anti-scope: priority decisions (`product-manager` — TPM tracks the schedule of decisions
+      PM has already made); rollout from code-complete onward (`release-engineer`); technical approach (`tech-lead` owns design-time
+      sequencing inside a feature; TPM owns date-bearing dependency tracking across active work).'
+    description_summary: Use for coordinating date-bearing work across multiple teams, components, or agents when the main
+      need is readiness tracking, dependency mapping, schedule risk, blocker visibility, or milestone health checks. It specializes
+      in identifying handoff risks, quantifying slips, marking workstreams on track or at risk, and presenting tradeoff options
+      for decision-makers. It does not make priority or scope decisions, choose technical approaches, or manage rollout after
+      code complete.
+    description_hash: sha256:9f166a4c59fd4ddded9980d15f507ec40369db41b5b679433542a5e55b046b87
     body_hash: sha256:9bdd234f70c0581d24a5e376746af68141e01b237546e2550cb47bb8a72b82d1
     tags:
     - project-management
