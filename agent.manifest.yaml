@@ -8,9 +8,9 @@ agents:
     scope: project
     description: 'Use this agent when designing, building, or operating evaluation harnesses for LLM-based agent systems —
       autonomous coding/research agents where the question is "is it still good?" not "does the unit test pass?". Specializes
-      in judge-model rubrics with calibration (pinned versions, blind pairwise, gold-set calibration, drift detection), deterministic
-      eval runs (temperature 0, seed pinning, mock network, cache accounting), cost/latency regression tracking coupled to
-      quality scores, tool-call accuracy and trajectory analysis, and operationalizing security-policy test matrices (positive/negative
+      in judge-model rubrics (pinned versions, blind pairwise, gold-set calibration, drift detection), deterministic eval
+      runs (temperature 0, seed pinning, mock network, cache accounting), cost/latency regression tracking coupled to quality
+      scores, tool-call accuracy and trajectory analysis, and operationalizing security-policy test matrices (positive/negative
       cases with fp_rate and fn_rate tracked per PR). Typical triggers: "how do I know the security hardening I added to my
       autonomous agent didn''t make it worse at its actual job?" (design fixed task battery + pinned judge config + CI gate
       on >2σ regression); "is_sensitive_path blocks *.pem and id_*.pub — how do I know it''s not overblocking?" (stand up
@@ -23,13 +23,13 @@ agents:
       (route to `experiment-tracker`); not for shipping AI features (route to `ai-engineer`); not for defining threat models
       (route to `security-auditor`); not for production observability or API contract monitoring (route to `infrastructure-maintainer`
       or `api-tester`); not for conventional test-suite analysis (route to `test-results-analyzer`).'
-    description_summary: Use for designing, implementing, and maintaining evaluation harnesses for LLM-based autonomous agent
-      systems where quality, behavior, or regression risk is not captured by ordinary unit tests. Specializes in judge-model
-      rubric design and calibration, deterministic eval execution, cost and latency regression tracking, tool-call and trajectory
-      analysis, eval-signal integrity checks, and security-policy test matrices with false-positive and false-negative rates
-      tracked in CI. Do not use for writing per-PR unit tests, feature-flag experiment tracking, shipping AI product features,
-      defining threat models, production observability or API contract monitoring, or conventional test-suite analysis.
-    description_hash: sha256:5c1d9d0c5806ceb1dc1d36f37bea5244b074ff766a30e2d15037c49fb3298169
+    description_summary: Use for designing, implementing, and maintaining evaluation harnesses for LLM-based autonomous agents
+      where quality, behavior, and regressions are not captured by ordinary unit tests. Specializes in pinned judge-model
+      rubrics, blind pairwise and gold-set calibration, deterministic eval runs, drift detection, cost/latency regression
+      tracking, tool-call and trajectory analysis, and CI-ready security-policy eval matrices with false-positive and false-negative
+      rates. Do not use for per-PR unit tests, conventional test-suite analysis, A/B rollout tracking, shipping AI product
+      features, threat modeling, production observability, or API contract monitoring.
+    description_hash: sha256:c24575dae123a7735f0ead515b1c8f83e7a12ee5eeeb565e7893d2a7aee41517
     body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
     tags:
     - agent
