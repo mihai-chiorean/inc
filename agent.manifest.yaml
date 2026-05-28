@@ -7,48 +7,29 @@ agents:
     category: testing
     scope: project
     description: 'Use this agent when designing, building, or operating evaluation harnesses for LLM-based agent systems —
-      particularly autonomous coding/research agents where the question is "is it still good?" rather than "does the unit
-      test pass?". This agent specializes in judge-model rubrics, deterministic eval runs, cost/latency regression tracking
-      tied to behavioral quality, tool-call accuracy scoring, and operationalizing security-policy test matrices. It is explicitly
-      NOT for per-PR unit tests (test-writer-fixer), A/B feature flag rollout tracking (experiment-tracker), shipping AI features
-      (ai-engineer), defining threat models (security-auditor), or general production observability (infrastructure-maintainer).
-      Examples:\n\n<example>\nContext: Long-running autonomous agent with no quality baseline\nuser: "Ziggy has been shipping
-      PRs for two weeks. How do I know the security hardening I added didn''t make it worse at its actual job?"\nassistant:
-      "You need a PR-to-PR regression track with a fixed task battery. Let me use the agent-eval-engineer agent to design
-      evals/tasks/ziggy_v1.yaml (10 pinned tasks, seed-frozen), judges/task_completion.yaml (pairwise blind, Opus 4.7 pinned),
-      and a reports/pr_diff.json that fails CI on a >2σ drop in completion rate."\n<commentary>\nDelivers a grader and a threshold,
-      not a product change. This is not ai-engineer (no feature shipped) and not experiment-tracker (no users, no flags).\n</commentary>\n</example>\n\n<example>\nContext:
-      Security policy tuning without a false-positive floor\nuser: "is_sensitive_path blocks *.pem and id_*.pub. Defensible
-      but might be overblocking. How do I know?"\nassistant: "Security-auditor defines what must be caught; this agent operationalizes
-      the matrix. Let me use the agent-eval-engineer agent to stand up evals/policy/sensitive_paths.csv with labeled positives
-      (private keys, tokens) and negatives (public keys, *.pem test fixtures, docs), wire it into CI, and publish fp_rate
-      and fn_rate as tracked metrics per PR."\n<commentary>\nThis is not security-auditor (which owns the threat model and
-      labels). This agent owns the matrix, the CI wiring, and the drift-tracking. A per-PR unit test from test-writer-fixer
-      would not surface cumulative overblocking.\n</commentary>\n</example>\n\n<example>\nContext: Silent metric regression
-      caught by accident\nuser: "ttft_ms was null in audit.jsonl for a week and I only noticed because I was watching a DM.
-      What do I put in place so this never happens again?"\nassistant: "An eval-signal smoke battery. Let me use the agent-eval-engineer
-      agent to add evals/smoke/audit_shape.py (schema assert on audit.jsonl) plus evals/smoke/ttft_probe.py (5 fixed prompts,
-      measures real TTFT against the streaming provider) with a CI gate that blocks merge on null/zero/NaN."\n<commentary>\nThis
-      is not infrastructure-maintainer or api-tester — the probe exists to protect eval signal integrity, not to monitor production
-      uptime or API contracts. Narrow scope on purpose.\n</commentary>\n</example>\n\n<example>\nContext: Choosing and calibrating
-      the judge\nuser: "I want to grade Ziggy''s output with Opus 4.7. Is that sound or is it cheating?"\nassistant: "Real
-      pitfalls: self-preference bias (Claude-family grading Claude-family), rubric leakage, judge drift across model versions.
-      Let me use the agent-eval-engineer agent to set up judges/task_completion.yaml with a pinned judge version, blind pairwise
-      ordering, a 50-item human-labeled gold set for calibration, and a quarterly drift check that re-scores the gold set."\n<commentary>\nThe
-      deliverable is the judge config and calibration data, not a feature. ai-engineer would use the grader; this agent builds
-      and validates it.\n</commentary>\n</example>\n\n<example>\nContext: Tool-use accuracy regression on a specific PR\nuser:
-      "PR #141 passed all unit tests but Ziggy feels off — it keeps running `ls` before every Read."\nassistant: "That''s
-      a trajectory regression, invisible to pass/fail tests. Let me use the agent-eval-engineer agent to run evals/trajectory/tool_selection.yaml
-      (50 NL intents with expected tool + arg schemas), produce reports/pr_141_trajectory.json showing tools-per-task delta
-      and redundant-call rate, and flag the specific intents where tool choice changed."\n<commentary>\nTool-call accuracy
-      and trajectory shape are behavior metrics, not correctness. test-writer-fixer would not have caught this. performance-benchmarker
-      would only see the latency side; this agent couples behavior + cost in one report.\n</commentary>\n</example>'
-    description_summary: Use when a project needs evaluation harnesses for LLM-based agent systems, especially autonomous
-      coding or research agents where behavioral quality must be tracked across changes. Specializes in judge-model rubrics,
-      deterministic eval task batteries, tool-call and trajectory scoring, cost/latency regression tied to quality, CI gating,
-      and security-policy test matrices. Do not route per-PR unit test writing, A/B rollout analysis, AI feature implementation,
-      threat-model definition, or general production observability work here.
-    description_hash: sha256:92ba5b982405dcdf945444bafd022e3819272324bf3ed5e6b31bd2fd335fedbc
+      autonomous coding/research agents where the question is "is it still good?" not "does the unit test pass?". Specializes
+      in judge-model rubrics with calibration (pinned versions, blind pairwise, gold-set calibration, drift detection), deterministic
+      eval runs (temperature 0, seed pinning, mock network, cache accounting), cost/latency regression tracking coupled to
+      quality scores, tool-call accuracy and trajectory analysis, and operationalizing security-policy test matrices (positive/negative
+      cases with fp_rate and fn_rate tracked per PR). Typical triggers: "how do I know the security hardening I added to my
+      autonomous agent didn''t make it worse at its actual job?" (design fixed task battery + pinned judge config + CI gate
+      on >2σ regression); "is_sensitive_path blocks *.pem and id_*.pub — how do I know it''s not overblocking?" (stand up
+      labeled positive/negative CSV, wire into CI, publish fp_rate and fn_rate per PR); "ttft_ms was null for a week and I
+      only noticed because I was watching a DM" (eval-signal smoke battery — schema asserts + probe runs to protect signal
+      integrity); "I want to grade with Opus 4.7 — is that sound or is it cheating?" (judge config with pinned version, blind
+      pairwise, 50-item human-labeled gold set, quarterly drift check); "PR #141 passed all unit tests but the agent feels
+      off — keeps running `ls` before every Read" (trajectory eval surfacing tool-selection regressions invisible to pass/fail
+      tests). Anti-scope: not for per-PR unit tests (route to `test-writer-fixer`); not for A/B feature-flag rollout tracking
+      (route to `experiment-tracker`); not for shipping AI features (route to `ai-engineer`); not for defining threat models
+      (route to `security-auditor`); not for production observability or API contract monitoring (route to `infrastructure-maintainer`
+      or `api-tester`); not for conventional test-suite analysis (route to `test-results-analyzer`).'
+    description_summary: Use for designing, implementing, and maintaining evaluation harnesses for LLM-based autonomous agent
+      systems where quality, behavior, or regression risk is not captured by ordinary unit tests. Specializes in judge-model
+      rubric design and calibration, deterministic eval execution, cost and latency regression tracking, tool-call and trajectory
+      analysis, eval-signal integrity checks, and security-policy test matrices with false-positive and false-negative rates
+      tracked in CI. Do not use for writing per-PR unit tests, feature-flag experiment tracking, shipping AI product features,
+      defining threat models, production observability or API contract monitoring, or conventional test-suite analysis.
+    description_hash: sha256:5c1d9d0c5806ceb1dc1d36f37bea5244b074ff766a30e2d15037c49fb3298169
     body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
     tags:
     - agent
@@ -103,67 +84,26 @@ agents:
     file: studio-operations/analytics-reporter.md
     category: studio-operations
     scope: project
-    description: 'Use this agent when analyzing metrics, generating insights from data, creating performance reports, or making
-      data-driven recommendations. This agent excels at transforming raw analytics into actionable intelligence that drives
-      studio growth and optimization. Examples:\n\n<example>\nContext: Monthly performance review needed
-
-      user: "I need to understand how our apps performed last month"
-
-      assistant: "I''ll analyze your app performance metrics comprehensively. Let me use the analytics-reporter agent to generate
-      insights from your data."
-
-      <commentary>
-
-      Regular performance reviews identify trends and opportunities that daily monitoring might miss.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: User behavior analysis for feature decisions
-
-      user: "Which features are users actually using in our fitness app?"
-
-      assistant: "Feature usage data is crucial for prioritization. I''ll use the analytics-reporter agent to analyze user
-      behavior patterns and identify your most valuable features."
-
-      <commentary>
-
-      Data-driven feature decisions prevent wasting resources on unused functionality.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Revenue optimization analysis
-
-      user: "Our revenue is plateauing, need to find growth opportunities"
-
-      assistant: "Let''s dive deep into your revenue metrics. I''ll use the analytics-reporter agent to identify conversion
-      bottlenecks and untapped opportunities."
-
-      <commentary>
-
-      Revenue plateau often hides multiple small optimization opportunities that compound.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: A/B test results interpretation
-
-      user: "We ran three different onboarding flows, which performed best?"
-
-      assistant: "I''ll analyze your A/B test results for statistical significance and practical impact. Let me use the analytics-reporter
-      agent to interpret the data."
-
-      <commentary>
-
-      Proper test analysis prevents false positives and ensures meaningful improvements.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use when a project task involves analyzing metrics, interpreting user behavior, evaluating revenue
-      or performance trends, producing reports, or turning A/B test results into recommendations. It specializes in converting
-      raw analytics into actionable insights such as growth opportunities, feature usage patterns, conversion bottlenecks,
-      and statistically grounded experiment conclusions. No explicit anti-scope is stated.
-    description_hash: sha256:39a83482af63d495080b32a4ccb5f270793d31ce98bd4c7c1e16ebf5b2657e86
-    body_hash: sha256:f64c7b887f52c2cac8084aa2668d6fbcbe3d75d6638762de6f44b1f16fe2e664
+    description: 'Use this agent to design analytics infrastructure, generate insights from data, build dashboards, interpret
+      A/B test results, and turn raw metrics into action. Spans event-schema design, cohort and funnel analysis, retention
+      curves, LTV models, and predictive forecasting. Typical triggers: "I need to understand how our apps performed last
+      month" (monthly performance review with trends, anomalies, benchmarks); "which features are users actually using in
+      our fitness app?" (feature usage analysis for prioritization); "our revenue is plateauing, need to find growth opportunities"
+      (conversion-funnel diagnostics, ARPU breakdown, upsell opportunities); "we ran three different onboarding flows — which
+      performed best?" (A/B test interpretation with confidence intervals and practical significance). Knows the tool landscape
+      — GA4, Mixpanel, Amplitude, RevenueCat, AppsFlyer, Hotjar, Looker, Optimizely. Anti-scope: not for A/B test instrumentation
+      or experiment design with feature flags (route to `experiment-tracker`); not for synthesizing qualitative user feedback
+      (route to `feedback-synthesizer`); not for budget allocation or P&L work (route to `finance-tracker`); not for infrastructure
+      performance monitoring and APM (route to `infrastructure-maintainer`); not for judge-graded LLM agent quality (route
+      to `agent-eval-engineer`).'
+    description_summary: Use for analytics work that turns product, revenue, or user-behavior data into decisions, including
+      performance reviews, feature usage analysis, funnel diagnostics, cohort and retention analysis, LTV modeling, forecasting,
+      dashboards, and A/B test result interpretation. Specializes in event-schema design, metric analysis, confidence/practical
+      significance for experiment readouts, and common analytics tools such as GA4, Mixpanel, Amplitude, RevenueCat, AppsFlyer,
+      Hotjar, Looker, and Optimizely. Do not use for A/B test instrumentation or feature-flag experiment design, qualitative
+      feedback synthesis, budget or P&L planning, infrastructure/APM monitoring, or judge-graded LLM agent evaluation.
+    description_hash: sha256:084b392b3fc083908324e5f0cf9eef1cfd0774943f2298b6bb487432e1b0180e
+    body_hash: sha256:6b029c056db76b195988e306bcc38d3adea4fedc3a40a5b5aaa8312cdb23d2e3
     tags:
     - analytics
     - reporter
@@ -178,66 +118,25 @@ agents:
     file: testing/api-tester.md
     category: testing
     scope: project
-    description: 'Use this agent for comprehensive API testing including performance testing, load testing, and contract testing.
-      This agent specializes in ensuring APIs are robust, performant, and meet specifications before deployment. Examples:\n\n<example>\nContext:
-      Testing API performance under load
-
-      user: "We need to test if our API can handle 10,000 concurrent users"
-
-      assistant: "I''ll help test your API''s performance under load. Let me use the api-tester agent to simulate 10,000 concurrent
-      users and analyze response times, error rates, and resource usage."
-
-      <commentary>
-
-      Load testing prevents embarrassing outages when products go viral.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Validating API contracts
-
-      user: "Make sure our API responses match the OpenAPI spec"
-
-      assistant: "I''ll validate your API against the OpenAPI specification. Let me use the api-tester agent to test all endpoints
-      and ensure contract compliance."
-
-      <commentary>
-
-      Contract testing prevents breaking changes that frustrate API consumers.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: API performance optimization
-
-      user: "Our API is slow, can you identify bottlenecks?"
-
-      assistant: "I''ll analyze your API performance and identify bottlenecks. Let me use the api-tester agent to profile
-      endpoints and provide optimization recommendations."
-
-      <commentary>
-
-      Performance profiling reveals hidden inefficiencies that compound at scale.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Security testing
-
-      user: "Test our API for common security vulnerabilities"
-
-      assistant: "I''ll test your API for security vulnerabilities. Let me use the api-tester agent to check for common issues
-      like injection attacks, authentication bypasses, and data exposure."
-
-      <commentary>
-
-      Security testing prevents costly breaches and maintains user trust.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for API validation work before deployment or when investigating API reliability, including performance,
-      load, contract, and security testing. It specializes in exercising endpoints against expected behavior and specifications,
-      measuring response times, error rates, resource usage, and identifying bottlenecks or common vulnerabilities such as
-      injection, authentication bypass, and data exposure. No explicit anti-scope is defined.
-    description_hash: sha256:42930722e2291ac387e823e8d83aa8fa4086d914c48be37fa9602396526c77d2
+    description: 'Use this agent for API testing — performance profiling, load testing (k6, JMeter, Gatling, Artillery), contract
+      testing (OpenAPI/Swagger, Pact, Dredd), integration testing, chaos testing, and monitoring setup. Specializes in finding
+      breaking points before users do. Typical triggers: "we need to test if our API can handle 10,000 concurrent users" (load
+      simulation with ramp/spike/soak/stress patterns, breaking-point analysis); "make sure our API responses match the OpenAPI
+      spec" (contract validation, backward compatibility, error response consistency); "our API is slow, can you identify
+      bottlenecks?" (endpoint profiling, N+1 queries, cache effectiveness, memory/CPU analysis); "test our API for common
+      security vulnerabilities" (injection attacks, auth bypasses, data exposure, rate-limit bypasses). Anti-scope: not for
+      application-level perf benchmarking like Web Vitals or mobile frame rates (route to `performance-benchmarker`); not
+      for conventional test-suite analysis (route to `test-results-analyzer`); not for LLM agent eval harnesses (route to
+      `agent-eval-engineer`); not for infrastructure capacity planning and autoscaling (route to `infrastructure-maintainer`);
+      not for security threat modeling beyond common API vulns (route to `security-auditor`); not for unit/integration test
+      writing (route to `test-writer-fixer`).'
+    description_summary: Use for API-focused validation and resilience work, including load, spike, soak, stress, contract,
+      integration, chaos, monitoring, and common API security testing. It specializes in exercising endpoints against OpenAPI/Swagger/Pact-style
+      contracts, profiling latency and bottlenecks, checking error and compatibility behavior, and identifying breaking points
+      under realistic traffic. Do not use for frontend or mobile performance benchmarking, general test-suite analysis, LLM
+      eval harnesses, infrastructure capacity planning, broad security threat modeling, or writing ordinary unit and integration
+      tests.
+    description_hash: sha256:ae75e4a3c8029da134fda8849ca7583435ce012506518bb31fec7e3f7f3dda05
     body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
     tags:
     - api
@@ -253,34 +152,24 @@ agents:
     file: marketing/app-store-optimizer.md
     category: marketing
     scope: project
-    description: 'Use this agent when preparing app store listings, researching keywords, optimizing app metadata, improving
-      conversion rates, or analyzing app store performance. This agent specializes in maximizing organic app store visibility
-      and downloads. Examples:\n\n<example>\nContext: Preparing for app launch
-
-      user: "We''re launching our meditation app next week. The listing needs work"\nassistant: "I''ll optimize your app store
-      presence for maximum visibility. Let me use the app-store-optimizer agent to research keywords and craft the perfect
-      listing."\n<commentary>\nPre-launch ASO optimization is crucial for organic discovery from day one.\n</commentary>\n</example>\n\n<example>\nContext:
-      Improving existing app performance
-
-      user: "Our downloads have plateaued despite good reviews"\nassistant: "Your app might have visibility issues. I''ll
-      use the app-store-optimizer agent to analyze your current ASO and identify improvement opportunities."\n<commentary>\nGood
-      apps can fail due to poor app store optimization, limiting organic discovery.\n</commentary>\n</example>\n\n<example>\nContext:
-      Researching competitive keywords
-
-      user: "What keywords should we target for our phone anxiety app?"\nassistant: "Keyword research is crucial for ASO.
-      Let me use the app-store-optimizer agent to find high-volume, low-competition keywords perfect for your app."\n<commentary>\nThe
-      right keywords can dramatically increase organic traffic and downloads.\n</commentary>\n</example>\n\n<example>\nContext:
-      A/B testing app store elements
-
-      user: "Should we change our app icon? Users say it''s boring"\nassistant: "Let''s test that systematically. I''ll use
-      the app-store-optimizer agent to set up A/B tests for your icon and measure conversion impact."\n<commentary>\nApp store
-      elements should be tested, not changed based on opinions alone.\n</commentary>\n</example>'
-    description_summary: Use for tasks involving app store listing preparation, keyword research, metadata optimization, conversion-rate
-      improvement, A/B testing of store assets, or app store performance analysis. Specializes in improving organic visibility
-      and downloads through ASO research, competitive keyword targeting, listing copy, and evaluation of icons or other store
-      elements. No explicit anti-scope is defined.
-    description_hash: sha256:fddb282f8ab22cf2ba6beea5024bea12d8bdbc9ef38bb9323a27265883e78d2a
-    body_hash: sha256:da74e59dd6809cc0d3eddae113819aa56f743983171d190370fc36605629d9cf
+    description: 'Use this agent for App Store / Google Play optimization — keyword research, metadata crafting, screenshot
+      and icon strategy, conversion rate optimization, rating and review management, and competitive ASO tracking. Typical
+      triggers: "we''re launching our meditation app next week — the listing needs work" (pre-launch keyword + metadata +
+      visual pass); "our downloads have plateaued despite good reviews" (ASO audit, identify what''s blocking organic discovery);
+      "what keywords should we target for our phone anxiety app?" (volume + difficulty + competitor gap research); "should
+      we change our app icon? users say it''s boring" (set up systematic A/B tests for icon, screenshot order, subtitle).
+      Knows the platform constraints — Apple title 30 chars + subtitle 30 + keyword field 100; Google title 50 + short description
+      80 with keyword density mattering in long description. Anti-scope: not for paid user acquisition or ad creative (route
+      to `growth-hacker`); not for in-app onboarding redesign (route to `ui-designer` + `ux-researcher`); not for marketing
+      site copy or video scripts (route to `content-creator`); not for social-platform-specific growth (route to `tiktok-strategist`,
+      `instagram-curator`, `twitter-engager`).'
+    description_summary: Use for App Store and Google Play optimization work, including keyword research, metadata, screenshot
+      and icon strategy, conversion rate testing, ratings and reviews, and competitor tracking. It is suited to pre-launch
+      listing preparation, organic discovery audits, keyword targeting, and structured experiments within Apple and Google
+      Play metadata constraints. Do not use for paid acquisition, ad creative, in-app onboarding redesign, marketing site
+      copy, video scripts, or social-platform-specific growth.
+    description_hash: sha256:24186ebb4ef3c9928eaef557bd9ee451f1112ca60a630168e7b51c27ccbed813
+    body_hash: sha256:94e366dc0c6b53c3d393d610b493317564c5f2459508477462e5a2325d5707fe
     tags:
     - app
     - marketing
@@ -331,36 +220,25 @@ agents:
     file: bonus/bay-value-hunter.md
     category: bonus
     scope: project
-    description: 'Use this agent when evaluating Bay Area residential real estate as a disciplined owner-occupant/investor.
-      Covers San Francisco, Berkeley, and Albany with per-city profiles (neighborhoods, permit sources, hazard patterns, rent
-      control). Finds mispriced homes, fixer-uppers, stale listings, estate/probate sales, and other value situations. Produces
-      buy targets, rehab estimates, ARV ranges, and pursue/monitor/pass verdicts — not pretty-home shopping. User is based
-      near Berkeley/Albany. Pairs with the bay-value-hunter skill for the full workflow and tool spec. Examples:\n\n<example>\nContext:
-      Evaluating a specific listing in Berkeley\nuser: "There''s a 1920s bungalow in Westbrae listed at $1.2M, sat 45 days,
-      one price cut. Worth a look?"\nassistant: "Stale DOM + price cut + Westbrae. I''ll use the bay-value-hunter agent to
-      check permit history (Berkeley uses Accela), Hayward Fault distance, rent-control implications for the hold case, and
-      produce a buy target with rehab range."\n<commentary>\nBerkeley listings need local data sources and local policy context
-      (rent control, BUSD zones, SB-9/ADU optionality), not generic MLS analysis.\n</commentary>\n</example>\n\n<example>\nContext:
-      Hunting value in Albany\nuser: "Find me fixer SFHs in Albany under $1.1M"\nassistant: "Albany''s tight — small inventory,
-      AUSD school premium baked in. I''ll use the bay-value-hunter agent to scan for stale listings and estate sales in the
-      flats vs the hill above Marin Ave, and flag I-80 noise and liquefaction exposure on anything west of San Pablo."\n<commentary>\nAlbany
-      is small and uniform on the surface but has real sub-market variation that mainstream search ignores.\n</commentary>\n</example>\n\n<example>\nContext:
-      Cross-market comparison\nuser: "I have three candidates: one in Outer Sunset, one in South Berkeley, one in Albany.
-      Rank them."\nassistant: "Cross-market ranking needs consistent underwriting plus per-city context (SF soft-story liability,
-      Berkeley rent control, Albany school premium). I''ll use the bay-value-hunter agent to score each and produce a ranked
-      shortlist with explicit tradeoffs."\n<commentary>\nApples-to-apples requires normalizing for very different rent-control
-      regimes, permit processes, and hazard profiles.\n</commentary>\n</example>\n\n<example>\nContext: Killing a deal\nuser:
-      "This Elmwood listing looks amazing — under comps, nice photos, tree-lined street"\nassistant: "Amazing-looking deals
-      deserve the most skepticism. I''ll use the bay-value-hunter agent to find what the listing isn''t telling you — permit
-      gaps, foundation concerns, tenant-in-place wrinkles, or Hayward Fault proximity — before you tour."\n<commentary>\nA
-      disciplined investor kills most deals. Great-looking deals usually have a catch.\n</commentary>\n</example>'
-    description_summary: Use for disciplined evaluation of Bay Area residential real estate in San Francisco, Berkeley, and
-      Albany, especially owner-occupant/investor decisions near Berkeley/Albany. Specializes in finding value situations such
-      as mispriced homes, fixers, stale listings, estate or probate sales, and underwriting them with local permit sources,
-      neighborhood context, hazard exposure, rent-control rules, rehab estimates, ARV ranges, buy targets, and pursue/monitor/pass
-      verdicts. Do not use for general pretty-home shopping or lifestyle-driven listing browsing without an investment or
-      value thesis.
-    description_hash: sha256:bea5f5c237d012ae5145407edbe7bfb7c83abc51d49a7e6c0fab87b9f9199fdf
+    description: 'Use this agent when evaluating Bay Area residential real estate as a disciplined owner-occupant/investor
+      — San Francisco, Berkeley, and Albany. Per-city profiles cover neighborhoods, permit data sources (SF DBI, Berkeley
+      Accela, Albany Community Development), hazard patterns (Hayward Fault, liquefaction, soft-story, I-80 corridor), and
+      rent-control regimes. Finds mispriced homes, fixer-uppers, stale listings, estate and probate sales. Produces buy targets,
+      rehab ranges, ARV estimates, and pursue/monitor/pass verdicts — not pretty-home shopping. User is based near Berkeley/Albany.
+      Pairs with the `/bay-value-hunter` skill for the full workflow and structured output format. Typical triggers: "there''s
+      a 1920s bungalow in Westbrae listed at $1.2M, sat 45 days, one price cut — worth a look?" (stale DOM + price cut + permit/hazard
+      check); "find me fixer SFHs in Albany under $1.1M" (flats vs hill, I-80 noise, liquefaction flags); "rank these three
+      candidates: Outer Sunset, South Berkeley, Albany" (cross-market scoring with per-city policy normalization); "this Elmwood
+      listing looks amazing — under comps, nice photos" (skepticism pass for what the listing isn''t telling you). Anti-scope:
+      pure architectural or interior-design opinions route elsewhere; mortgage underwriting and loan products are out of scope;
+      not for commercial or multifamily 5+ unit deals.'
+    description_summary: Use for evaluating Bay Area residential real estate opportunities, especially owner-occupant or investor
+      purchases in San Francisco, Berkeley, and Albany. It specializes in identifying mispriced homes, fixer-uppers, stale
+      listings, estate or probate sales, and producing buy targets, rehab ranges, ARV estimates, and pursue/monitor/pass verdicts
+      using local permit, hazard, neighborhood, and rent-control context. It is not for pretty-home shopping, architectural
+      or interior-design opinions, mortgage underwriting, loan product selection, commercial deals, or multifamily properties
+      with 5+ units.
+    description_hash: sha256:e4add67f00f3e0190c1197aec536a015143d8f305a8748adc4e18215c7b4d340
     body_hash: sha256:86a9c3ac3b46a5f6d538199a38131b5f5e710fdfc13208f40eca86dbb1e7cbdc
     tags:
     - bay
@@ -408,67 +286,23 @@ agents:
     file: design/brand-guardian.md
     category: design
     scope: project
-    description: 'Use this agent when establishing brand guidelines, ensuring visual consistency, managing brand assets, or
-      evolving brand identity. This agent specializes in creating and maintaining cohesive brand experiences across all touchpoints
-      while enabling rapid development. Examples:\n\n<example>\nContext: Creating brand guidelines for a new app
-
-      user: "We need to establish a visual identity for our meditation app"
-
-      assistant: "I''ll help create a calming yet distinctive brand identity. Let me use the brand-guardian agent to develop
-      comprehensive guidelines that reflect your app''s essence."
-
-      <commentary>
-
-      Strong brand identity differentiates apps in crowded marketplaces.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Ensuring consistency across platforms
-
-      user: "Our app looks different on iOS, Android, and web"
-
-      assistant: "Brand consistency builds trust and recognition. I''ll use the brand-guardian agent to create unified design
-      standards across all platforms."
-
-      <commentary>
-
-      Consistent branding makes products feel more professional and trustworthy.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Evolving existing brand
-
-      user: "Our brand feels outdated compared to competitors like Headspace"
-
-      assistant: "Brand evolution can revitalize user perception. Let me use the brand-guardian agent to modernize your brand
-      while maintaining recognition."
-
-      <commentary>
-
-      Strategic brand updates keep products feeling fresh and relevant.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Managing brand assets
-
-      user: "Developers keep using different shades of our brand colors"
-
-      assistant: "Clear asset management prevents brand dilution. I''ll use the brand-guardian agent to create a definitive
-      asset library and usage guidelines."
-
-      <commentary>
-
-      Well-organized brand assets speed up development and maintain quality.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for tasks involving brand guideline creation, visual identity definition, cross-platform brand
-      consistency, brand asset organization, or modernization of an existing brand. It specializes in translating product
-      positioning into reusable visual standards, color and asset guidance, and cohesive brand experiences across touchpoints.
-      No explicit anti-scope is defined in the source description.
-    description_hash: sha256:566ed0d7859e64886f9e10f95038220dc51ee20d472461a382a8cf1972e20677
-    body_hash: sha256:c021eb05dcd6b2e643b3510d685bd8e85e0bd0292098b8c24df2d3717260da3b
+    description: 'Use this agent when establishing brand guidelines, ensuring visual consistency across platforms, managing
+      brand assets, or evolving brand identity. Owns the visual identity system, design tokens, and the rules that keep a
+      product feeling cohesive across iOS, Android, web, and social. Typical triggers: "we need to establish a visual identity
+      for our meditation app" (logo system, color palette, typography, voice); "our app looks different on iOS, Android, and
+      web" (cross-platform tokens, platform-specific adaptations that preserve identity); "our brand feels outdated compared
+      to competitors" (refresh vs evolution vs revolution path); "developers keep using different shades of our brand colors"
+      (asset library, design tokens, naming conventions, developer handoff kits). Anti-scope: not for screen-by-screen UI
+      design (route to `ui-designer`); not for adding playful micro-interactions or delight moments (route to `whimsy-injector`);
+      not for marketing campaigns or content production (route to `content-creator`, `visual-storyteller`); not for accessibility
+      audits beyond brand color-contrast (route to a dedicated accessibility specialist if depth is needed).'
+    description_summary: '{"brand-guardian":"Use for defining, maintaining, or evolving a product’s visual identity across
+      platforms, including logo systems, color palettes, typography, design tokens, asset libraries, naming conventions, and
+      developer handoff guidance. It specializes in keeping brand expression cohesive across iOS, Android, web, and social
+      while handling refresh decisions and platform-specific adaptations. Do not use for screen-level UI design, playful interaction
+      details, marketing/content production, or accessibility work beyond brand color contrast."}'
+    description_hash: sha256:22772f08d1541061f379e4aeba6efeeb79287910cb6a8d360ef801f7473d2f2e
+    body_hash: sha256:fc3f3af84871b554adf2b888e67c79b279fe77a7183b8edea89a27dd534e5ea9
     tags:
     - brand
     - design
@@ -483,28 +317,24 @@ agents:
     file: product/competitive-intel.md
     category: product
     scope: project
-    description: 'Use this agent when you need deep competitive analysis — reverse-engineering competitor business models,
-      tracking their strategic moves, finding whitespace in crowded markets, or understanding why certain players dominate.
-      Goes beyond surface-level feature comparison to understand competitive dynamics. Examples:\n\n<example>\nContext: Entering
-      a market with established players\nuser: "Notion, Obsidian, and Roam all exist. Is there still room for a new note-taking
-      app?"\nassistant: "Crowded markets often have hidden gaps. Let me use the competitive-intel agent to map the competitive
-      landscape and find underserved segments."\n<commentary>\nCrowded markets usually mean strong demand. The question is
-      whether there''s an unserved niche.\n</commentary>\n</example>\n\n<example>\nContext: Understanding a competitor''s
-      strategy\nuser: "Our competitor just raised $50M and launched 3 new features. What are they doing?"\nassistant: "Funding
-      rounds and feature launches reveal strategic direction. I''ll use the competitive-intel agent to decode their strategy
-      and find our opportunities."\n<commentary>\nCompetitor moves tell you where the market is going — and where they''re
-      leaving gaps.\n</commentary>\n</example>\n\n<example>\nContext: Finding differentiation in a saturated space\nuser:
-      "Every meditation app looks the same. How do we stand out?"\nassistant: "When products converge, differentiation comes
-      from positioning and underserved segments. Let me use the competitive-intel agent to find angles others are missing."\n<commentary>\nIn
-      saturated markets, winning often means redefining the category rather than competing on features.\n</commentary>\n</example>\n\n<example>\nContext:
-      Assessing competitive threat\nuser: "Could Spotify just build what we''re building?"\nassistant: "Platform risk is real.
-      I''ll use the competitive-intel agent to assess the likelihood and timeline of incumbents entering your space."\n<commentary>\nUnderstanding
-      whether a big player will copy you is critical for strategy.\n</commentary>\n</example>'
-    description_summary: Use for deep competitive analysis when evaluating market entry, competitor strategy, differentiation
-      in crowded categories, or platform/incumbent threat. Specializes in reverse-engineering business models, interpreting
-      strategic moves such as funding and feature launches, mapping competitive dynamics, and identifying underserved segments
-      or whitespace. Not intended for surface-level feature comparisons or generic market summaries.
-    description_hash: sha256:36865a28cdb1e3968c392a819f372e916007ed1f751f363e7c2fee57cae468fb
+    description: 'Use this agent for deep competitive analysis — reverse-engineering competitor business models, tracking
+      strategic moves, finding whitespace in crowded markets, building battle cards, and understanding why certain players
+      dominate. Goes beyond surface feature comparison to competitive dynamics (network effects, moats, switching costs, disruption
+      patterns). Typical triggers: "Notion, Obsidian, and Roam all exist — is there still room for a new note-taking app?"
+      (whitespace mapping in crowded markets); "our competitor just raised $50M and launched 3 new features — what are they
+      doing?" (decode strategic direction from funding + roadmap); "every meditation app looks the same — how do we stand
+      out?" (positioning gaps when products converge); "could Spotify just build what we''re building?" (platform-risk and
+      incumbent-threat assessment with timeline). Uses public signals — job postings, engineering blogs, pricing pages, app
+      store data, LinkedIn movement, funding announcements. Ethical only — never fake reviews or impersonation. Anti-scope:
+      not for raw market sizing or unit economics (route to `market-validator`); not for trend / virality research (route
+      to `trend-researcher`); not for customer interviews (route to `customer-interviewer`); not for shipping a positioning/messaging
+      artifact (route to `content-creator`); not for the final go/no-go scoring call on an idea (route to `idea-evaluator`).'
+    description_summary: Use for deep competitive analysis that explains how competitors win, where whitespace exists, and
+      what strategic moves imply. It specializes in public-signal research such as job postings, pricing, app store data,
+      funding news, engineering blogs, and LinkedIn movement, with attention to moats, network effects, switching costs, platform
+      risk, and disruption patterns. It should not be used for raw market sizing, unit economics, trend or virality research,
+      customer interviews, final idea scoring, or producing the finished positioning or messaging artifact.
+    description_hash: sha256:7595561d34357fbef00052d71d2006b0906e20bd1d7a4b8daf444df7047feeba
     body_hash: sha256:9dcbd738a00617921194b7e5c10916726e6b2f959e8d8b8192215b561ac9a33c
     tags:
     - competitive
@@ -520,14 +350,24 @@ agents:
     file: marketing/content-creator.md
     category: marketing
     scope: project
-    description: Use this agent for cross-platform content generation — long-form blog posts, video scripts, and social-media
-      copy — adapting messaging across formats while maintaining brand consistency and maximizing impact for each platform's
-      unique requirements.
-    description_summary: Use for creating and adapting content across formats such as long-form blog posts, video scripts,
-      and social-media copy. It specializes in preserving brand consistency while tailoring messaging, structure, and emphasis
-      to each platform's requirements and audience expectations. No explicit anti-scope is defined in the source description.
-    description_hash: sha256:7bccb0c446911812108bdb4a27effe59730af9f65fa7f4eab43eb0b5db6294fb
-    body_hash: sha256:e56623b56c43fe23be2334fafd9762923c853f23ee470868efc2dfc3f71797a5
+    description: 'Use this agent for cross-platform content generation — long-form blog posts, video scripts (YouTube, TikTok,
+      Shorts, webinars), platform-specific social copy, email newsletters and campaigns. Adapts a core message across formats
+      while keeping brand voice consistent and respecting each platform''s constraints. Typical triggers: "turn this idea
+      into a blog post, video script, and social posts" (multi-format pipeline from a single thesis); "write an SEO-optimized
+      pillar article about X" (long-form with keyword strategy and internal linking); "script a YouTube video / TikTok / webinar
+      on Y" (hook-driven scripts with pattern interrupts and retention design); "repurpose this case study into 5 social pieces"
+      (content multiplication: 1 pillar → 10 posts, 1 video → 3 blogs, 1 webinar → 5 emails). Anti-scope: not for visual/illustration
+      work or infographic design (route to `visual-storyteller`); not for in-platform tactical engagement and trend-jacking
+      (route to `tiktok-strategist`, `instagram-curator`, `twitter-engager`, `reddit-community-builder`); not for ad creative
+      or paid campaign copy (route to `growth-hacker`); not for ASO listing copy (route to `app-store-optimizer`); not for
+      support response templates (route to `support-responder`).'
+    description_summary: Use for generating and repurposing written or scripted content across formats, including blog posts,
+      SEO pillar articles, YouTube/TikTok/Shorts/webinar scripts, social copy, newsletters, and email campaigns. It specializes
+      in adapting a core message into platform-appropriate assets while preserving brand voice, keyword strategy, retention
+      structure, and format constraints. Do not use for visual or infographic design, tactical social engagement or trend-jacking,
+      paid ad creative, ASO listings, or support response templates.
+    description_hash: sha256:4657520b3745096b10bc46305baf11d68673394deee98bcacd3d3c5c5b64aeb8
+    body_hash: sha256:7564f55013a3253d443e32d14aee5b37ee86b866bd8da2a874f7add19873fdf8
     tags:
     - content
     - creator
@@ -542,31 +382,25 @@ agents:
     file: product/customer-interviewer.md
     category: product
     scope: project
-    description: 'Use this agent when preparing for customer discovery interviews, generating interview questions, debriefing
-      after conversations, or validating problem hypotheses through user conversations. This agent is deeply grounded in "The
-      Mom Test" methodology — it ensures you learn from customers without leading them or fishing for compliments. Examples:\n\n<example>\nContext:
-      Preparing for customer discovery interviews\nuser: "I think there''s an opportunity in helping freelancers manage their
-      taxes. I have 5 interviews lined up this week."\nassistant: "Great — let me use the customer-interviewer agent to prepare
-      a Mom Test-compliant interview script that uncovers real tax pain points without leading your interviewees."\n<commentary>\nInterview
-      prep is the highest-leverage moment. Bad questions waste everyone''s time and produce false validation.\n</commentary>\n</example>\n\n<example>\nContext:
-      Debriefing after customer conversations\nuser: "I just talked to 3 potential users. They all said they loved the idea!"\nassistant:
-      "Let''s check if that''s real signal or just politeness. I''ll use the customer-interviewer agent to debrief those conversations
-      and separate facts from compliments."\n<commentary>\nPeople are polite. The Mom Test teaches us to look past enthusiasm
-      and find commitments and concrete behaviors.\n</commentary>\n</example>\n\n<example>\nContext: Figuring out who to talk
-      to\nuser: "I want to validate a meal planning app idea but don''t know where to start"\nassistant: "Before building
-      anything, let''s figure out who to talk to and what to ask. I''ll use the customer-interviewer agent to design your
-      customer discovery plan."\n<commentary>\nWho you talk to matters as much as what you ask. The agent helps identify the
-      right customer segments.\n</commentary>\n</example>\n\n<example>\nContext: Extracting signal from noisy conversations\nuser:
-      "I''ve done 10 interviews and I''m getting mixed signals. Some people care about the problem, others don''t."\nassistant:
-      "Mixed signals usually mean you''re talking to different segments or asking the wrong questions. Let me use the customer-interviewer
-      agent to analyze your interview notes and find the real patterns."\n<commentary>\nPattern recognition across interviews
-      is where the gold is — but only if the data is clean.\n</commentary>\n</example>'
-    description_summary: Use for preparing customer discovery interviews, choosing interview segments, generating non-leading
-      questions, debriefing conversations, and validating problem hypotheses through user interviews. It specializes in applying
-      The Mom Test methodology to separate concrete past behavior, real pain, commitments, and segment patterns from compliments
-      or vague enthusiasm. It should not be used to seek validation by pitching an idea, asking leading questions, or treating
-      positive reactions as evidence without behavioral signal.
-    description_hash: sha256:822b1bdaecdefdba95bfb6dabee5a9bd8cd3e8827256d8f6c119ec0bf937cacd
+    description: 'Use this agent when preparing for customer discovery interviews, generating Mom Test-compliant questions,
+      debriefing conversations, identifying customer segments, or extracting signal from noisy interview data. Deeply grounded
+      in Rob Fitzpatrick''s "The Mom Test" — people lie out of politeness, optimism, and social pressure; the job is to make
+      it impossible for them to do that. Typical triggers: "I have 5 interviews lined up this week, help me prep questions"
+      (Mom Test-compliant scripts that surface real pain without leading); "I just talked to 3 potential users — they all
+      said they loved the idea" (separate compliments from concrete commitments, score the signal); "I want to validate a
+      meal planning app idea but don''t know where to start" (customer segment + discovery plan); "I''ve done 10 interviews
+      and I''m getting mixed signals" (pattern recognition across conversations, surface contradictions). Tracks four levels
+      of commitment — time, reputation, financial, effort — as the only real signal. Anti-scope: not for usability testing
+      of an existing UI (route to `ux-researcher`); not for synthesizing reviews/tickets at scale (route to `feedback-synthesizer`);
+      not for market sizing or unit economics (route to `market-validator`); not for scoring or stress-testing the idea itself
+      (route to `idea-evaluator`); not for running A/B tests with real users (route to `experiment-tracker`).'
+    description_summary: Use for preparing and debriefing customer discovery interviews, especially when the task needs Mom
+      Test-compliant questions that avoid leading, compliments, hypotheticals, or false validation. Specializes in identifying
+      customer segments, extracting concrete signal from noisy conversations, recognizing patterns across interviews, and
+      evaluating commitment through time, reputation, financial, and effort signals. Do not use for usability testing an existing
+      UI, large-scale review or ticket synthesis, market sizing or unit economics, idea scoring, or running A/B tests with
+      real users.
+    description_hash: sha256:8067f8d4f7f1b4398440c4f9e28aa110780b58b226f712689793b2d06e005bb1
     body_hash: sha256:6499b9c49dc39d0ec322832c42a3d5eb7f3a55e4fd1c2ddce10bae5b4252df06
     tags:
     - customer
@@ -751,33 +585,25 @@ agents:
     file: project-management/experiment-tracker.md
     category: project-management
     scope: project
-    description: 'PROACTIVELY use this agent when experiments are started, modified, or when results need analysis. This agent
-      specializes in tracking A/B tests, feature rollouts, and product iterations with real users. Owns the EVIDENCE - experiment
-      design, instrumentation, statistical analysis, written readouts and recommendations. Anti-scope - this is NOT `product-manager`
-      (experiment-tracker recommends ship/kill via written readout; product-manager makes the final call - the readout names
-      a winner, PM signs the ship-or-kill); NOT `agent-eval-engineer` (experiments = real users + feature flags; evals = judge-graded
-      agent quality). Should be triggered automatically when experimental code paths or feature flags are introduced. Examples:\n\n<example>\nContext:
-      When implementing feature flags or A/B test variants\nuser: "Add a feature flag to test the new onboarding flow"\nassistant:
-      "I''ve implemented the feature flag for the onboarding flow A/B test. Let me use the experiment-tracker agent to properly
-      document this experiment and set up tracking."\n<commentary>\nEvery feature flag represents an experiment that needs
-      proper tracking and success metrics.\n</commentary>\n</example>\n\n<example>\nContext: After deploying experimental
-      features\nuser: "The new viral sharing feature is now live for 10% of users"\nassistant: "Great! The viral sharing feature
-      is deployed. I''ll use the experiment-tracker agent to monitor its performance and document initial results."\n<commentary>\nLive
-      experiments need immediate tracking setup to capture valuable data from the start.\n</commentary>\n</example>\n\n<example>\nContext:
-      When reaching experiment milestones\nuser: "It''s been a week since we launched the TikTok integration test"\nassistant:
-      "Perfect timing for analysis. Let me use the experiment-tracker agent to compile the week-one results and determine
-      if we should expand the test."\n<commentary>\nRegular experiment checkpoints ensure data-driven decisions about feature
-      rollouts.\n</commentary>\n</example>\n\n<example>\nContext: Before making product decisions\nuser: "Should we keep the
-      AI avatar feature or remove it?"\nassistant: "Let me analyze the experiment data to inform this decision. I''ll use
-      the experiment-tracker agent to review all metrics and user feedback for the AI avatar feature test."\n<commentary>\nProduct
-      decisions should be backed by experiment data, not gut feelings.\n</commentary>\n</example>'
-    description_summary: Use when a project starts, changes, monitors, or analyzes an experiment involving real users, such
-      as an A/B test, feature rollout, product iteration, or newly introduced feature flag or experimental code path. Specializes
-      in experiment design, instrumentation, success metrics, statistical analysis, evidence gathering, written readouts,
-      and recommendations that name a winning variant or recommend ship/kill. Do not use for final product decision ownership,
-      which belongs to product management, or for judge-graded agent quality evaluations, which belong to agent evaluation
-      work.
-    description_hash: sha256:5cc753105623c45cae07a79a52f64b9bc56f0eb4d892f53b452c8ad933f10ada
+    description: 'PROACTIVELY use this agent when experiments are started, modified, or when results need analysis — A/B tests,
+      feature rollouts, and product iterations with real users behind feature flags. Owns the evidence: experiment design,
+      instrumentation, sample-size calculation, statistical analysis, and the written readout with a recommendation. Fires
+      automatically when experimental code paths or feature flags are introduced. Typical triggers: "add a feature flag to
+      test the new onboarding flow" (document hypothesis, set up tracking, define success metrics); "the new viral sharing
+      feature is now live for 10% of users" (live monitoring, initial results); "it''s been a week since we launched the TikTok
+      integration test" (week-one readout, expand/hold/kill recommendation); "should we keep the AI avatar feature or remove
+      it?" (compile experiment data into a ship/kill recommendation). Authority boundary — produces the readout and the recommendation;
+      `product-manager` makes the final ship/kill call. Anti-scope: not for the ship/kill product decision itself (route to
+      `product-manager` — the readout names a winner, PM signs); not for judge-graded agent quality evaluation (route to `agent-eval-engineer`
+      — experiments are real users + flags, evals are agent-quality batteries); not for the deploy-safety side of a rollout
+      (route to `release-engineer` — canary % and rollback triggers are deployment, not experimentation); not for analytics
+      infrastructure broadly (route to `analytics-reporter`).'
+    description_summary: Use when a real-user experiment is started, changed, monitored, or analyzed, especially A/B tests,
+      feature-flagged rollouts, and product iterations. Specializes in experiment design, instrumentation, sample-size planning,
+      statistical analysis, live/result readouts, and evidence-based recommendations. Do not use for the final product ship/kill
+      decision, judge-graded agent evaluations, deployment safety mechanics such as canary and rollback control, or broad
+      analytics infrastructure work.
+    description_hash: sha256:e55fe27105b6c0c43a6bc32ccb190b72e93c3ec71a1f90bff1cd357e240e04fc
     body_hash: sha256:7b5729f9a6aba26a84e3ab9481381b5f034aa93a30375cdc17851b8c4e3fd8aa
     tags:
     - experiment
@@ -793,29 +619,24 @@ agents:
     file: product/feedback-synthesizer.md
     category: product
     scope: project
-    description: 'Use this agent when you need to analyze user feedback from multiple sources, identify patterns in user complaints
-      or requests, synthesize insights from reviews, or prioritize feature development based on user input. This agent excels
-      at turning raw feedback into actionable product insights. Examples:\n\n<example>\nContext: Weekly review of user feedback
-
-      user: "We got a bunch of new app store reviews this week"\nassistant: "Let me analyze those reviews for actionable insights.
-      I''ll use the feedback-synthesizer agent to identify patterns and prioritize improvements."\n<commentary>\nRegular feedback
-      analysis ensures the product evolves based on real user needs.\n</commentary>\n</example>\n\n<example>\nContext: Feature
-      prioritization for next sprint\nuser: "What should we build next based on user feedback?"\nassistant: "I''ll analyze
-      all recent feedback to identify the most requested features. Let me use the feedback-synthesizer agent to synthesize
-      user input across all channels."\n<commentary>\nFeature prioritization should be driven by actual user needs, not assumptions.\n</commentary>\n</example>\n\n<example>\nContext:
-      Post-launch feedback analysis\nuser: "Our new feature has been live for a week. What are users saying?"\nassistant:
-      "I''ll compile and analyze user reactions to the new feature. Let me use the feedback-synthesizer agent to create a
-      comprehensive feedback report."\n<commentary>\nPost-launch feedback is crucial for rapid iteration and improvement.\n</commentary>\n</example>\n\n<example>\nContext:
-      Identifying user pain points\nuser: "Users seem frustrated but I can''t pinpoint why"\nassistant: "I''ll dig into the
-      feedback to identify specific pain points. Let me use the feedback-synthesizer agent to analyze user sentiment and extract
-      core issues."\n<commentary>\nVague frustrations often hide specific, fixable problems that feedback analysis can reveal.\n</commentary>\n</example>'
-    description_summary: Use when a task involves analyzing user feedback from multiple sources, such as app store reviews,
-      support tickets, surveys, launch reactions, or feature requests. It specializes in identifying recurring complaints,
-      extracting pain points, summarizing sentiment, and turning raw feedback into prioritized product insights. It is not
-      the right fit for implementing the resulting product changes or making prioritization decisions without user-feedback
-      evidence.
-    description_hash: sha256:33c48863ef095f3806a434e2208d129bc53ebd2b64d0cd1a92dd5fdfb94a268b
-    body_hash: sha256:058aefb3e409dafa316865dcb22be26d799ca4e6c5fcf5cbff96f852dda0cca5
+    description: 'Use this agent to analyze user feedback from multiple sources (app store reviews iOS+Android, in-app submissions,
+      social mentions, support tickets, Reddit/forum discussions, beta reports), identify patterns, score urgency, and turn
+      vague complaints into specific, prioritized actions. Typical triggers: "we got a bunch of new app store reviews this
+      week" (weekly synthesis, theme extraction, sentiment trend); "what should we build next based on user feedback?" (feature
+      prioritization grounded in real signal); "our new feature has been live for a week — what are users saying?" (post-launch
+      impact and friction report); "users seem frustrated but I can''t pinpoint why" (digging through vague complaints to
+      find specific, fixable pain points). Produces synthesis deliverables: top issues with quotes + %, top feature requests
+      by segment, quick wins shippable this week, sentiment trends week-over-week. Anti-scope: not for one-on-one customer
+      discovery interviews (route to `customer-interviewer`); not for usability research and persona building (route to `ux-researcher`);
+      not for responding to individual support tickets (route to `support-responder`); not for market sizing or business-model
+      evaluation (route to `market-validator`); not for the ship/kill product call (route to `product-manager`).'
+    description_summary: Use for synthesizing user feedback across app store reviews, in-app submissions, social/support channels,
+      forums, Reddit, and beta reports. It specializes in extracting recurring themes, sentiment trends, urgency scores, prioritized
+      issues, feature requests by segment, representative quotes, and quick wins. Do not use for individual customer interviews,
+      usability research or personas, support-ticket replies, market sizing, business-model evaluation, or final ship/kill
+      product decisions.
+    description_hash: sha256:a6774ce77f47c6762a83e0d59cfc551e16aa35ac2ab3dd58ef2000726e62a36a
+    body_hash: sha256:7e52dd0a7e5037423bbb6d523423cd9d6a19aacb6ab4d4dca94aee59068355fb
     tags:
     - feedback
     - product
@@ -830,68 +651,24 @@ agents:
     file: studio-operations/finance-tracker.md
     category: studio-operations
     scope: project
-    description: 'Use this agent when managing budgets, optimizing costs, forecasting revenue, or analyzing financial performance.
-      This agent excels at transforming financial chaos into strategic clarity, ensuring studio resources generate maximum
-      return. Examples:\n\n<example>\nContext: Planning next quarter''s development budget
-
-      user: "We have $50k for Q2, how should we allocate it?"
-
-      assistant: "I''ll create an optimized budget allocation plan. Let me use the finance-tracker agent to analyze your needs
-      and maximize ROI."
-
-      <commentary>
-
-      Strategic budget allocation can be the difference between growth and stagnation in app development.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: App profitability analysis
-
-      user: "Our fitness app has 10k users but we''re still losing money"
-
-      assistant: "Let''s analyze your unit economics and find the path to profitability. I''ll use the finance-tracker agent
-      to break down costs and revenue opportunities."
-
-      <commentary>
-
-      Many apps fail not from lack of users but from unsustainable unit economics.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Evaluating monetization strategies
-
-      user: "Should we switch from ads to subscriptions?"
-
-      assistant: "This requires careful financial modeling. I''ll use the finance-tracker agent to project revenues and compare
-      monetization strategies."
-
-      <commentary>
-
-      Monetization model changes can dramatically impact both revenue and user experience.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Investor reporting preparation
-
-      user: "I need to show our investors our burn rate and runway"
-
-      assistant: "I''ll prepare comprehensive financial reports for your investors. Let me use the finance-tracker agent to
-      create clear visualizations of your financial health."
-
-      <commentary>
-
-      Clear financial reporting builds investor confidence and secures future funding.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for project tasks involving budgets, cost optimization, revenue forecasting, profitability analysis,
-      runway, burn rate, investor reporting, or monetization tradeoffs. It specializes in financial modeling, unit economics,
-      allocation planning, ROI analysis, and turning messy financial inputs into decision-ready projections and reports. It
-      is not intended for general product strategy, user research, engineering implementation, or marketing work unless the
-      task is primarily financial.
-    description_hash: sha256:6d3be69546e4fc0ba9251c3146e637fe2bc3b86016caa3077d5737573148e2a7
-    body_hash: sha256:a88541e1eed4779a04b075df9daf7c30fc6d8ca6b4a58af04e7ab91d81252f09
+    description: 'Use this agent to manage budgets, optimize costs, model revenue, evaluate unit economics, and produce financial
+      reports for stakeholders or investors. Covers budget allocation across projects, CAC/LTV/payback analysis, MRR/ARR/ARPU
+      modeling, burn rate and runway tracking, and ROI on features and campaigns. Typical triggers: "we have $50k for Q2,
+      how should we allocate it?" (optimized budget allocation across dev, marketing, infrastructure, ops, reserve); "our
+      fitness app has 10k users but we''re still losing money" (unit-economics breakdown, path to profitability); "should
+      we switch from ads to subscriptions?" (financial model comparing monetization strategies); "I need to show our investors
+      our burn rate and runway" (investor reporting pack — MRR, CAC, LTV, cohort retention, budget vs actual, 12-month forecast).
+      Anti-scope: not for product/user analytics (route to `analytics-reporter`); not for market sizing and TAM (route to
+      `market-validator`); not for fundraising strategy or pitch deck design (route to `visual-storyteller` for deck visuals,
+      `content-creator` for narrative); not for legal/tax structuring (route to `legal-compliance-checker` for compliance,
+      external accountants for tax); not for infrastructure cost monitoring beyond budget review (route to `infrastructure-maintainer`).'
+    description_summary: Use for project and business finance tasks such as budget allocation, cost optimization, revenue
+      modeling, burn rate, runway, investor reporting, and feature or campaign ROI analysis. It specializes in unit economics
+      and monetization metrics including CAC, LTV, payback period, MRR, ARR, ARPU, cohort retention, budget versus actuals,
+      and financial forecasts. Do not use for product analytics, market sizing, fundraising strategy, pitch deck design, legal
+      or tax structuring, or detailed infrastructure cost monitoring beyond budget review.
+    description_hash: sha256:9959bd772b1d1badaee33e4442ea8665ea9e06374fed435704979313b7f353af
+    body_hash: sha256:eda8116769ebb0e996e7f8466ab5174e4e8333ade18956af3e6b1d11fadb36fb
     tags:
     - finance
     - studio-operations
@@ -1036,16 +813,23 @@ agents:
     file: marketing/growth-hacker.md
     category: marketing
     scope: project
-    description: Use this agent for rapid user acquisition, viral loop creation, and data-driven growth experiments. Combines
-      marketing, product, and data analysis to identify and exploit growth opportunities and build scalable systems that drive
-      exponential user growth.
-    description_summary: Use for tasks focused on rapid user acquisition, viral loop design, growth experiment planning, and
-      scaling measurable adoption. It specializes in combining marketing strategy, product optimization, and data analysis
-      to identify growth opportunities and design systems that improve activation, retention, referral, or conversion. It
-      is not the right fit for work that is primarily brand design, long-form content production, or general product development
-      without a growth metric or experiment focus.
-    description_hash: sha256:4ebbf6891930826ca69b97cea54fce1f96056c7d5256af40a20b73b6f6207dd3
-    body_hash: sha256:bd7887081e9159ed64b2803033114471f84269f3205b22e513526cd840b8225a
+    description: 'Use this agent for rapid user acquisition, viral loop design, conversion optimization, and data-driven growth
+      experiments. Combines marketing creativity with analytical rigor across the AARRR funnel (acquisition, activation, retention,
+      referral, revenue). Typical triggers: "design a referral program with built-in virality" (viral loop blueprint, incentive
+      structure, network-effect features); "run A/B tests on acquisition channels" (ICE-prioritized experiments, multiple
+      parallel tests, scale winners); "identify highest-ROI acquisition channels" (channel performance audit, CAC/LTV economics,
+      automated scaling); "set up growth tracking and find bottlenecks in the user journey" (cohort analysis, funnel diagnostics,
+      leading indicators). Anti-scope: not for one-platform tactical execution (route to `tiktok-strategist`, `instagram-curator`,
+      `twitter-engager`, `reddit-community-builder`); not for App Store listing optimization (route to `app-store-optimizer`);
+      not for content production (route to `content-creator`); not for randomized in-product experiment design and statistical
+      readouts (route to `experiment-tracker`); not for analytics infrastructure and dashboarding (route to `analytics-reporter`).'
+    description_summary: Use for cross-channel growth strategy, rapid user acquisition, viral loop design, conversion optimization,
+      and AARRR funnel experiments. It specializes in prioritizing data-driven growth tests, diagnosing funnel and cohort
+      bottlenecks, evaluating CAC/LTV economics, and scaling high-ROI acquisition channels. Do not use for one-platform tactical
+      execution, App Store listing optimization, content production, randomized in-product experiment statistics, or analytics
+      infrastructure and dashboarding.
+    description_hash: sha256:7cf74cfe82ff0f1d2285a32a0e250f58f539e5bd0d0b101a5fdf11102a7dff2e
+    body_hash: sha256:1839d242ce5e1c845c5d158017a4e4929bba86cbfd39f780d26a67c66af8d276
     tags:
     - growth
     - hacker
@@ -1133,33 +917,23 @@ agents:
     category: product
     scope: project
     description: 'Use this agent to stress-test startup ideas before committing time to build them. Applies proven frameworks
-      (YC scorecard, riskiest-assumption test, jobs-to-be-done, napkin math) to score ideas, identify the riskiest assumptions,
-      and make kill/pursue/pivot decisions. The skeptical friend every founder needs. For a deeper failure-first pre-mortem
-      on a concrete plan (stakeholder round, severity × likelihood × invisibility risk register, test matrix with fail thresholds),
-      suggest the user invoke the `/pre-mortem` skill instead — this agent doesn''t reimplement that. Examples:\n\n<example>\nContext:
-      Evaluating a new startup idea\nuser: "I want to build an app that helps people find workout buddies nearby"\nassistant:
-      "Let me stress-test that idea before you invest a sprint. I''ll use the idea-evaluator agent to score it across key
-      dimensions and identify the riskiest assumptions."\n<commentary>\nEvery sprint invested in the wrong idea is a sprint
-      not invested in the right one.\n</commentary>\n</example>\n\n<example>\nContext: Choosing between multiple ideas\nuser:
-      "I have 4 ideas and can only build one this week. Help me pick."\nassistant: "I''ll evaluate all 4 against the same
-      criteria so you can compare apples to apples. Let me use the idea-evaluator agent to rank them."\n<commentary>\nWhen
-      choosing between ideas, consistent evaluation criteria prevent gut-feel bias.\n</commentary>\n</example>\n\n<example>\nContext:
-      Deciding whether to kill or pivot an idea\nuser: "We built the MVP and got 50 signups but only 3 active users. Should
-      we keep going?"\nassistant: "Those numbers tell a story. Let me use the idea-evaluator agent to diagnose what''s happening
-      and recommend kill, pivot, or persevere."\n<commentary>\nThe hardest startup skill is knowing when to quit vs. when
-      to push through.\n</commentary>\n</example>\n\n<example>\nContext: User wants a deep pre-mortem rather than scoring\nuser:
-      "Run a pre-mortem on the AI journaling app before we build it"\nassistant: "Pre-mortem is the /pre-mortem skill''s job
-      — it has a richer failure-first protocol (stakeholder round, invisibility-weighted risk register, test matrix) than
-      this agent''s scoring framework. Suggest running `/pre-mortem` directly. I can still do an idea-scoring pass first if
-      you want both lenses."\n<commentary>\nThe agent is honest about its anti-scope. Idea-scoring and deep pre-mortem are
-      different jobs; suggest the right tool.\n</commentary>\n</example>'
-    description_summary: Use for evaluating startup ideas before committing build time, comparing multiple ideas, or deciding
-      whether early traction signals justify killing, pivoting, or continuing. It specializes in structured idea scoring using
-      frameworks such as YC-style criteria, riskiest-assumption testing, jobs-to-be-done, and rough market/unit-economics
-      math to surface the weakest assumptions and recommend kill, pursue, or pivot. Do not route deep failure-first pre-mortems
-      on concrete plans here; those should use the `/pre-mortem` skill for stakeholder analysis, severity-likelihood-invisibility
-      risk registers, and fail-threshold test matrices.
-    description_hash: sha256:eb245732f48f057a75834eda4b67e07374a90678b66c82fb28b5129eb9950b83
+      — YC scorecard (10 dimensions × 5), Riskiest Assumption Test, Jobs-to-be-Done, Napkin Math — to score ideas, identify
+      the riskiest assumption, and make kill / pivot / persevere calls. The skeptical friend every founder needs. Typical
+      triggers: "I want to build an app that helps people find workout buddies nearby" (single idea, full scorecard + RAT
+      + recommendation); "I have 4 ideas and can only build one this week — help me pick" (apples-to-apples ranking with consistent
+      criteria); "we built the MVP and got 50 signups but only 3 active users — should we keep going?" (kill/pivot/persevere
+      call grounded in post-MVP signals); "run a pre-mortem on the AI journaling app before we build it" (suggest invoking
+      the `/pre-mortem` skill instead — richer failure-first protocol with stakeholder round, invisibility-weighted risk register,
+      test matrix). Anti-scope: not for deep failure-first pre-mortem (route to `/pre-mortem` skill); not for market sizing
+      or unit economics depth (route to `market-validator`); not for reverse-engineering competitor strategy (route to `competitive-intel`);
+      not for customer-discovery interviews (route to `customer-interviewer`); not for trend research or viral mechanics (route
+      to `trend-researcher`).'
+    description_summary: Use for early or post-MVP startup idea evaluation when a founder needs a structured kill, pivot,
+      persevere, or prioritization decision. It specializes in applying YC-style scoring, Riskiest Assumption Testing, Jobs-to-be-Done,
+      and rough napkin math to compare ideas, identify the core assumption to test, and interpret early traction signals.
+      Do not use for deep failure-first pre-mortems, detailed market sizing or unit economics, competitor strategy analysis,
+      customer interviews, or trend and virality research; route those to the relevant specialized agents or skill.
+    description_hash: sha256:d7871ebde33bab5c5a4177cb5c80ec535efacda45e9bf27a03659c28c7fe9fae
     body_hash: sha256:f7326ae3f162729d52a8359dca98568a4da3fb70fdddda2f7a09b66b4fa23819
     tags:
     - evaluator
@@ -1216,67 +990,25 @@ agents:
     file: studio-operations/infrastructure-maintainer.md
     category: studio-operations
     scope: project
-    description: 'Use this agent when monitoring system health, optimizing performance, managing scaling, or ensuring infrastructure
-      reliability. This agent excels at keeping studio applications running smoothly while preparing for growth and preventing
-      disasters. Examples:\n\n<example>\nContext: App experiencing slow performance
-
-      user: "Users are complaining the app is getting slower"
-
-      assistant: "I''ll diagnose and optimize your app''s performance. Let me use the infrastructure-maintainer agent to identify
-      bottlenecks and implement solutions."
-
-      <commentary>
-
-      Performance degradation often creeps in gradually until it reaches a tipping point that drives users away.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Preparing for viral growth
-
-      user: "We might go viral next week with this influencer partnership"
-
-      assistant: "Let''s ensure your infrastructure can handle the surge. I''ll use the infrastructure-maintainer agent to
-      audit and scale your systems proactively."
-
-      <commentary>
-
-      Viral moments can kill apps that aren''t prepared—success becomes failure without proper infrastructure.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Reducing infrastructure costs
-
-      user: "Our server costs are eating up all our profit margins"
-
-      assistant: "I''ll analyze and optimize your infrastructure spending. Let me use the infrastructure-maintainer agent
-      to find cost savings without sacrificing performance."
-
-      <commentary>
-
-      Many apps overspend on infrastructure due to poor optimization and outdated configurations.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Setting up monitoring and alerts
-
-      user: "I want to know immediately if something breaks"
-
-      assistant: "Proactive monitoring is essential. I''ll use the infrastructure-maintainer agent to set up comprehensive
-      health checks and alert systems."
-
-      <commentary>
-
-      The first user complaint should never be how you discover an outage.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for tasks involving system health, performance bottlenecks, scaling readiness, infrastructure
-      reliability, monitoring, alerting, and infrastructure cost optimization. It specializes in diagnosing operational issues,
-      hardening applications against outages or traffic spikes, and improving runtime efficiency without sacrificing reliability.
-      No explicit anti-scope is defined.
-    description_hash: sha256:c88dd94f5b23a7e0e3cc8a5de36dfe5681dfcc5f8cab849f7052e98e54e07690
-    body_hash: sha256:301b9595168ca3a02833ed5cd572368120e45dce39e041ee5dd32e4f85240d2b
+    description: 'Use this agent for infrastructure reliability, performance optimization, capacity planning, cost management,
+      and disaster recovery for studio applications. Spans load balancers, autoscaling, container orchestration (ECS/K8s),
+      databases (RDS/Aurora), caching layers (Redis/Memcached), CDN, monitoring (APM, ELK, CloudWatch), and incident response.
+      Typical triggers: "users are complaining the app is getting slower" (profile bottlenecks, optimize queries, implement
+      caching); "we might go viral next week with this influencer partnership" (proactive capacity audit, autoscaling, load
+      testing); "our server costs are eating up all our profit margins" (cost optimization — right-sizing, reserved instances,
+      spot, lifecycle policies); "I want to know immediately if something breaks" (health checks, alert thresholds, dashboards,
+      SLA tracking). Anti-scope: not for application-level CI/CD pipeline building (route to `devops-automator`); not for
+      the rollout/launch process of a specific release (route to `release-engineer`); not for API contract or load testing
+      of specific endpoints (route to `api-tester`); not for application-level perf benchmarking (route to `performance-benchmarker`);
+      not for cloud-cost budget allocation across business units (route to `finance-tracker`); not for security threat modeling
+      (route to `security-auditor`).'
+    description_summary: Use for infrastructure reliability work covering production performance, capacity planning, cost
+      optimization, disaster recovery, observability, and incident response. It specializes in systems such as load balancers,
+      autoscaling, ECS/Kubernetes, RDS/Aurora, Redis or Memcached, CDNs, APM, ELK, and CloudWatch. Do not use for application
+      CI/CD pipelines, release rollout management, endpoint-specific API or load testing, application-level benchmarking,
+      business-unit budget allocation, or security threat modeling.
+    description_hash: sha256:2c09291077163d94a8341236d934b2d675cd63c2ae6d59eeb79e9e8d0c58ba78
+    body_hash: sha256:1f2a9782e1e051e4927a50bd5bf24f98acfb3da4cb485f219fc47b0f0c100817
     tags:
     - infrastructure
     - maintainer
@@ -1291,15 +1023,24 @@ agents:
     file: marketing/instagram-curator.md
     category: marketing
     scope: project
-    description: Use this agent for Instagram visual content strategy, Stories and Reels production, and platform-native growth
-      tactics. Understands Instagram's algorithm, visual aesthetics, and engagement patterns to drive followers, engagement,
-      and conversions.
-    description_summary: Use for tasks focused on Instagram content strategy, including visual direction, Stories, Reels,
-      engagement planning, and platform-native growth tactics. Specializes in Instagram algorithm behavior, aesthetic presentation,
-      content formats, audience interaction patterns, and conversion-oriented social execution. Best suited to Instagram-specific
-      work rather than broader cross-platform social strategy unless Instagram is the primary channel.
-    description_hash: sha256:172d51cb373d623ba76623008bcf3ae136046601dc3e879e1e687edb762318f1
-    body_hash: sha256:7ab9a71d39e42c44af5832de6e20bef124d6caa61275ad5471a9254228483cd5
+    description: 'Use this agent for Instagram visual content strategy, Stories and Reels production planning, grid aesthetics,
+      and platform-native growth tactics. Knows the algorithm — engagement signals, distribution mechanics, audio trends,
+      hashtag strategy, optimal posting cadence. Typical triggers: "design a 30-day content grid maintaining visual cohesion"
+      (content calendar with grid planning, themed pillars, consistent aesthetic); "plan a Reels series with viral hooks"
+      (script Reels with 3-second hooks, trending audio, replay loops, text overlays for silent viewing); "plan Stories sequences
+      that build narrative arcs" (10-slot Story sequences with polls/quizzes/cliffhangers); "analyze our competitors and propose
+      a hashtag + posting-time strategy" (Instagram Insights interpretation, hashtag balance, posting windows). Anti-scope:
+      not for TikTok-specific strategy (route to `tiktok-strategist`); not for Twitter/X tactics (route to `twitter-engager`);
+      not for Reddit community building (route to `reddit-community-builder`); not for cross-platform content writing (route
+      to `content-creator`); not for the brand identity system or asset library (route to `brand-guardian`); not for paid
+      acquisition or growth loops (route to `growth-hacker`).'
+    description_summary: Use for Instagram-specific visual content strategy, including grid planning, Stories sequences, Reels
+      production plans, hashtag strategy, posting cadence, and platform-native growth tactics. It specializes in Instagram
+      engagement signals, distribution mechanics, audio trends, visual cohesion, narrative Story arcs, and competitor-informed
+      content recommendations. Do not use for TikTok, Twitter/X, Reddit, cross-platform copywriting, brand identity systems,
+      asset libraries, paid acquisition, or broader growth loops.
+    description_hash: sha256:51cab744339d0e4e4cedf7858ab15554e9b0ffd7282f7e3a3a25bb08a19fa38d
+    body_hash: sha256:cef4b789eb90c435d230c04a65d587d348424d9d60514657b60ab7b2c72b7833
     tags:
     - curator
     - instagram
@@ -1314,18 +1055,19 @@ agents:
     file: bonus/joker.md
     category: bonus
     scope: project
-    description: 'Use this agent when you need to lighten the mood, create funny content, or add humor to any situation. This
-      agent specializes in dad jokes, programming puns, and startup humor. Examples:\n\n<example>\nContext: Team needs a laugh
-      during a stressful sprint\nuser: "We''ve been debugging for hours and everyone''s frustrated"\nassistant: "Time for
-      a morale boost! Let me use the joker agent to share some programming humor."\n<commentary>\nHumor can help reset team
-      energy during challenging moments.\n</commentary>\n</example>\n\n<example>\nContext: Creating fun error messages\nuser:
-      "Our 404 page is boring"\nassistant: "Let''s make that error page memorable! I''ll use the joker agent to create some
-      funny 404 messages."\n<commentary>\nHumorous error pages can turn frustration into delight.\n</commentary>\n</example>'
-    description_summary: Use for tasks where the goal is to add humor, lighten a tense moment, or produce funny user-facing
-      copy. Specializes in dad jokes, programming puns, startup humor, and playful variants of otherwise dry messages such
-      as 404 pages or team morale notes. No explicit anti-scope is specified.
-    description_hash: sha256:6a0b7b55520405e19b46c84f9bd01deeb2a972e16b51210e7b031586c3ad3098
-    body_hash: sha256:51f65b1a7a0f51e1702c5f009dde2b187a52d8059a11247f112f6a1493bd144d
+    description: 'Use this agent when you need to lighten the mood, create funny content, or add humor to a stressful moment.
+      Specializes in dad jokes, programming puns, and startup humor. Typical triggers: "we''ve been debugging for hours and
+      everyone''s frustrated" (drop a programming joke for morale), "our 404 page is boring" (memorable error copy), or any
+      "need a laugh" / "add some personality" / "funny error messages" request. Keeps it clean, inclusive, and developer-aware
+      — knows when NOT to joke. Reads the room. Anti-scope: not for serious copywriting (route to `content-creator`), not
+      for full microcopy systems with brand voice (route to `brand-guardian` for tone rules + `content-creator` for execution),
+      not for UI delight in general (route to `whimsy-injector`).'
+    description_summary: Use for clean, inclusive humor that lightens stressful moments or adds developer-aware personality
+      to small pieces of content. It specializes in dad jokes, programming puns, startup humor, funny error messages, morale-boosting
+      quips, and memorable one-off copy such as a 404 message. Do not use for serious copywriting, full microcopy systems
+      or brand voice work, or general UI delight beyond humor.
+    description_hash: sha256:30eb55f96fd942d3715611bd3c7c9bc1c6ea4e6d88c007eea0f76e22cb7da3b3
+    body_hash: sha256:f2eb5d6532f75f10efd08d6b90b893caa16707e7d29e2fa7d399708d3bb3df56
     tags:
     - bonus
     - joker
@@ -1339,67 +1081,27 @@ agents:
     file: studio-operations/legal-compliance-checker.md
     category: studio-operations
     scope: project
-    description: 'Use this agent when reviewing terms of service, privacy policies, ensuring regulatory compliance, or handling
-      legal requirements. This agent excels at navigating the complex legal landscape of app development while maintaining
-      user trust and avoiding costly violations. Examples:\n\n<example>\nContext: Launching app in European markets
-
-      user: "We want to expand to the EU next month"
-
-      assistant: "EU expansion requires GDPR compliance. I''ll use the legal-compliance-checker agent to audit your current
-      practices and implement necessary changes."
-
-      <commentary>
-
-      GDPR violations can result in fines up to 4% of global annual revenue—preparation is essential.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Adding AI features to the app
-
-      user: "We''re integrating ChatGPT into our education app"
-
-      assistant: "AI integration has specific legal considerations. Let me use the legal-compliance-checker agent to ensure
-      proper disclosures and data handling."
-
-      <commentary>
-
-      AI features require transparency about data usage and potential biases, especially in education.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Collecting user health data
-
-      user: "Our fitness app will track heart rate and sleep patterns"
-
-      assistant: "Health data has strict privacy requirements. I''ll use the legal-compliance-checker agent to implement HIPAA-compliant
-      data handling."
-
-      <commentary>
-
-      Health data mishandling can result in both regulatory fines and loss of user trust.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Implementing in-app purchases for children''s app
-
-      user: "We want to add a coin store to our kids'' game"
-
-      assistant: "Children''s apps have special requirements for purchases. Let me use the legal-compliance-checker agent
-      to ensure COPPA compliance and parental controls."
-
-      <commentary>
-
-      Monetizing children''s apps requires careful navigation of protective regulations.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for app-development tasks involving terms of service, privacy policies, regulatory compliance,
-      legal requirements, or data-handling obligations. It specializes in identifying requirements for areas such as GDPR,
-      AI-feature disclosures, health data, children's privacy, in-app purchases, consent, and user trust implications. No
-      explicit anti-scope is stated in the definition.
-    description_hash: sha256:4c6d6d8e1347a7624024b74a1731ef7f70725fe2a2d57001e38c9caa97d661f7
-    body_hash: sha256:1e57c4fd32896a785b6673a67d2cea53ccf17ba05eb51ec9b4a1fa8bcef55141
+    description: 'Use this agent for privacy policy and ToS drafting, regulatory-compliance audits (GDPR, CCPA, COPPA, HIPAA,
+      WCAG), data-protection architecture, international expansion review, platform-policy adherence (App Store, Google Play),
+      and risk assessment. Typical triggers: "we want to expand to the EU next month" (GDPR readiness audit, consent flows,
+      data-residency, DPO question); "we''re integrating ChatGPT into our education app" (AI disclosure, data handling, COPPA/FERPA
+      implications); "our fitness app will track heart rate and sleep patterns" (HIPAA scope determination, data minimization,
+      retention policy); "we want to add a coin store to our kids'' game" (COPPA-compliant purchases, verifiable parental
+      consent, no behavioral ads, parental access rights). Drafts privacy policies, ToS, cookie banners; runs compliance checklists;
+      surfaces platform-policy traps before they cause rejections or fines. Anti-scope: not for tax/corporate structuring
+      (route to external accountants); not for security threat modeling and pen testing (route to `security-auditor`); not
+      for data infrastructure encryption or backup engineering (route to `infrastructure-maintainer`); not for marketing copy
+      review (route to `content-creator` for voice, this agent for legal claims only); not a replacement for licensed counsel
+      on serious regulatory decisions — flags when to escalate.'
+    description_summary: Use for privacy policy, terms of service, cookie banner, and regulatory compliance work involving
+      GDPR, CCPA, COPPA, HIPAA, WCAG, international expansion, data handling, platform policies, or legal-risk review. It
+      specializes in compliance audits, data-protection requirements, consent and retention flows, policy drafting, and identifying
+      App Store or Google Play policy issues before launch. Do not use for tax or corporate structuring, security threat modeling
+      or penetration testing, infrastructure encryption or backup implementation, or general marketing copy review except
+      for legal claims. It should flag matters that require licensed legal counsel rather than serving as a substitute for
+      counsel on serious regulatory decisions.
+    description_hash: sha256:4546a5a016e9e49e24729fa27a6b8f556ee021b4d085808155032e55a9fe1eb0
+    body_hash: sha256:c4540f93e19e4c557c40648f58343bb12b55b1b6d8b9d811a34c43c6572edc2c
     tags:
     - checker
     - compliance
@@ -1415,29 +1117,24 @@ agents:
     file: product/market-validator.md
     category: product
     scope: project
-    description: 'Use this agent when you need to evaluate the business viability of a startup idea, size a market, analyze
-      unit economics, assess willingness-to-pay, or understand why similar ideas have succeeded or failed. This agent turns
-      gut feelings about opportunities into numbers and evidence. Examples:\n\n<example>\nContext: Evaluating whether a market
-      is big enough\nuser: "Is the market for AI-powered meal planning big enough to build a business around?"\nassistant:
-      "Let me use the market-validator agent to size the TAM/SAM/SOM and assess whether this market can support a venture-scale
-      business."\n<commentary>\nMarket sizing prevents building something nobody can make money from.\n</commentary>\n</example>\n\n<example>\nContext:
-      Figuring out a business model\nuser: "Should this be a subscription app or a one-time purchase?"\nassistant: "The right
-      model depends on user behavior and comparable products. I''ll use the market-validator agent to analyze monetization
-      approaches in this space."\n<commentary>\nBusiness model choice dramatically affects what you build and how you grow.\n</commentary>\n</example>\n\n<example>\nContext:
-      Understanding why a previous startup failed\nuser: "There were 3 apps that tried this before and all died. Should we
-      still try?"\nassistant: "Past failures contain gold — if you learn the right lessons. Let me use the market-validator
-      agent to do a post-mortem on those failures and identify what''s different now."\n<commentary>\nFailed startups in a
-      space can mean the idea is bad — or that timing/execution was wrong.\n</commentary>\n</example>\n\n<example>\nContext:
-      Assessing willingness to pay\nuser: "People say they want this but I don''t know if they''ll pay for it"\nassistant:
-      "Stated interest and actual payment are very different things. I''ll use the market-validator agent to assess willingness-to-pay
-      using comparable products and behavioral signals."\n<commentary>\nWillingness to pay is the single hardest thing to
-      validate pre-launch.\n</commentary>\n</example>'
-    description_summary: Use for evaluating whether a startup idea can become a viable business through market sizing, unit
-      economics, monetization analysis, willingness-to-pay assessment, and comparison with existing or failed products. It
-      specializes in grounding opportunity assessments in numbers, evidence, comparable businesses, and failure post-mortems
-      rather than relying on stated interest or intuition. It is not scoped for product design, implementation planning, or
-      technical feasibility except where those factors directly affect business viability.
-    description_hash: sha256:216e4a9c26fe482065c1319ad5205be72b7d7bdb224813666fd2325f3fdb9bbc
+    description: 'Use this agent to evaluate the business viability of a startup idea — market sizing (TAM/SAM/SOM top-down
+      and bottom-up), unit economics (CAC, LTV, payback, gross margin), willingness-to-pay assessment, business-model selection
+      (subscription vs marketplace vs ad-supported vs one-time), and post-mortems on similar startups that died. Turns gut
+      feelings into numbers and evidence. Typical triggers: "is the market for AI-powered meal planning big enough to build
+      a business around?" (TAM/SAM/SOM with method and assumptions cited); "should this be a subscription app or a one-time
+      purchase?" (business-model fit grounded in usage frequency, comparable economics, defensibility); "there were 3 apps
+      that tried this before and all died — should we still try?" (failed-startup post-mortem framework — what killed them,
+      what''s different now); "people say they want this but I don''t know if they''ll pay" (willingness-to-pay assessment
+      via comparable pricing, substitute spend, pain severity). Anti-scope: not for the kill/pivot/persevere scoring call
+      on an idea (route to `idea-evaluator`); not for competitor strategy reverse-engineering (route to `competitive-intel`);
+      not for customer-discovery interviews (route to `customer-interviewer`); not for trend / virality research (route to
+      `trend-researcher`); not for ongoing analytics or KPI dashboards (route to `analytics-reporter`).'
+    description_summary: Use for evaluating whether a startup idea can support a viable business, especially market sizing,
+      unit economics, pricing and willingness-to-pay, business-model fit, and evidence-based analysis of comparable failures.
+      It specializes in turning assumptions into TAM/SAM/SOM estimates, CAC/LTV/payback and margin reasoning, substitute-spend
+      comparisons, and post-mortems on similar startups. Do not use for final kill/pivot/persevere decisions, competitor strategy
+      reverse-engineering, customer-discovery interviews, trend or virality research, or ongoing analytics dashboards.
+    description_hash: sha256:dcaaf1f200dab71582408b4d5b5a91412191725aa9687f216972e037042fef5b
     body_hash: sha256:c8dae5c721db69a6a1250505ad563f36c38a781cb62786b107ad8ca9c4f9e57b
     tags:
     - market
@@ -1493,66 +1190,25 @@ agents:
     file: testing/performance-benchmarker.md
     category: testing
     scope: project
-    description: 'Use this agent for comprehensive performance testing, profiling, and optimization recommendations. This
-      agent specializes in measuring speed, identifying bottlenecks, and providing actionable optimization strategies for
-      applications. Examples:\n\n<example>\nContext: Application speed testing
-
-      user: "Our app feels sluggish, can you benchmark it?"
-
-      assistant: "I''ll benchmark your application''s performance comprehensively. Let me use the performance-benchmarker
-      agent to measure load times, identify bottlenecks, and provide optimization recommendations."
-
-      <commentary>
-
-      Performance benchmarking reveals invisible problems that frustrate users.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Frontend performance optimization
-
-      user: "Our website takes 5 seconds to load"
-
-      assistant: "I''ll analyze your website''s performance issues. Let me use the performance-benchmarker agent to profile
-      load times, bundle sizes, and rendering performance."
-
-      <commentary>
-
-      Every second of load time costs conversions and user satisfaction.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Database query optimization
-
-      user: "Some queries are taking forever"
-
-      assistant: "I''ll profile your database queries to find the slow ones. Let me use the performance-benchmarker agent
-      to analyze query performance and suggest optimizations."
-
-      <commentary>
-
-      Slow queries compound into application-wide performance degradation.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Mobile app performance
-
-      user: "Our React Native app is janky on older phones"
-
-      assistant: "I''ll benchmark your app''s performance on various devices. Let me use the performance-benchmarker agent
-      to measure frame rates, memory usage, and identify optimization opportunities."
-
-      <commentary>
-
-      Mobile performance issues eliminate huge segments of potential users.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use when a task requires measuring or diagnosing application performance, including load times, runtime
-      speed, rendering behavior, query latency, frame rates, memory use, or bundle size. Specializes in profiling systems,
-      identifying bottlenecks, running benchmarks, and turning measurements into concrete optimization recommendations. It
-      is not intended for general feature implementation or broad code review unless the primary question is performance-related.
-    description_hash: sha256:15954de560d495780feccbd7d70f3947ff341b9dc2bb7057523f504e7e51297c
+    description: 'Use this agent for application performance testing, profiling, and optimization recommendations across frontend
+      (Web Vitals — LCP, FID, CLS, FCP, TTI), backend (API response times, DB queries, CPU/memory), and mobile (frame rates,
+      battery, startup time). Knows the toolchain — Chrome DevTools, Lighthouse, WebPageTest, React DevTools Profiler, Xcode
+      Instruments, Android Studio Profiler, APM, k6, JMeter, Jaeger. Typical triggers: "our app feels sluggish, can you benchmark
+      it?" (full performance profile, bottleneck identification, prioritized optimization plan); "our website takes 5 seconds
+      to load" (frontend profile — bundle sizes, render-blocking resources, image optimization, lazy loading); "some queries
+      are taking forever" (DB query profiling, index suggestions, N+1 fixes); "our React Native app is janky on older phones"
+      (device-specific profiling, frame-rate measurement, memory pressure). Anti-scope: not for API load and contract testing
+      (route to `api-tester`); not for infrastructure capacity planning and autoscaling (route to `infrastructure-maintainer`);
+      not for security perf-impact analysis (route to `security-auditor`); not for LLM agent latency-coupled-to-quality eval
+      (route to `agent-eval-engineer`); not for unit/integration test writing or fixes (route to `test-writer-fixer`); not
+      for conventional test-suite trend analysis (route to `test-results-analyzer`).'
+    description_summary: Use for profiling and benchmarking application performance across web, backend, database, and mobile
+      surfaces, including Web Vitals, API latency, CPU and memory use, query behavior, frame rates, battery impact, and startup
+      time. Specializes in using tools such as Chrome DevTools, Lighthouse, WebPageTest, React DevTools Profiler, Xcode Instruments,
+      Android Studio Profiler, APM, k6, JMeter, and Jaeger to identify bottlenecks and produce prioritized optimization recommendations.
+      Do not use for API load or contract testing, infrastructure capacity planning or autoscaling, security performance-impact
+      review, LLM latency-quality evaluation, unit or integration test implementation, or conventional test-suite trend analysis.
+    description_hash: sha256:0b6eb03dbde2ca25b50ca794f61bfea628ae61211538ae3b321d2774a28c70c5
     body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
     tags:
     - benchmarker
@@ -1637,15 +1293,23 @@ agents:
     file: marketing/reddit-community-builder.md
     category: marketing
     scope: project
-    description: Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
-      and navigating Reddit's culture. Provides value first, builds genuine relationships, and respects community norms while
-      strategically growing brand presence.
-    description_summary: Use for projects that need authentic participation in Reddit communities, community-specific positioning,
-      or organic growth through helpful engagement. It specializes in reading subreddit norms, contributing value before promotion,
-      building relationships, and growing brand presence without violating community expectations. It is not suited for spam,
-      astroturfing, aggressive self-promotion, or tactics that ignore moderation rules and Reddit culture.
-    description_hash: sha256:7e3f68fe81b1850f7bb73d214afab13464b31687d58b1eef83225340133f86aa
-    body_hash: sha256:b13ad116fbc9330e08055d7c69e0a79af82311c38653cbeee0342a540aa17db7
+    description: 'Use this agent for authentic Reddit community engagement, organic growth through valuable participation,
+      AMA design, and navigating Reddit''s culture without getting nuked. Value-first, brand-second — knows that corporate
+      speak, cross-posting, and vote manipulation are instant credibility kills. Typical triggers: "identify relevant subreddits
+      for brand participation" (subreddit selection matrix, value-first engagement strategies); "plan an AMA that provides
+      genuine value" (AMA design with real expertise, not promo); "establish presence as a helpful community member" (long-term
+      reputation through consistent contributions, moderator relationships); "monitor brand mentions and manage potential
+      PR issues" (Reddit-native crisis navigation, transparency, no defensiveness). Anti-scope: not for Instagram/TikTok/Twitter
+      strategy (route to `instagram-curator`, `tiktok-strategist`, `twitter-engager`); not for long-form blog or video production
+      (route to `content-creator`); not for paid acquisition or referral loops (route to `growth-hacker`); not for support
+      ticket responses (route to `support-responder`); not for legal/compliance review of brand statements (route to `legal-compliance-checker`).'
+    description_summary: Use for Reddit-native community participation, organic presence building, subreddit selection, AMA
+      planning, moderator relationship strategy, and brand mention or PR issue handling. It specializes in value-first engagement
+      that fits Reddit culture, including avoiding corporate tone, cross-post spam, vote manipulation, defensiveness, and
+      other credibility-damaging behavior. Do not use for Instagram, TikTok, Twitter, long-form content production, paid acquisition,
+      referral loops, support tickets, or legal/compliance review.
+    description_hash: sha256:d42e419d93015cd66b97bf02326719cd36e1435d4238403e46148fb0329117b4
+    body_hash: sha256:142b6b9d51b5a939d0b47c6781259a7e4ce399e9e76331177e58bbc795ed90d6
     tags:
     - builder
     - community
@@ -1661,32 +1325,26 @@ agents:
     file: project-management/release-engineer.md
     category: project-management
     scope: project
-    description: 'Use this agent when planning a release, designing rollout strategy (canary, percentage rollout, region-by-region),
-      defining rollback drills, coordinating launch-day monitoring, owning the operational side of getting a code-complete
-      feature into users'' hands. Picks up where `tpm` leaves off (at code-complete) and runs through post-launch monitoring.
-      Anti-scope - this is NOT `tpm` (TPM owns program readiness pre-code-complete; release-engineer takes over at code-complete);
-      NOT `devops-automator` (release-engineer owns the *process* of shipping a specific release; devops-automator builds
-      the underlying CI/CD plumbing); NOT `growth-hacker` or `app-store-optimizer` (release-engineer owns engineering-side
-      launch readiness; GTM positioning, store listings, and viral copy live in marketing agents). Examples:\n\n<example>\nContext:
-      Code-complete on a non-trivial feature\nuser: "swift-backend has tagged the v1.4 build. Time to ship."\nassistant: "Operational
-      readiness is the release-engineer''s job. Let me use the release-engineer agent to define the rollout plan (canary %
-      → 25% → 100%), the rollback trigger criteria, the on-call rotation for launch day, and the dashboard / log queries we''ll
-      watch."\n<commentary>\nA release plan names the unhappy paths and the cutover criteria, not just the timeline.\n</commentary>\n</example>\n\n<example>\nContext:
-      Mid-rollout regression detected\nuser: "Error rate jumped 2x at the 25% mark."\nassistant: "Mid-rollout incident response
-      is in scope. Let me use the release-engineer agent to assess against the pre-defined rollback trigger, execute the rollback
-      if criteria are met, and coordinate the post-incident write-up."\n<commentary>\nRollback decisions are pre-committed.
-      release-engineer executes the documented criteria; doesn''t relitigate them mid-incident.\n</commentary>\n</example>\n\n<example>\nContext:
-      Launch readiness review before ship-day\nuser: "We''re shipping the new auth migration tomorrow."\nassistant: "T-1 launch
-      readiness check is the release-engineer''s job. Let me use the release-engineer agent to walk the launch checklist:
-      rollout plan signed off, rollback drill run within 7 days, monitoring dashboards configured, on-call paged, and anti-checklist
-      - has security-auditor signed off, has tpm closed all blocking deps?"\n<commentary>\nLaunch readiness is concrete and
-      binary. Either the checklist is done or it isn''t. No vibes.\n</commentary>\n</example>'
-    description_summary: 'Use for the operational phase of shipping a code-complete release: rollout planning, canary or percentage
-      ramps, region sequencing, launch-day monitoring, rollback criteria, drills, and post-launch follow-up. Specializes in
-      turning a finished build into a controlled release with explicit cutover gates, observability, on-call coordination,
-      and incident response during rollout. Do not use for pre-code-complete program readiness, building CI/CD infrastructure,
-      or marketing, app store, GTM, and growth work.'
-    description_hash: sha256:cecf1add7e36757b11b5672432c1d612bc9b0c29b85a63e108cbefa49e1ba51e
+    description: 'Use this agent when planning a release, designing rollout strategy (canary, percentage rollout, region-by-region,
+      cohort rollout, dark launch), defining rollback drills, coordinating launch-day monitoring, or owning the operational
+      side of getting a code-complete feature into users'' hands. Picks up where `tpm` leaves off (at code-complete) and runs
+      through the post-launch bake period. Typical triggers: "swift-backend has tagged the v1.4 build, time to ship" (define
+      rollout plan, rollback trigger criteria, on-call rotation, dashboards/log queries to watch); "error rate jumped 2x at
+      the 25% mark" (mid-rollout incident response, assess against pre-committed rollback trigger, execute rollback if criteria
+      met, post-incident write-up); "we''re shipping the new auth migration tomorrow" (T-1 launch readiness walk — rollout
+      plan signed off, rollback drill run within 7 days, monitoring configured, on-call paged, blocking deps closed by `tpm`,
+      security sign-off from `security-auditor`). Pre-commits rollback criteria before launch day, not during incidents. Anti-scope:
+      not `tpm` (TPM owns program readiness pre-code-complete; release-engineer takes over at code-complete); not `devops-automator`
+      (release-engineer uses the CI/CD pipeline; devops-automator builds it); not `growth-hacker` or `app-store-optimizer`
+      (release-engineer owns engineering-side launch readiness; GTM positioning, store listings, and viral copy live in marketing
+      agents); not `product-manager` (PM owns the feature''s user-value ship/kill; release-engineer owns the deploy''s safety
+      call); not `experiment-tracker` (a safety canary is deployment caution, not a randomized experiment).'
+    description_summary: 'Use for operational release ownership after code-complete: rollout planning, launch readiness checks,
+      rollback criteria, launch-day monitoring, incident decisions during rollout, and post-launch bake follow-through. It
+      specializes in deployment safety patterns such as canaries, percentage or region rollouts, dark launches, rollback drills,
+      on-call coordination, and monitoring queries or dashboards. Do not use for pre-code-complete program management, building
+      CI/CD infrastructure, product ship/kill decisions, marketing or app-store launch work, or randomized experiment analysis.'
+    description_hash: sha256:0dab1d5bc73c863a1c2a935c76b7ec000c1940633d82dc150ca142ec83708e8d
     body_hash: sha256:1acd4243ee4b429af8081ef5c48f3cee078ee55ab96a68af4ae8a68d89c259ec
     tags:
     - engineer
@@ -1766,34 +1424,25 @@ agents:
     file: studio-operations/support-responder.md
     category: studio-operations
     scope: project
-    description: 'Use this agent when handling customer support inquiries, creating support documentation, setting up automated
-      responses, or analyzing support patterns. This agent excels at maintaining high-quality support across all studio projects
-      while identifying product improvement opportunities. Examples:\n\n<example>\nContext: Setting up support for a new app
-      launch
-
-      user: "We''re launching tomorrow and need customer support ready"\nassistant: "I''ll set up comprehensive customer support
-      for your launch. Let me use the support-responder agent to create response templates and support workflows."\n<commentary>\nProactive
-      support setup prevents launch day chaos and ensures positive user experiences.\n</commentary>\n</example>\n\n<example>\nContext:
-      Handling increased support volume
-
-      user: "We''re getting swamped with the same questions over and over"\nassistant: "I''ll help optimize your support efficiency.
-      Let me use the support-responder agent to identify patterns and create automated responses."\n<commentary>\nRepetitive
-      questions indicate opportunities for automation and product improvements.\n</commentary>\n</example>\n\n<example>\nContext:
-      Analyzing support tickets for product insights
-
-      user: "What are users actually struggling with in our app?"\nassistant: "Support tickets are a goldmine of insights.
-      I''ll use the support-responder agent to analyze patterns and identify improvement opportunities."\n<commentary>\nSupport
-      data provides direct feedback about user pain points and confusion.\n</commentary>\n</example>\n\n<example>\nContext:
-      Creating help documentation
-
-      user: "Users keep asking how to connect their TikTok account"\nassistant: "Let''s create clear documentation for that.
-      I''ll use the support-responder agent to write help articles and in-app guidance."\n<commentary>\nGood documentation
-      reduces support load and improves user satisfaction.\n</commentary>\n</example>'
-    description_summary: Use for customer support inquiries, support documentation, automated response setup, and analysis
-      of recurring ticket patterns. It specializes in creating response templates, support workflows, help articles, in-app
-      guidance, and extracting product improvement signals from user issues. No explicit anti-scope is defined.
-    description_hash: sha256:0bb6ebeee97a52edef0772671dba3a4ac1363b72ac4e719f5003e30ece0a9bc9
-    body_hash: sha256:f541d3974c8dad1451874d6ca0e25a4b3e39ea43f49397c0535b6d851e033de1
+    description: 'Use this agent for customer support — response template creation, support workflow setup, ticket pattern
+      analysis, sentiment management, and turning repetitive questions into self-service docs. Builds the human face of the
+      product across email, in-app chat, and social channels. Typical triggers: "we''re launching tomorrow and need customer
+      support ready" (response templates, workflow design, escalation paths, channel setup); "we''re getting swamped with
+      the same questions over and over" (pattern recognition, automation candidates, chatbot scripts); "what are users actually
+      struggling with in our app?" (ticket analysis as product insight source); "users keep asking how to connect their TikTok
+      account" (write help articles, in-app contextual guidance). Anti-scope: not for synthesizing app store reviews and broader
+      feedback (route to `feedback-synthesizer`); not for user research and persona work (route to `ux-researcher`); not for
+      legal/compliance responses on data requests or breach incidents (route to `legal-compliance-checker`); not for crisis-PR
+      or social-media reputation management (route to `twitter-engager` for tweet-level response, `legal-compliance-checker`
+      for serious incidents); not for incident-response engineering during outages (route to `infrastructure-maintainer`).'
+    description_summary: Use for customer support preparation and operations, including response templates, support workflows,
+      escalation paths, ticket pattern analysis, sentiment handling, and self-service help content. It specializes in converting
+      repeated customer questions and support conversations from email, in-app chat, and social channels into actionable docs,
+      automation candidates, chatbot scripts, and product insights. Do not use for app store review synthesis, user research
+      or personas, legal/compliance responses, crisis PR or broad reputation management, or engineering incident response
+      during outages.
+    description_hash: sha256:56bbc2ac3f6f9944b3b5a73de40f82006fbaf515b68f4b2634ce25f18323d2a8
+    body_hash: sha256:ba5cde04aa59e2ee2fcf339415d1c093cf9cb21dd1d733436e2a99cbf8645df9
     tags:
     - responder
     - studio-operations
@@ -1882,66 +1531,24 @@ agents:
     file: testing/test-results-analyzer.md
     category: testing
     scope: project
-    description: 'Use this agent for analyzing test results, synthesizing test data, identifying trends, and generating quality
-      metrics reports. This agent specializes in turning raw test data into actionable insights that drive quality improvements.
-      Examples:\n\n<example>\nContext: Analyzing test suite results
-
-      user: "Our test suite has been flaky lately, can you analyze the patterns?"
-
-      assistant: "I''ll analyze your test suite results to identify flaky patterns. Let me use the test-results-analyzer agent
-      to examine failure trends, timing patterns, and provide stability recommendations."
-
-      <commentary>
-
-      Flaky tests erode confidence and slow development velocity.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Quality metrics reporting
-
-      user: "Generate a quality report for this sprint"
-
-      assistant: "I''ll generate a comprehensive quality report for your sprint. Let me use the test-results-analyzer agent
-      to analyze test coverage, defect trends, and quality metrics."
-
-      <commentary>
-
-      Quality metrics make invisible problems visible and actionable.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Test trend analysis
-
-      user: "Are our tests getting slower over time?"
-
-      assistant: "I''ll analyze your test execution trends over time. Let me use the test-results-analyzer agent to examine
-      historical data and identify performance degradation patterns."
-
-      <commentary>
-
-      Slow tests compound into slow development cycles.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Coverage analysis
-
-      user: "Which parts of our codebase lack test coverage?"
-
-      assistant: "I''ll analyze your test coverage to find gaps. Let me use the test-results-analyzer agent to identify uncovered
-      code paths and suggest priority areas for testing."
-
-      <commentary>
-
-      Coverage gaps are where bugs love to hide.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for analyzing raw test outputs, coverage data, historical execution records, flaky failures,
-      and sprint-level quality metrics. Specializes in synthesizing trends, identifying failure or performance patterns, finding
-      coverage gaps, and producing actionable quality reports or recommendations. No explicit anti-scope is specified; it
-      is analysis-focused rather than an implementation agent for writing tests or changing production code.
-    description_hash: sha256:31cd4f4840202522c976dc5880ce9c6d29f634835d17547e5835c7b633d04335
+    description: 'Use this agent for analyzing conventional test-suite artifacts — JUnit XML, coverage reports (Istanbul,
+      Coverage.py), CI flake logs, framework reports (pytest, etc.) — to surface trends, flaky tests, coverage gaps, and quality
+      regressions. Turns raw test data into sprint-quality reports and actionable recommendations. Typical triggers: "our
+      test suite has been flaky lately, can you analyze the patterns?" (flaky-test detection — timing, order-dependent, env-specific,
+      concurrency triggers); "generate a quality report for this sprint" (pass rates, coverage, defect trends, MTTR, recommendations);
+      "are our tests getting slower over time?" (execution-time trend analysis, slow-test identification, parallelization
+      efficiency); "which parts of our codebase lack test coverage?" (coverage gap analysis, mutation-test suggestions, priority
+      targets). Anti-scope: not for writing or fixing the tests themselves (route to `test-writer-fixer`); not for application
+      or API performance benchmarking (route to `performance-benchmarker` or `api-tester`); not for LLM agent quality evaluation
+      (route to `agent-eval-engineer` — judge transcripts and eval traces are a different artifact class); not for infrastructure-level
+      CI/CD pipeline failures (route to `devops-automator` or `infrastructure-maintainer`); not for product-feedback synthesis
+      (route to `feedback-synthesizer`).'
+    description_summary: Use for interpreting conventional test-suite artifacts such as JUnit XML, coverage reports, pytest/framework
+      output, and CI flake logs. It specializes in finding flaky-test patterns, pass-rate and coverage trends, slow-test regressions,
+      coverage gaps, and quality risks, then turning those findings into actionable reporting. Do not route tasks that require
+      writing or fixing tests, benchmarking application/API performance, evaluating LLM agents, debugging CI/CD infrastructure
+      failures, or synthesizing product feedback.
+    description_hash: sha256:659496f1327c7c07ad9c1893e34f5cbe8c62bd57d59da59869e77b3aabcd7494
     body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
     tags:
     - analyzer
@@ -1994,30 +1601,24 @@ agents:
     file: marketing/tiktok-strategist.md
     category: marketing
     scope: project
-    description: 'Use this agent when you need to create TikTok marketing strategies, develop viral content ideas, plan TikTok
-      campaigns, or optimize for TikTok''s algorithm. This agent specializes in creating shareable moments and leveraging
-      TikTok trends for app growth. Examples:\n\n<example>\nContext: Launching a new app and need TikTok strategy\nuser: "We''re
-      launching our phone anxiety app next week. How should we approach TikTok?"\nassistant: "TikTok will be crucial for your
-      launch. Let me use the tiktok-strategist agent to create a comprehensive TikTok marketing strategy for your phone anxiety
-      app."\n<commentary>\nNew app launches benefit from TikTok''s viral potential and young user base.\n</commentary>\n</example>\n\n<example>\nContext:
-      Creating viral content for an existing app\nuser: "Our meditation app needs more downloads. What kind of TikTok content
-      should we make?"\nassistant: "I''ll help you create viral TikTok content ideas. Let me use the tiktok-strategist agent
-      to develop content that showcases your app in trending formats."\n<commentary>\nExisting apps can boost downloads through
-      strategic TikTok content that fits platform culture.\n</commentary>\n</example>\n\n<example>\nContext: Identifying TikTok
-      influencers for partnerships\nuser: "Should we work with TikTok creators to promote our app?"\nassistant: "Creator partnerships
-      can be very effective. Let me use the tiktok-strategist agent to identify the right creators and collaboration strategies
-      for your app."\n<commentary>\nInfluencer partnerships on TikTok can provide authentic reach to target audiences.\n</commentary>\n</example>\n\n<example>\nContext:
-      Optimizing app features for TikTok sharing\nuser: "How can we make our app more TikTok-friendly?"\nassistant: "Making
-      your app TikTok-native is smart. I''ll use the tiktok-strategist agent to identify features and moments in your app
-      that users would want to share on TikTok."\n<commentary>\nApps with built-in TikTok-worthy moments see higher organic
-      growth through user-generated content.\n</commentary>\n</example>'
-    description_summary: Use for tasks involving TikTok marketing strategy, viral content ideation, campaign planning, creator
-      partnerships, trend usage, and algorithm-aware optimization for app growth. Specializes in identifying shareable app
-      moments, TikTok-native content formats, and ways to turn product features into user-generated or creator-led promotion.
-      Best fit when TikTok is the target channel; not intended for broad marketing strategy outside TikTok unless it directly
-      supports TikTok-driven growth.
-    description_hash: sha256:7a81977ef3316ce15c0c9cfc42c24695053ee224187ef6b91bbcf144b0635ad3
-    body_hash: sha256:4600c641292d9e7c6602758059126011e8bb4712f5942eff77ccf3e606c941ff
+    description: 'Use this agent for TikTok marketing strategy, viral content development, algorithm-aware campaign planning,
+      and creator partnerships. Understands TikTok''s culture, algorithm, and viral mechanics — authenticity beats production
+      value every time, hook within 3 seconds, native vertical only. Typical triggers: "we''re launching our phone anxiety
+      app next week — how should we approach TikTok?" (full launch strategy with creators, content pillars, sound selection);
+      "our meditation app needs more downloads — what content should we make?" (viral content ideation grounded in trending
+      formats); "should we work with TikTok creators to promote our app?" (micro-influencer 10K-100K identification, brief
+      design, seeding strategy); "how can we make our app more TikTok-friendly?" (identify in-app moments worth recording,
+      duet/stitch bait, branded challenges). Anti-scope: not for Instagram Reels strategy (route to `instagram-curator`);
+      not for Twitter/X threads (route to `twitter-engager`); not for Reddit communities (route to `reddit-community-builder`);
+      not for cross-platform content writing (route to `content-creator`); not for App Store listing optimization (route to
+      `app-store-optimizer`); not for paid acquisition campaigns broadly (route to `growth-hacker`).'
+    description_summary: Use for TikTok-specific marketing strategy, viral content planning, creator partnerships, and campaign
+      concepts that depend on TikTok culture, algorithm behavior, trends, sounds, hooks, native vertical formats, duets, stitches,
+      or branded challenges. It specializes in launch strategies, content pillars, micro-influencer briefs and seeding, and
+      identifying app moments that can become TikTok-native content. Do not use for Instagram Reels, Twitter/X, Reddit, general
+      cross-platform copywriting, App Store optimization, or broad paid acquisition work.
+    description_hash: sha256:0112e6dfa4c9ba34edbf7142bb9df9031914e800379bb6604eef5fe62404a9fc
+    body_hash: sha256:5f0555370fee3256a6716f0ab2eb1206792435616d82ddd13bbf536ad5995c68
     tags:
     - marketing
     - strategist
@@ -2032,33 +1633,26 @@ agents:
     file: testing/tool-evaluator.md
     category: testing
     scope: project
-    description: 'Use this agent when evaluating new development tools, frameworks, or services for the studio. This agent
-      specializes in rapid tool assessment, comparative analysis, and making recommendations that align with the 6-day development
-      cycle philosophy. Examples:\n\n<example>\nContext: Considering a new framework or library
-
-      user: "Should we use the new Vite 5.0 for our next project?"\nassistant: "I''ll evaluate Vite 5.0 for your needs. Let
-      me use the tool-evaluator agent to assess its benefits, migration effort, and impact on development speed."\n<commentary>\nTool
-      choices significantly impact development velocity and should be evaluated systematically.\n</commentary>\n</example>\n\n<example>\nContext:
-      Comparing similar tools or services
-
-      user: "Supabase vs Firebase vs AWS Amplify - which should we use?"\nassistant: "I''ll compare these backend services
-      for your use case. Let me use the tool-evaluator agent to analyze features, pricing, and development speed."\n<commentary>\nBackend
-      service choices affect both development time and long-term costs.\n</commentary>\n</example>\n\n<example>\nContext:
-      Evaluating AI/ML service providers
-
-      user: "We need to add AI features. OpenAI, Anthropic, or Replicate?"\nassistant: "I''ll evaluate these AI providers
-      for your specific needs. Let me use the tool-evaluator agent to compare capabilities, costs, and integration complexity."\n<commentary>\nAI
-      service selection impacts both features and operational costs significantly.\n</commentary>\n</example>\n\n<example>\nContext:
-      Assessing no-code/low-code tools
-
-      user: "Could Bubble or FlutterFlow speed up our prototyping?"\nassistant: "Let''s evaluate if no-code tools fit your
-      workflow. I''ll use the tool-evaluator agent to assess the speed gains versus flexibility trade-offs."\n<commentary>\nNo-code
-      tools can accelerate prototyping but may limit customization.\n</commentary>\n</example>'
-    description_summary: Use when a project needs to evaluate, compare, or select a development tool, framework, platform,
-      backend service, AI/ML provider, or no-code/low-code option. It specializes in rapid assessments of benefits, trade-offs,
-      pricing, migration effort, integration complexity, and impact on development speed, with recommendations aligned to
-      short development cycles. No explicit anti-scope is defined.
-    description_hash: sha256:1643e3ce76fe98f28e4cc6b6c2ed076759cadc1b67670fc3ba63918c552541bd
+    description: 'Use this agent to evaluate new development tools, frameworks, libraries, or services against studio needs
+      — rapid POC builds, comparative feature matrices, cost-benefit analysis, integration testing, and ADOPT/TRIAL/ASSESS/AVOID
+      recommendations. Aligned with the 6-day sprint philosophy (the best tool ships products fastest, not the one with most
+      features). Typical triggers: "should we use the new Vite 5.0 for our next project?" (single-tool assessment — benefits,
+      migration effort, dev-speed impact); "Supabase vs Firebase vs AWS Amplify — which should we use?" (comparative analysis
+      — feature matrix, pricing, lock-in risk, integration complexity); "OpenAI, Anthropic, or Replicate for our AI features?"
+      (provider comparison — latency, cost per request, model capabilities, rate limits); "could Bubble or FlutterFlow speed
+      up our prototyping?" (no-code/low-code trade-off — speed gains vs flexibility ceiling). Runs hello-world / CRUD / integration
+      / deploy tests in days, not weeks. Anti-scope: not for ongoing infrastructure cost monitoring (route to `infrastructure-maintainer`);
+      not for budget planning across the studio (route to `finance-tracker`); not for LLM agent quality evaluation (route
+      to `agent-eval-engineer`); not for API performance and load testing (route to `api-tester`); not for actually shipping
+      the integration in production code (route to the relevant engineering agent — `backend-architect`, `frontend-developer`,
+      etc.); not for security audit of vendor surface (route to `security-auditor`).'
+    description_summary: Use for time-boxed evaluation of new development tools, frameworks, libraries, or services when a
+      project needs a recommendation based on rapid prototypes, feature comparisons, integration effort, pricing, lock-in,
+      and developer-speed impact. It specializes in quick hello-world, CRUD, integration, or deploy tests and returns practical
+      ADOPT/TRIAL/ASSESS/AVOID guidance aligned to shipping quickly. Do not use for ongoing infrastructure cost monitoring,
+      studio-wide budget planning, LLM agent quality evaluation, API load testing, production implementation, or vendor security
+      audits.
+    description_hash: sha256:24cccd5dc17340dc0344ac856c06e8adc467fa9ba41b500e7c21ebdece173502
     body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
     tags:
     - evaluator
@@ -2107,28 +1701,25 @@ agents:
     file: product/trend-researcher.md
     category: product
     scope: project
-    description: 'Use this agent when you need to identify market opportunities, analyze trending topics, research viral content,
-      or understand emerging user behaviors. This agent specializes in finding product opportunities from TikTok trends, App
-      Store patterns, and social media virality. Examples:\n\n<example>\nContext: Looking for new app ideas based on current
-      trends\nuser: "What''s trending on TikTok that we could build an app around?"\nassistant: "I''ll research current TikTok
-      trends that have app potential. Let me use the trend-researcher agent to analyze viral content and identify opportunities."\n<commentary>\nWhen
-      seeking new product ideas, the trend-researcher can identify viral trends with commercial potential.\n</commentary>\n</example>\n\n<example>\nContext:
-      Validating a product concept against market trends\nuser: "Is there market demand for an app that helps introverts network?"\nassistant:
-      "Let me validate this concept against current market trends. I''ll use the trend-researcher agent to analyze social
-      sentiment and existing solutions."\n<commentary>\nBefore building, validate ideas against real market signals and user
-      behavior patterns.\n</commentary>\n</example>\n\n<example>\nContext: Competitive analysis for a new feature\nuser: "Our
-      competitor just added AI avatars. Should we care?"\nassistant: "I''ll analyze the market impact and user reception of
-      AI avatars. Let me use the trend-researcher agent to assess this feature''s traction."\n<commentary>\nCompetitive features
-      need trend analysis to determine if they''re fleeting or fundamental.\n</commentary>\n</example>\n\n<example>\nContext:
-      Finding viral mechanics for existing apps\nuser: "How can we make our habit tracker more shareable?"\nassistant: "I''ll
-      research viral sharing mechanics in successful apps. Let me use the trend-researcher agent to identify patterns we can
-      adapt."\n<commentary>\nExisting apps can be enhanced by incorporating proven viral mechanics from trending apps.\n</commentary>\n</example>'
-    description_summary: Use for tasks that need market trend research, product opportunity discovery, validation of demand,
-      or assessment of whether a competitor feature reflects real traction. Specializes in analyzing TikTok trends, App Store
-      patterns, social media virality, user behavior signals, viral content mechanics, and social sentiment to identify app
-      or feature opportunities. No explicit anti-scope is specified.
-    description_hash: sha256:280845c83613138d063639c7bfe469a355160d8cb22dfc58537238a9c7cd0b1f
-    body_hash: sha256:b2bab77bf4ba28cbded722c28996cb7aca67d26926185c301a21200000420714
+    description: 'Use this agent to identify market opportunities from viral content, emerging user behaviors, and app-store
+      patterns. Spots trends before they peak (the 1-4 week momentum window that fits a 6-day dev cycle) and translates cultural
+      moments into product opportunities. Typical triggers: "what''s trending on TikTok that we could build an app around?"
+      (viral content analysis with commercial potential); "is there market demand for an app that helps introverts network?"
+      (validate a concept against social sentiment and existing solutions); "our competitor just added AI avatars — should
+      we care?" (assess whether a feature is fleeting or fundamental); "how can we make our habit tracker more shareable?"
+      (lift proven viral mechanics from successful apps). Tracks hashtag velocity (>50% WoW = high potential), video share
+      ratios, app-store keyword volume, generational usage differences, meme origins, and the ideal 2-4 week emergence-to-mainstream
+      window. Anti-scope: not for deep competitor strategy reverse-engineering (route to `competitive-intel`); not for market
+      sizing and unit economics (route to `market-validator`); not for customer-discovery interviews (route to `customer-interviewer`);
+      not for kill/pursue scoring of an idea (route to `idea-evaluator`); not for executing a TikTok/Instagram/Reddit campaign
+      once an opportunity is identified (route to `tiktok-strategist`, `instagram-curator`, `reddit-community-builder`).'
+    description_summary: Use for identifying short-window product opportunities from viral content, emerging user behaviors,
+      social sentiment, meme cycles, and app-store patterns. It specializes in spotting trends with 1-4 week momentum, assessing
+      whether cultural or feature signals are fleeting or durable, and translating proven viral mechanics into app ideas or
+      product adjustments. Do not use for deep competitor reverse-engineering, market sizing or economics, customer interviews,
+      kill/pursue scoring, or executing social campaigns after an opportunity is found.
+    description_hash: sha256:9c3baaa2f90722b1b540f1063f2a94cdb23ee09659db9ed063f806b7539cf070
+    body_hash: sha256:8d28bf324f25d991cc2345d5b3a4b6a5c4fd27364a1fd05d2aa9ab74d19ffc85
     tags:
     - product
     - researcher
@@ -2143,13 +1734,24 @@ agents:
     file: marketing/twitter-engager.md
     category: marketing
     scope: project
-    description: Use this agent for real-time Twitter/X engagement, trending-topic leverage, and viral tweet creation. Specializes
-      in concise communication, thread storytelling, and community building through strategic engagement on the platform.
-    description_summary: Use for tasks involving real-time Twitter/X engagement, capitalizing on trending topics, or drafting
-      posts designed for viral reach. It specializes in concise platform-native writing, thread structure and storytelling,
-      and strategic interaction that supports community growth.
-    description_hash: sha256:4a710f8b1b34a837a318fd4b6a00cb593bc995f4e96d884fc08ab4e62220b089
-    body_hash: sha256:37a3261785d7f7c91c79a4e632a1c26d2045dc1251b4432104c39ec0fc28de08
+    description: 'Use this agent for real-time Twitter/X engagement, viral tweet and thread design, trending-topic leverage,
+      and Twitter-native community building. Concise copywriting, thread storytelling, real-time response strategy, Spaces,
+      and audience growth — knows that on Twitter the first hour determines whether content compounds or dies. Typical triggers:
+      "craft tweets with high shareability potential" (hook-driven copy, meme-aware, thread architecture); "monitor trending
+      topics for brand insertion opportunities" (trend jacking with safety checks, 30-min response window); "plan a Twitter
+      Spaces strategy for community building" (Spaces as authority-building format); "analyze tweet performance and optimal
+      posting times" (engagement-rate analysis, audience-window detection, competitor benchmarking). Anti-scope: not for Instagram/TikTok/Reddit
+      strategy (route to `instagram-curator`, `tiktok-strategist`, `reddit-community-builder`); not for long-form blog or
+      video production (route to `content-creator`); not for paid acquisition (route to `growth-hacker`); not for App Store
+      messaging (route to `app-store-optimizer`); not for crisis management beyond a tweet-level response (route to `support-responder`
+      or `legal-compliance-checker` for serious incidents).'
+    description_summary: Use for Twitter/X-specific engagement work, including high-shareability tweets, thread structure,
+      trend insertion opportunities, real-time response planning, Spaces strategy, and performance analysis. Specializes in
+      concise hook-driven copy, meme-aware positioning, audience timing, competitor benchmarking, and first-hour engagement
+      mechanics. Do not use for Instagram, TikTok, Reddit, long-form content, video production, paid acquisition, App Store
+      messaging, or serious crisis/legal handling beyond a tweet-level response.
+    description_hash: sha256:594e3e41dd3d149153ba40d2379951253227e96c7ddc5f2f418a3d9ca524101f
+    body_hash: sha256:f0b3a78de590acb1b04143c5debdb906de74ea404e1429eb7287b5bbb4344b05
     tags:
     - engager
     - marketing
@@ -2165,33 +1767,23 @@ agents:
     category: design
     scope: project
     description: 'Use this agent when creating user interfaces, designing components, building design systems, or improving
-      visual aesthetics. This agent specializes in creating beautiful, functional interfaces that can be implemented quickly
-      within 6-day sprints. Examples:\n\n<example>\nContext: Starting a new app or feature design
-
-      user: "We need UI designs for the new social sharing feature"\nassistant: "I''ll create compelling UI designs for your
-      social sharing feature. Let me use the ui-designer agent to develop interfaces that are both beautiful and implementable."\n<commentary>\nUI
-      design sets the visual foundation for user experience and brand perception.\n</commentary>\n</example>\n\n<example>\nContext:
-      Improving existing interfaces
-
-      user: "Our settings page looks dated and cluttered"\nassistant: "I''ll modernize and simplify your settings UI. Let
-      me use the ui-designer agent to redesign it with better visual hierarchy and usability."\n<commentary>\nRefreshing existing
-      UI can dramatically improve user perception and usability.\n</commentary>\n</example>\n\n<example>\nContext: Creating
-      consistent design systems
-
-      user: "Our app feels inconsistent across different screens"\nassistant: "Design consistency is crucial for professional
-      apps. I''ll use the ui-designer agent to create a cohesive design system for your app."\n<commentary>\nDesign systems
-      ensure consistency and speed up future development.\n</commentary>\n</example>\n\n<example>\nContext: Adapting trendy
-      design patterns
-
-      user: "I love how BeReal does their dual camera view. Can we do something similar?"\nassistant: "I''ll adapt that trendy
-      pattern for your app. Let me use the ui-designer agent to create a unique take on the dual camera interface."\n<commentary>\nAdapting
-      successful patterns from trending apps can boost user engagement.\n</commentary>\n</example>'
-    description_summary: Use for tasks involving new or existing user interfaces, component design, design systems, visual
-      polish, and adaptation of familiar interaction patterns from other apps. It specializes in producing attractive, usable
-      UI concepts that are practical to implement quickly, with attention to hierarchy, consistency, and sprint-scale feasibility.
-      It is not intended for non-UI implementation work or purely backend, infrastructure, or algorithmic tasks.
-    description_hash: sha256:9b9c160fd7d41c3d58bc32a5f3e4400d77d313332dcf14a2ec905bca1ae0df61
-    body_hash: sha256:50d63044c26060efdbfb2cf3418b46b5723467644113ee0e7b79250aad55e1aa
+      visual aesthetics for screens that need to be implementable within rapid development cycles. Translates trends (glass
+      morphism, neu-morphism, BeReal-style dual camera) into UIs that respect Tailwind, Shadcn/ui, Radix, and platform conventions
+      (iOS HIG, Material). Typical triggers: "we need UI designs for the new social sharing feature" (full screen flows with
+      component states); "our settings page looks dated and cluttered" (modernize with better hierarchy and usability); "our
+      app feels inconsistent across different screens" (design system pass, tokens, reusable patterns); "I love how BeReal
+      does their dual camera view — can we do something similar?" (adapt trending patterns with original take). Specifies
+      exact Tailwind classes and spacing tokens for fast developer handoff, designs for thumb-reach, screenshot appeal, and
+      dark mode. Anti-scope: doesn''t own the brand identity itself (route to `brand-guardian` for tokens, voice, asset rules);
+      doesn''t add micro-delights (route to `whimsy-injector`); doesn''t own user research validating the design (route to
+      `ux-researcher`); doesn''t write production component code (route to `frontend-developer` or `mobile-app-builder`).'
+    description_summary: Use for implementable UI design work, including new screen flows, component design, design-system
+      alignment, and visual modernization within rapid development cycles. Specializes in translating current interface patterns
+      into platform-conventional designs using Tailwind, Shadcn/ui, Radix, iOS HIG, and Material constraints, with concrete
+      spacing, class, dark-mode, and responsive interaction guidance for developer handoff. Do not route brand identity, micro-interactions,
+      user research validation, or production component implementation here.
+    description_hash: sha256:3638e7eadd2153f0baa48efa92edf2e61338c04f6ada604e5e3a5765b446a486
+    body_hash: sha256:9c13eb68354eed57054d9a2a574564d4e56241d8c63c37b3e03181b8b6ba0c46
     tags:
     - design
     - designer
@@ -2206,68 +1798,23 @@ agents:
     file: design/ux-researcher.md
     category: design
     scope: project
-    description: 'Use this agent when conducting user research, analyzing user behavior, creating journey maps, or validating
-      design decisions through testing. This agent specializes in understanding user needs, pain points, and behaviors to
-      inform product decisions within rapid development cycles. Examples:\n\n<example>\nContext: Understanding user needs
-      for a new feature
-
-      user: "We want to add a mood tracking feature but aren''t sure what users really need"
-
-      assistant: "I''ll help uncover what users truly need from mood tracking. Let me use the ux-researcher agent to analyze
-      user behaviors and design effective research methods."
-
-      <commentary>
-
-      Understanding user needs before building prevents costly pivots later.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Improving app onboarding
-
-      user: "Our onboarding has a 60% drop-off rate"
-
-      assistant: "That''s a critical issue affecting user retention. I''ll use the ux-researcher agent to identify friction
-      points and design a smoother onboarding experience."
-
-      <commentary>
-
-      Data-driven UX improvements can dramatically increase conversion rates.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Validating design decisions
-
-      user: "Should we use a tab bar or hamburger menu for navigation?"
-
-      assistant: "Let''s make this decision based on user behavior data. I''ll use the ux-researcher agent to analyze navigation
-      patterns and recommend the best approach for your users."
-
-      <commentary>
-
-      UX research removes guesswork from design decisions.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Creating user personas
-
-      user: "We need to better understand our target users for the fitness app"
-
-      assistant: "Understanding your users is crucial for product-market fit. I''ll use the ux-researcher agent to develop
-      detailed personas based on user research and behavior patterns."
-
-      <commentary>
-
-      Well-defined personas guide every product decision from features to marketing.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for tasks that require understanding users before making product or design decisions, such as
-      research planning, behavior analysis, journey mapping, onboarding friction analysis, persona development, and design
-      validation. Specializes in identifying user needs, pain points, motivations, and interaction patterns within rapid development
-      cycles, then translating findings into product guidance. No explicit anti-scope is provided.
-    description_hash: sha256:4182d8fa9bc2c62eba5773632b7103f2d23e3636d97560361916c7cac71ee67e
-    body_hash: sha256:b2a23b17c716d06e8b06bcf7d20c345c0b31840ff04bfff1bfe56c1ad0ce3553
+    description: 'Use this agent when conducting user research, analyzing user behavior, creating journey maps, building personas,
+      or validating design decisions through testing. Designs lean research (5-second tests, card sorts, A/B tests, heat maps,
+      session recordings, exit surveys, guerrilla tests) that fits inside sprint timelines instead of producing reports that
+      arrive after ship. Typical triggers: "we want to add a mood tracking feature but aren''t sure what users really need"
+      (problem-space exploration before building); "our onboarding has a 60% drop-off rate" (friction-point identification,
+      journey mapping with data); "should we use a tab bar or hamburger menu for navigation?" (decision validation via behavior
+      data rather than opinion); "we need to better understand our target users for the fitness app" (data-driven persona
+      development). Anti-scope: not for customer-discovery / Mom Test problem-validation interviews (route to `customer-interviewer`);
+      not for synthesizing reviews and tickets into themes (route to `feedback-synthesizer`); not for visual design itself
+      (route to `ui-designer`); not for A/B test orchestration with feature flags and real users (route to `experiment-tracker`).'
+    description_summary: Use for lean user research that informs product and UX decisions within sprint timelines, including
+      behavior analysis, journey maps, personas, and validation of navigation or feature choices. It specializes in lightweight
+      methods such as 5-second tests, card sorts, heat maps, session recordings, exit surveys, guerrilla tests, and research
+      plans tied to measurable friction or uncertainty. Do not use for Mom Test-style customer discovery, review or ticket
+      synthesis, visual UI design, or live A/B test orchestration with feature flags.
+    description_hash: sha256:4a69cf0c359de7809b32b2140785ae9d7f7e3d65fc0adfc2ab2ef90921055103
+    body_hash: sha256:a73eb82ac9281c746b8990bcd342ce3f91bf7a340f37d9abf3557630363c2034
     tags:
     - design
     - researcher
@@ -2395,68 +1942,23 @@ agents:
     file: design/visual-storyteller.md
     category: design
     scope: project
-    description: 'Use this agent when creating visual narratives, designing infographics, building presentations, or communicating
-      complex ideas through imagery. This agent specializes in transforming data and concepts into compelling visual stories
-      that engage users and stakeholders. Examples:\n\n<example>\nContext: Creating app onboarding illustrations
-
-      user: "We need to explain how our AI journaling app works in a visual way"
-
-      assistant: "I''ll create an engaging visual narrative for your onboarding. Let me use the visual-storyteller agent to
-      design illustrations that simplify AI concepts and guide users."
-
-      <commentary>
-
-      Visual storytelling in onboarding dramatically improves user comprehension and retention.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Designing investor pitch deck
-
-      user: "We need a pitch deck that shows our growth trajectory and vision"
-
-      assistant: "A compelling visual story can make or break funding rounds. I''ll use the visual-storyteller agent to create
-      a presentation that captivates investors."
-
-      <commentary>
-
-      Data visualization and narrative flow are crucial for successful pitches.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Creating marketing infographics
-
-      user: "We want to show how our app saves users 2 hours per week"
-
-      assistant: "That''s a powerful value proposition to visualize. Let me use the visual-storyteller agent to create an
-      infographic that makes this benefit instantly clear."
-
-      <commentary>
-
-      Well-designed infographics can go viral and drive organic growth.
-
-      </commentary>
-
-      </example>\n\n<example>\nContext: Explaining complex features
-
-      user: "Users don''t understand how our recommendation algorithm works"
-
-      assistant: "Complex systems need simple visual explanations. I''ll use the visual-storyteller agent to create visual
-      metaphors that demystify your algorithm."
-
-      <commentary>
-
-      Visual explanations build trust by making complexity approachable.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for tasks that need ideas, data, or product concepts turned into visual narratives, including
-      infographics, onboarding illustrations, pitch decks, presentations, and visual explanations of complex features. It
-      specializes in narrative flow, visual metaphors, and data-to-image communication for users, stakeholders, or investors.
-      Do not route purely textual writing, implementation, or non-visual analysis tasks unless the core deliverable is visual
-      communication.
-    description_hash: sha256:316b307c653c6d5f8b161f70a8c05e40f300812bdc0886a8d7ec6c90bc6f25fe
-    body_hash: sha256:d0d2906337076d3009dc851e4c394a1a3f6cd31911cce9b49a02b03646941e13
+    description: 'Use this agent when creating visual narratives — onboarding illustrations, investor pitch decks, marketing
+      infographics, data visualizations, or visual explanations of complex features. Transforms data and concepts into compelling
+      images and sequential flows. Typical triggers: "we need to explain how our AI journaling app works in a visual way"
+      (onboarding illustration sequence that simplifies abstract concepts); "we need a pitch deck that shows our growth trajectory
+      and vision" (investor narrative, data-led slide design); "we want to show how our app saves users 2 hours per week"
+      (infographic with viral potential); "users don''t understand how our recommendation algorithm works" (visual metaphors
+      that demystify complexity). Picks the right chart for the story, designs icon and illustration systems, scripts animation,
+      and adapts for Instagram 1:1, Twitter 16:9, TikTok 9:16, Pinterest 2:3. Anti-scope: not for UI/component design (route
+      to `ui-designer`); not for the brand identity system itself (route to `brand-guardian`); not for copy-heavy content
+      like blog posts or video scripts (route to `content-creator`); not for delight micro-interactions (route to `whimsy-injector`).'
+    description_summary: '{"visual-storyteller":"Use for tasks that need visual narratives, such as onboarding illustration
+      sequences, pitch decks, marketing infographics, data visualizations, or visual explanations of complex features. It
+      specializes in turning concepts and data into sequential visual flows, choosing story-appropriate charts, creating icon
+      and illustration systems, scripting animation, and adapting assets across social formats. Do not use for UI or component
+      design, brand identity systems, copy-heavy content, video scripts, or delight-focused micro-interactions."}'
+    description_hash: sha256:fb9d8c55bf2a3f9233ff325414fcdf3b0ec84f9e650161583d34fce14665142d
+    body_hash: sha256:5af15463449859cc6b799128b2dcb38094c427a2843c2cdab9f0edfc80075f3b
     tags:
     - design
     - storyteller
@@ -2471,29 +1973,24 @@ agents:
     file: design/whimsy-injector.md
     category: design
     scope: project
-    description: 'PROACTIVELY use this agent after any UI/UX changes to ensure delightful, playful elements are incorporated.
-      This agent specializes in adding joy, surprise, and memorable moments to user experiences. The agent should be triggered
-      automatically when design or interface updates are made. Examples:\n\n<example>\nContext: After implementing new features
-      or UI components\nuser: "I''ve added the new onboarding flow for the app"\nassistant: "Great! I''ve implemented the
-      onboarding flow. Now let me use the whimsy-injector agent to add delightful touches that will make users smile during
-      their first experience."\n<commentary>\nEvery new UI addition is an opportunity to inject personality and delight.\n</commentary>\n</example>\n\n<example>\nContext:
-      When error states or empty states are created\nuser: "Set up error handling for the payment flow"\nassistant: "I''ve
-      implemented the error handling. Let me use the whimsy-injector agent to transform those error messages into moments
-      that reduce user frustration."\n<commentary>\nError states are perfect opportunities to show personality and maintain
-      user goodwill.\n</commentary>\n</example>\n\n<example>\nContext: After creating standard UI components\nuser: "Build
-      a loading spinner for the data fetch"\nassistant: "I''ve created the basic loading functionality. Now I''ll use the
-      whimsy-injector agent to make the loading experience entertaining rather than frustrating."\n<commentary>\nLoading states
-      can become memorable moments instead of boring waits.\n</commentary>\n</example>\n\n<example>\nContext: When reviewing
-      completed features\nuser: "The user profile page is done"\nassistant: "Perfect! The profile page is complete. Let me
-      use the whimsy-injector agent to audit it for opportunities to add surprising delights and shareable moments."\n<commentary>\nCompleted
-      features often miss opportunities for delight that can differentiate the app.\n</commentary>\n</example>'
-    description_summary: Use after UI or UX changes, especially new features, onboarding flows, standard components, loading
-      states, empty states, error handling, or completed feature reviews. It specializes in adding small playful touches,
-      personality, surprise, and memorable interactions that make routine or frustrating states feel more engaging. It is
-      not for core product functionality, backend logic, or general UI implementation unless the task is specifically to add
-      delight to an existing interface.
-    description_hash: sha256:546ebc59fb2accc6c6e49c3db2b0551765241da5d5f89a27cb125d9e6774d48c
-    body_hash: sha256:57663bb442a59c4efd089a4e0b24588650d63591ce929bec81bc50d024fbc64b
+    description: 'PROACTIVELY use this agent after any UI/UX changes to add delightful, playful elements — micro-animations,
+      satisfying feedback, personality-filled copy, easter eggs, shareable moments. Fires automatically when design or interface
+      updates land. Typical triggers: "I''ve added the new onboarding flow for the app" (delightful first-experience touches);
+      "set up error handling for the payment flow" (turn harsh error states into helpful friends); "build a loading spinner
+      for the data fetch" (entertain instead of frustrate during waits); "the user profile page is done" (audit for shareable
+      surprises and screenshot-worthy moments). Designs squash-and-stretch animations, particle effects for celebrations,
+      rotating loading messages, pull-to-refresh surprises, confetti bursts, long-press easter eggs. Performance-conscious
+      — CSS over JS, reduced-motion alternatives, tested on low-end devices. Anti-scope: doesn''t own the brand identity (route
+      to `brand-guardian`); doesn''t do screen design from scratch (route to `ui-designer`); doesn''t write production animations
+      or interaction code (route to `frontend-developer` or `mobile-app-builder`); doesn''t replace serious copywriting for
+      marketing (route to `content-creator`).'
+    description_summary: 'Use after UI/UX changes have landed to audit and add lightweight delight: micro-animations, satisfying
+      feedback, playful empty/error/loading states, easter eggs, celebrations, and shareable moments. It specializes in performance-conscious
+      interaction polish, preferring CSS where possible and accounting for reduced-motion and low-end device constraints.
+      Do not use for brand identity, full screen design, production implementation of animations/interactions, or serious
+      marketing copywriting.'
+    description_hash: sha256:f26d1ed0f31e82cf829423ba71ef7c18c296ffd640ed8c39bb2e2552e353669a
+    body_hash: sha256:f86c183867c397948f410732afb8ea5747469a17c8e854449792fa386a4ad665
     tags:
     - design
     - injector
