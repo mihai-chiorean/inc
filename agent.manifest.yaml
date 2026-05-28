@@ -376,7 +376,10 @@ agents:
       clarification workflow, drafts in his voice, iterates with codex CLI feedback rounds. Also reviews and refines existing
       drafts. Fires on: writing a blog post, capturing a lesson, developing a founder thesis, working out an observation,
       sharpening an existing draft. Do not use for social posts (route to `social-amplifier`).'
-    description_summary: ''
+    description_summary: Use for developing, drafting, reviewing, and refining personal blog posts, especially when the task
+      involves capturing a lesson, shaping a founder thesis, working through an observation, or sharpening an existing draft.
+      It specializes in an interactive clarification workflow, writing in Mihai's voice, and iterating through Codex CLI feedback
+      rounds. Do not use for social posts; route those to `social-amplifier`.
     description_hash: sha256:13aa32d51483557bed143dca678cca04a9b2f6c1cf295586170754845e63e40e
     body_hash: sha256:6a63df48ce33ff2d9dea6a1939cff1f6726ff31a3482234ef83d250a9feb186c
     tags:
@@ -1094,11 +1097,14 @@ agents:
     scope: org
     description: Use this agent to analyze the current agent roster, spot gaps or redundancy exposed by real work, draft new
       role definitions, and refresh existing role .md files when scope drifts. Iterates with codex CLI on new-role drafts.
-      Do not use for sprint planning or live coordination (`studio-producer`), performance support for in-flight agents (`studio-coach`),
-      or hiring humans.
-    description_summary: ''
-    description_hash: sha256:c966d9e525b382738fa33b90d3a2364cba959d123c0fdc8628268bab7fcd4c19
-    body_hash: sha256:d9f34fb506a00254a5ece129cd55c75bde04a2fee8cf7e51ad4cd75d1c2e46cc
+      Do not use for cross-team execution coordination, schedule and dependency tracking (route to `tpm`), or hiring humans.
+    description_summary: Use when a task involves evaluating the existing Claude Code agent roster, identifying role gaps
+      or redundancy revealed by actual work, or updating agent role definitions whose scope has drifted. It specializes in
+      drafting and refining new or existing agent `.md` definitions, including iterating on new-role drafts with the Codex
+      CLI. Do not route cross-team execution coordination, schedule or dependency tracking, or human hiring tasks here; those
+      belong elsewhere such as `tpm` for coordination work.
+    description_hash: sha256:afb5bae27936944ab8d173d1d30333605446754bee683cdf71bcc9dd6e56f64b
+    body_hash: sha256:101ffd9ebd549281fa39b4470ae9b207ea21cc42470a4c2f611abbbbc3ae16c4
     tags:
     - hiring
     - manager
@@ -1551,7 +1557,10 @@ agents:
       calls, or scope work with named tradeoffs. Pairs with `tech-lead` through code-complete (PM owns the WHY; TL owns the
       HOW). Do not use for schedule and dependency tracking (`tpm`), scoring raw inbound ideas (`idea-evaluator`), experiment
       readouts (`experiment-tracker` recommends; PM decides), or technical design (`tech-lead`).
-    description_summary: ''
+    description_summary: 'Use for roadmap prioritization, product scoping, ship/kill decisions, and translating customer-discovery
+      input into user value and explicit tradeoffs. Specializes in owning the product rationale: why a problem matters, which
+      outcomes to pursue, and how to frame scope so engineering can decide the implementation approach. Do not use for schedule
+      or dependency tracking, raw idea scoring, experiment readouts, or technical design.'
     description_hash: sha256:93e698ed1730619e319010d130f5ec72f7985113f4cff3a435fba8beb35e706f
     body_hash: sha256:6dc4a8249afd189ec48d8738b6e42685e95776c039aad2c1a991efe4c9018b9c
     tags:
@@ -1674,7 +1683,10 @@ agents:
     description: Use this agent when reviewing code or infrastructure for security vulnerabilities, auditing PKI/mTLS configurations,
       validating certificate lifecycles, or checking for OWASP-style issues. Specializes in finding header injection, open
       redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations.
-    description_summary: ''
+    description_summary: Use for security-focused review of application code, infrastructure, PKI/mTLS setups, certificate
+      lifecycle handling, and OWASP-style vulnerability checks. It specializes in identifying issues such as header injection,
+      open redirects, spoofing vectors, authentication bypasses, and cryptographic misconfigurations. No explicit anti-scope
+      is specified.
     description_hash: sha256:ab4e40b6c5d016c43eb0100238e5c282acbc20d633341da75e2ba86508e18f87
     body_hash: sha256:e63b4eca1fe4748048d01d9e09f848c4b26c90f06c5dea4a28b5f4aaa2d44c51
     tags:
@@ -1695,7 +1707,10 @@ agents:
       sound like Mihai, or to draft standalone social posts when a thought is worth sharing but not worth a full blog post.
       Produces different posts per platform (not the same post reformatted) and runs a codex CLI feedback loop. Do not use
       for blog drafts (route to `blog-writer`).
-    description_summary: ''
+    description_summary: Use for converting finished or near-finished blog posts into platform-native LinkedIn and X posts,
+      or for drafting standalone social posts from ideas that do not warrant a full blog post. It specializes in producing
+      distinct posts per platform in Mihai's voice and incorporating a codex CLI feedback loop. Do not route blog drafting
+      tasks here; send those to `blog-writer`.
     description_hash: sha256:37b1e85e409ab8feb3c7c686278dc2fafd4a691b9b36cfca9a08c888e0bcbb23
     body_hash: sha256:f057356d6a618912fd410979ccbb1d9856c359e625b1455a66dc5ce8fd5fd989
     tags:
@@ -1797,7 +1812,11 @@ agents:
       implementation approach, sequence work across components, own execution quality. Pairs with `product-manager` (PM frames
       the WHY; TL frames the HOW). Do not use for deep specialist work (route to `backend-architect`, `swift-backend`, `frontend-developer`,
       `infra-reviewer`, `security-auditor`, etc.), schedule and dependency tracking (`tpm`), or rollout (`release-engineer`).'
-    description_summary: ''
+    description_summary: 'Use for non-trivial feature work that needs a technical approach: design documentation, implementation
+      strategy, sequencing across components, and quality ownership. It specializes in framing how the work should be built
+      and coordinating the engineering shape of execution, especially alongside product input that defines the why. Do not
+      route deep specialist implementation or review work here, including backend, Swift, frontend, infrastructure, or security
+      tasks; also avoid schedule/dependency tracking and rollout ownership.'
     description_hash: sha256:fa5f8c2c04987d402fc4b828c45c6281e302a403b0b719ac3537870e6d9091d8
     body_hash: sha256:ceed9e163a777d8e8218a35a147b90c31ff04c3f7cc140db329031b6ed492ae2
     tags:
@@ -2017,7 +2036,10 @@ agents:
       dependencies, surfacing schedule risk, or coordinating multi-component work toward a milestone. Owns the WHEN, not the
       WHAT or HOW. Do not use for priority decisions (`product-manager`), rollout (`release-engineer` from code-complete onward),
       or motivational language (`tpm` is execution machinery).
-    description_summary: ''
+    description_summary: 'Use for tracking readiness across teams or workstreams, mapping cross-team dependencies, identifying
+      schedule risk, and coordinating multi-component work toward a milestone. Specializes in execution timing, dependency
+      management, and milestone coordination: the when, not the what or how. Do not use for priority or product decisions,
+      post-code-complete rollout work, implementation planning, or motivational/status-polishing language.'
     description_hash: sha256:c5e43a53451d36a39cea8db7566d615063cf596fe24328ff3b47b88f02f3a443
     body_hash: sha256:9bdd234f70c0581d24a5e376746af68141e01b237546e2550cb47bb8a72b82d1
     tags:
