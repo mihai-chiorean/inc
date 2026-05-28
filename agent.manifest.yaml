@@ -65,24 +65,24 @@ agents:
     file: engineering/ai-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when implementing AI/ML features, integrating language models, building recommendation systems,
-      or adding intelligent automation to applications. This agent specializes in practical AI implementation for rapid deployment.
-      Examples:\n\n<example>\nContext: Adding AI features to an app\nuser: "We need AI-powered content recommendations"\nassistant:
-      "I''ll implement a smart recommendation engine. Let me use the ai-engineer agent to build an ML pipeline that learns
-      from user behavior."\n<commentary>\nRecommendation systems require careful ML implementation and continuous learning
-      capabilities.\n</commentary>\n</example>\n\n<example>\nContext: Integrating language models\nuser: "Add an AI chatbot
-      to help users navigate our app"\nassistant: "I''ll integrate a conversational AI assistant. Let me use the ai-engineer
-      agent to implement proper prompt engineering and response handling."\n<commentary>\nLLM integration requires expertise
-      in prompt design, token management, and response streaming.\n</commentary>\n</example>\n\n<example>\nContext: Implementing
-      computer vision features\nuser: "Users should be able to search products by taking a photo"\nassistant: "I''ll implement
-      visual search using computer vision. Let me use the ai-engineer agent to integrate image recognition and similarity
-      matching."\n<commentary>\nComputer vision features require efficient processing and accurate model selection.\n</commentary>\n</example>'
-    description_summary: Use for projects that add AI or ML behavior to an application, including LLM chatbots, recommendation
-      systems, intelligent automation, visual search, and computer vision features. Specializes in practical implementation
-      details such as model selection, prompt design, token and response handling, ML pipelines, user-behavior learning, similarity
-      matching, and deployment-oriented integration. No explicit anti-scope is stated.
-    description_hash: sha256:c0a2acc67126f6bb7d7b3514b956e0f1b7d2f8e4a9436fe6e4ac59aed6a223c5
-    body_hash: sha256:db791bde5f3dd5f9c0c3d0c0ef645834d85f84370463d325942d5a0544309c1a
+    description: 'Use this agent when implementing AI/ML features, integrating language models (OpenAI, Anthropic, Llama,
+      Mistral), building recommendation systems, adding RAG / semantic search to apps, integrating computer-vision features
+      (image classification, visual search, OCR), or shipping LLM-powered automation. Fires on: "add AI-powered content recommendations"
+      / "build a recommendation engine that learns from user behavior" (collaborative filtering, content-based, hybrid, cold-start
+      handling); "add an AI chatbot" / "integrate a conversational assistant" (prompt engineering, streaming responses, token/context-window
+      management, semantic caching for cost); "users should search products by photo" / visual search / image similarity (embedding
+      stores like Pinecone/Weaviate/Chroma, CLIP-style embeddings, mobile-deployable models); LLM cost overruns (quantization,
+      batching, smaller-model fallback, semantic cache); inference-latency targets (< 200 ms) and serving infra (TorchServe,
+      TF Serving, ONNX); bias/fairness/explainability concerns. Anti-scope: video-reasoning over multiple frames or multi-camera
+      setups routes to `video-analytics-engineer`; edge YOLO/TensorRT deployment on Jetson routes to `vision-engineer`; CUDA-kernel-level
+      work routes to `gpu-engineer`; production backend plumbing (auth, gRPC, database) routes to `backend-architect` or `swift-backend`/`go-engineer`.'
+    description_summary: Use for implementing AI and ML features such as LLM integrations, chatbots, RAG, semantic search,
+      recommendation systems, computer-vision search/OCR, and LLM-powered automation. Specializes in model/provider integration,
+      embeddings and vector stores, prompt and context handling, streaming responses, inference latency, serving infrastructure,
+      cost optimization, semantic caching, and fairness or explainability concerns. Do not route video reasoning, multi-camera
+      analytics, Jetson/TensorRT edge vision deployment, CUDA kernel work, or general production backend plumbing here.
+    description_hash: sha256:2d2365a6c050e5df2d1458f1e77b3f5660af2f2d198281f89bcc73f50e24f333
+    body_hash: sha256:e02382ec9c51968b397832ce04282038e5fb79490c6fd36a0ad6bd30ca62eff1
     tags:
     - ai
     - engineer
@@ -297,21 +297,26 @@ agents:
     category: engineering
     scope: project
     description: 'Use this agent when designing APIs, building server-side logic, implementing databases, or architecting
-      scalable backend systems. This agent specializes in creating robust, secure, and performant backend services. Examples:\n\n<example>\nContext:
-      Designing a new API\nuser: "We need an API for our social sharing feature"\nassistant: "I''ll design a RESTful API with
-      proper authentication and rate limiting. Let me use the backend-architect agent to create a scalable backend architecture."\n<commentary>\nAPI
-      design requires careful consideration of security, scalability, and maintainability.\n</commentary>\n</example>\n\n<example>\nContext:
-      Database design and optimization\nuser: "Our queries are getting slow as we scale"\nassistant: "Database performance
-      is critical at scale. I''ll use the backend-architect agent to optimize queries and implement proper indexing strategies."\n<commentary>\nDatabase
-      optimization requires deep understanding of query patterns and indexing strategies.\n</commentary>\n</example>\n\n<example>\nContext:
-      Implementing authentication system\nuser: "Add OAuth2 login with Google and GitHub"\nassistant: "I''ll implement secure
-      OAuth2 authentication. Let me use the backend-architect agent to ensure proper token handling and security measures."\n<commentary>\nAuthentication
-      systems require careful security considerations and proper implementation.\n</commentary>\n</example>'
-    description_summary: Use for backend work involving API design, server-side implementation, database schema or query optimization,
-      authentication, and scalable service architecture. It specializes in secure, performant backend systems, including RESTful
-      API structure, rate limiting, indexing strategies, OAuth2 flows, and token handling. No explicit anti-scope is stated.
-    description_hash: sha256:c4420bdc7ddddba5ba5963b7d4d8c6a2434cd0c3f387777bfd0ac7b7e4bbb4a3
-    body_hash: sha256:cd1b035250e5c927fa51a2b116dcd139d1f374ae3aa2adb41abed9f01ee550c9
+      scalable backend systems — at the design/architecture altitude, language-agnostic. Specializes in robust, secure, performant
+      backend services and the decisions that lock them in for years. Fires on: "design an API for our social sharing feature"
+      — new RESTful or GraphQL surface (versioning strategy, error envelope, pagination, auth, rate limiting); "queries getting
+      slow as we scale" — DB performance (indexing, query plans, read replicas, sharding, partitioning, caching tier); "add
+      OAuth2 login with Google and GitHub" — auth-system design (JWT vs session, token storage, refresh flow, RBAC vs ABAC,
+      OWASP coverage); microservices boundary decisions, event-driven vs request/response, sync vs async, message queue choice
+      (RabbitMQ vs Kafka vs SQS), saga / CQRS / event-sourcing tradeoffs; choosing SQL vs NoSQL (PostgreSQL, MongoDB, DynamoDB,
+      Redis) for a new domain; when serverless (Lambda, Cloud Run) beats long-lived services; service-mesh, API-gateway, circuit-breaker
+      patterns; data-migration strategy for schema changes under live traffic. Anti-scope: hands-on Go implementation routes
+      to `go-engineer`; hands-on Swift server implementation routes to `swift-backend`; database-migration mechanics (DDL
+      safety, multi-repo coordination) route to `db-migration`; cross-language proto audits route to `grpc-contracts`; security
+      audit of a specific implementation routes to `security-auditor`.'
+    description_summary: Use for language-agnostic backend design and architecture tasks, including API design, server-side
+      system boundaries, database strategy, authentication flows, scalability planning, and service communication patterns.
+      It specializes in durable backend decisions around performance, security, reliability, data modeling, caching, queues,
+      serverless versus long-lived services, migrations under live traffic, and distributed-system tradeoffs. Do not use for
+      hands-on Go or Swift implementation, detailed database migration mechanics, cross-language protobuf contract audits,
+      or security review of a specific implementation.
+    description_hash: sha256:d2fff803d60f90e030277fe5fcd9b64c74337945889423324a1d70ab1c684df3
+    body_hash: sha256:d0ed29b22d9910206c77afa83ed29a957838d207a76d9d4bd043f949e885f0f7
     tags:
     - architect
     - backend
@@ -577,24 +582,26 @@ agents:
     file: engineering/db-migration.md
     category: engineering
     scope: project
-    description: 'Use this agent when creating database migrations, validating migration ordering across repositories, checking
-      for destructive schema changes, or ensuring Go and Swift ORMs stay consistent with the database schema. Examples:\n\n<example>\nContext:
-      Creating a new migration\nuser: "Add a device_tokens table for push notifications"\nassistant: "Database migrations
-      need careful ordering and safety. Let me use the db-migration agent to create a safe, reversible migration."\n<commentary>\nMigrations
-      must handle existing data, use IF NOT EXISTS guards, and consider rollback.\n</commentary>\n</example>\n\n<example>\nContext:
-      Migration conflict between repos\nuser: "The Go and Swift backends both have migration 19 but they''re different"\nassistant:
-      "Migration conflicts cause deployment failures. I''ll use the db-migration agent to reconcile the migration history
-      and establish ordering."\n<commentary>\nWhen multiple repos manage the same database, migration numbering must be coordinated.\n</commentary>\n</example>\n\n<example>\nContext:
-      Schema drift detection\nuser: "Production has columns that aren''t in any migration file"\nassistant: "Schema drift
-      indicates out-of-band changes. Let me use the db-migration agent to audit the production schema against migration history."\n<commentary>\nManual
-      database changes cause drift that makes migrations fail or miss columns.\n</commentary>\n</example>'
-    description_summary: Use for creating, reviewing, and reconciling database migrations, especially when migration ordering,
-      rollback safety, destructive schema changes, or cross-repository conflicts are involved. It specializes in auditing
-      schema drift, coordinating migration histories across Go and Swift backends, and keeping ORM models consistent with
-      the database schema. Do not route general database query work, application feature implementation, or unrelated ORM
-      refactors here unless the task directly affects schema migration correctness.
-    description_hash: sha256:8fb6338f3abd635eedf995fefd52cfad6027edeabd1a79d372bf73a82737b3ad
-    body_hash: sha256:f65347a48513300ad3b0352c6919ffb0dabb472837c63f52a9bc5eb711f3dba1
+    description: 'Use this agent for creating database migrations, validating migration ordering across repositories, checking
+      for destructive schema changes, or keeping Go and Swift ORMs consistent with the DB schema. Owns PostgreSQL DDL safety
+      and the multi-service migration discipline where the Go (wendycloud) and Swift (cloud) backends share one database.
+      Fires on: "add a device_tokens table for push notifications" — new migration creation (IF NOT EXISTS guards, reversible
+      up/down pairs, NOT NULL + DEFAULT handling for live tables); "Go and Swift both have migration 19 but they differ" —
+      cross-repo numbering conflicts (canonical ordering, sync between repos, shared migration history); "production has columns
+      not in any migration file" — schema-drift detection (out-of-band manual SQL, missing migrations, drift); destructive
+      changes (column drops, type narrowing, NOT NULL adds) requiring rename-then-drop or backfill; ALTER TABLE lock-duration
+      estimation and `CREATE INDEX CONCURRENTLY` discipline; PostgreSQL choices (`timestamptz` vs `timestamp`, `jsonb` vs
+      `json`, UUID vs serial PKs, GIN/GiST/BRIN, PostGIS for spatial); enum evolution and ORM type checks across Go (sqlc/gorm)
+      and Swift (postgres-nio). Anti-scope: live-traffic-safe API-level rollout (expand/contract orchestration, feature flags)
+      routes to `backend-architect`; postgres-nio query implementation on the Swift side routes to `swift-backend`; SQL-injection
+      / auth audits route to `security-auditor`.'
+    description_summary: Use for creating and reviewing PostgreSQL migrations, validating migration ordering across shared
+      Go and Swift backends, and detecting schema drift or destructive DDL risks. Specializes in safe DDL patterns, reversible
+      migrations, live-table constraints and defaults, lock/index strategy, PostgreSQL type/index choices, enum evolution,
+      and keeping Go and Swift ORM expectations aligned with the shared database schema. Do not use for API rollout orchestration,
+      Swift postgres-nio query implementation, or SQL injection/auth security audits.
+    description_hash: sha256:2f1a2708ca4fe4b2e422c26126c19882eb096cc5727b768dfaa00ef44414a1dd
+    body_hash: sha256:3e33572d3c659bea0644211cffeba2625f11be024430bb9512e4ca13a622fa52
     tags:
     - db
     - engineering
@@ -617,24 +624,26 @@ agents:
     file: engineering/devops-automator.md
     category: engineering
     scope: project
-    description: 'Use this agent when setting up CI/CD pipelines, configuring cloud infrastructure, implementing monitoring
-      systems, or automating deployment processes. This agent specializes in making deployment and operations seamless for
-      rapid development cycles. Examples:\n\n<example>\nContext: Setting up automated deployments\nuser: "We need automatic
-      deployments when we push to main"\nassistant: "I''ll set up a complete CI/CD pipeline. Let me use the devops-automator
-      agent to configure automated testing, building, and deployment."\n<commentary>\nAutomated deployments require careful
-      pipeline configuration and proper testing stages.\n</commentary>\n</example>\n\n<example>\nContext: Infrastructure scaling
-      issues\nuser: "Our app crashes when we get traffic spikes"\nassistant: "I''ll implement auto-scaling and load balancing.
-      Let me use the devops-automator agent to ensure your infrastructure handles traffic gracefully."\n<commentary>\nScaling
-      requires proper infrastructure setup with monitoring and automatic responses.\n</commentary>\n</example>\n\n<example>\nContext:
-      Monitoring and alerting setup\nuser: "We have no idea when things break in production"\nassistant: "Observability is
-      crucial for rapid iteration. I''ll use the devops-automator agent to set up comprehensive monitoring and alerting."\n<commentary>\nProper
-      monitoring enables fast issue detection and resolution in production.\n</commentary>\n</example>'
-    description_summary: Use for tasks involving CI/CD setup, deployment automation, cloud infrastructure configuration, autoscaling,
-      load balancing, monitoring, and alerting. It specializes in operational automation for rapid development cycles, including
-      pipeline stages for testing, building, deployment, and production observability. No explicit anti-scope is specified
-      in the definition.
-    description_hash: sha256:541aaa2716c4eb47007eb4a3fffa1a16e4a2ae5a5c834e72aee0f83d3032879f
-    body_hash: sha256:00221538b3b9d90388c1790337fdef042850da4d9babe90747c76a6cc736161b
+    description: 'Use this agent for setting up CI/CD pipelines, configuring cloud infrastructure (Terraform / Pulumi / CDK),
+      implementing monitoring + observability, building deployment automation, or making deployment frictionless for rapid
+      iteration. Fires on: "automatic deployments when we push to main" — CI/CD pipelines (multi-stage test → build → deploy,
+      parallel jobs, environment promotion, rollback, deployment gates); "app crashes on traffic spikes" — scaling + load
+      (auto-scaling policies, load balancing, capacity planning, the Four Golden Signals — latency, traffic, errors, saturation);
+      "no idea when things break in production" — observability gaps (structured logging, metrics + dashboards, distributed
+      tracing, actionable alerts, SLO/SLA monitoring, error tracking, on-call runbooks); container orchestration (Docker image
+      optimization, Kubernetes, service mesh decisions, health checks); IaC patterns (Terraform modules, state management,
+      multi-environment promotion, secrets); security automation (SAST/DAST in CI, dependency scanning, vault, secrets rotation);
+      preview environments per PR, blue-green, canary, feature-flag rollouts; cost monitoring + FinOps. Anti-scope: Terraform/GCP
+      plan review before apply (TrustConfig location, IAM, ALB chain) routes to `infra-reviewer`; application code the pipeline
+      builds (Go / Swift / TypeScript) routes to the language agent; app-specific security audit routes to `security-auditor`.'
+    description_summary: Use for CI/CD pipelines, deployment automation, cloud infrastructure as code, observability, scaling,
+      container orchestration, preview environments, rollout strategies, security automation in delivery workflows, and cost
+      monitoring. It specializes in making build-test-deploy paths reliable and fast, including environment promotion, rollback
+      controls, health checks, dashboards, alerts, SLO monitoring, secrets handling, and autoscaling. Do not route Terraform
+      or GCP plan reviews before apply, application code changes in the services being built, or app-specific security audits
+      here.
+    description_hash: sha256:df606d9012e3b136010e539b451a34f3dad0fe8ee3befd67cfe802e4160b306f
+    body_hash: sha256:60e5cd4b43b6376b1277aa1b36d4daa18db18fd822b5bfcd326a568b078874f4
     tags:
     - automator
     - devops
@@ -657,25 +666,28 @@ agents:
     file: engineering/embedded-device.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on WendyOS device-side concerns including Yocto recipes, wendy-agent internals,
-      containerd integration, Bluetooth/mDNS discovery, cross-compilation for ARM64/Jetson, OTA updates, or device identity
-      management. Examples:\n\n<example>\nContext: Device agent development\nuser: "The wendy-agent drops its gRPC connection
-      to the cloud after deploy"\nassistant: "Device-to-cloud connectivity has multiple failure modes. Let me use the embedded-device
-      agent to diagnose the connection lifecycle."\n<commentary>\nAgent-to-cloud connections go through mTLS and may be affected
-      by keepalive, NAT, or certificate issues.\n</commentary>\n</example>\n\n<example>\nContext: Yocto build issues\nuser:
-      "The WendyOS image build fails on the containerd recipe"\nassistant: "Yocto recipe failures need layer-aware debugging.
-      I''ll use the embedded-device agent to check the recipe, dependencies, and build configuration."\n<commentary>\nYocto
-      builds have complex dependency chains across meta-layers that need systematic debugging.\n</commentary>\n</example>\n\n<example>\nContext:
-      Cross-compilation\nuser: "The Swift binary crashes on Jetson but works on macOS"\nassistant: "ARM64 cross-compilation
-      has platform-specific issues. Let me use the embedded-device agent to check architecture, linking, and runtime dependencies."\n<commentary>\nCross-compiled
-      Swift binaries may have different Foundation behavior or missing system libraries.\n</commentary>\n</example>'
-    description_summary: Use for WendyOS device-side work involving Yocto builds and recipes, wendy-agent behavior, containerd
-      integration, Bluetooth or mDNS discovery, ARM64/Jetson cross-compilation, OTA updates, and device identity. It specializes
-      in embedded Linux debugging across build layers, runtime dependencies, device-to-cloud connectivity, mTLS lifecycle
-      issues, and platform-specific failures on target hardware. Do not route general cloud, frontend, or application tasks
-      here unless the issue depends on device firmware, agent runtime, provisioning, or edge integration.
-    description_hash: sha256:5030e05d113f6cbb5f69d615a941fbe68b1ce7fd7efc7bd1fe9e4c5eb322404e
-    body_hash: sha256:b2a9e23c8a1ae21a8fa709b6f3190508a12023125bfe8aefa1664a98263c89db
+    description: 'Use this agent for WendyOS device-side concerns including Yocto recipes for the wendy-agent layer, wendy-agent
+      CLI internals, containerd / nerdctl integration, Bluetooth + mDNS / Avahi discovery, cross-compilation for ARM64 / Jetson,
+      OTA updates, device identity (UUID, X.509 certs), or the device-to-cloud mTLS path. Owns the edge runtime substrate
+      that ships with WendyOS. Fires on: "wendy-agent drops gRPC to cloud after deploy" — device-to-cloud connectivity (mTLS
+      handshake, keepalive, NAT traversal, cert validity, retry-with-backoff); "WendyOS image build fails on the containerd
+      recipe" — Yocto recipe failures (bbappend layering, dep chains across meta-layers, do_compile / do_install debugging);
+      "Swift binary crashes on Jetson but works on macOS" — ARM64 cross-compilation (Foundation differences, missing system
+      libs, static-vs-dynamic linking, sysroot); device-side gRPC ports (50051 plaintext / 50052 mTLS local; 443 cloud); provisioning
+      state machine (unprovisioned → provisioned, SAN URI `urn:wendy:org:{id}:asset:{id}`, CSR generation, cert rotation);
+      container lifecycle on device (image pulls over limited bandwidth, storage GC, GPU CDI / entitlements); BLE setup flow,
+      Avahi broadcast; systemd journal triage, NTP-affecting cert validation. Anti-scope: BSP-wide work (kernel config, U-Boot,
+      BSP layers, Mender OTA infra) routes to `embedded-linux`; GStreamer pipelines inside detector containers route to `video-pipeline-engineer`;
+      TensorRT / `nvinfer` routes to `vision-engineer` / `gpu-engineer`; mTLS audit routes to `security-auditor`.'
+    description_summary: 'Use for WendyOS device-side runtime work, including Yocto recipes for the wendy-agent layer, wendy-agent
+      CLI internals, containerd/nerdctl integration, Bluetooth and mDNS/Avahi discovery, ARM64/Jetson cross-compilation, device
+      identity, provisioning, OTA update client behavior, and device-to-cloud mTLS connectivity. It specializes in the edge
+      runtime substrate: local and cloud gRPC ports, certificate/CSR lifecycle, retry and keepalive behavior, container lifecycle
+      on constrained devices, GPU CDI entitlements, systemd journal triage, and NTP issues that affect certificate validation.
+      Do not route BSP-wide kernel, U-Boot, BSP layer, or Mender infrastructure work here; send detector-container GStreamer
+      issues, TensorRT/nvinfer problems, and mTLS audits to their respective specialist agents.'
+    description_hash: sha256:a90556163f248214557e0b21f5e8eac3f9662176fc6d9b6b3032d02baf102cac
+    body_hash: sha256:60eab1e2d9e06b313963ab2c58bed7f5a156c610aac1ce0a3f6943e57d4ce8a3
     tags:
     - device
     - embedded
@@ -695,31 +707,27 @@ agents:
     file: engineering/embedded-linux.md
     category: engineering
     scope: project
-    description: 'Use this agent for embedded Linux and Yocto/OpenEmbedded work including writing and debugging recipes, BSP
-      integration, kernel configuration, bootloader setup, OTA updates (Mender/SWUpdate), cross-compilation, device tree customization,
-      and CI/CD for embedded builds. Covers Jetson (meta-tegra), Raspberry Pi (meta-raspberrypi), and general ARM64 targets.
-      Examples:\n\n<example>\nContext: Yocto build failure\nuser: "bitbake core-image-minimal fails with a do_compile error
-      in our custom recipe"\nassistant: "Recipe build failures need layer-aware debugging. Let me use the embedded-linux agent
-      to trace the error through the recipe, dependencies, and build configuration."\n<commentary>\nYocto compile failures
-      can stem from missing dependencies, incorrect SRC_URI, toolchain issues, or layer priority conflicts. Systematic log
-      analysis is essential.\n</commentary>\n</example>\n\n<example>\nContext: Board bring-up\nuser: "We need to add support
-      for a custom carrier board based on Jetson Orin"\nassistant: "Custom carrier boards need BSP-level changes. I''ll use
-      the embedded-linux agent to handle the device tree, kernel config, and machine configuration."\n<commentary>\nJetson
-      carrier board support involves meta-tegra machine configs, device tree overlays, and potentially pin multiplexing changes.\n</commentary>\n</example>\n\n<example>\nContext:
-      OTA update integration\nuser: "Set up Mender for our Raspberry Pi image with A/B partitioning"\nassistant: "Mender integration
-      touches the partition layout, bootloader, and image generation. Let me use the embedded-linux agent to configure meta-mender
-      for your target."\n<commentary>\nMender requires careful partition scheme setup, U-Boot integration for rollback, and
-      proper artifact generation in the build.\n</commentary>\n</example>\n\n<example>\nContext: CI/CD pipeline\nuser: "Our
-      Yocto builds take 4 hours in CI, how do we speed this up?"\nassistant: "Long Yocto CI builds usually mean poor sstate-cache
-      utilization. I''ll use the embedded-linux agent to optimize your pipeline with KAS and proper caching."\n<commentary>\nWith
-      shared sstate-cache and downloads, incremental Yocto builds should take under 30 minutes. KAS makes this reproducible.\n</commentary>\n</example>'
-    description_summary: Use for embedded Linux work involving Yocto/OpenEmbedded builds, recipe debugging, BSP integration,
-      kernel and bootloader configuration, device trees, cross-compilation, OTA update frameworks, and CI/CD for embedded
-      image builds. It specializes in ARM64 targets including Jetson with meta-tegra, Raspberry Pi with meta-raspberrypi,
-      and custom board bring-up where layer configuration, machine definitions, partition layout, and build caching matter.
-      Do not route general application development, cloud-only CI, or non-Linux firmware tasks here unless they directly affect
-      the embedded Linux build or runtime platform.
-    description_hash: sha256:dd2add70422658e8b6053980aec303a10ac0bd86413d662e7ea23191404162d2
+    description: 'Use this agent for embedded Linux and Yocto / OpenEmbedded work including bitbake recipes (.bb / .bbappend
+      / .conf), BSP integration, kernel config, bootloader setup (U-Boot, FIT images, secure boot), OTA infra (Mender, SWUpdate),
+      cross-compilation toolchains, device-tree customization, and CI/CD for embedded builds (KAS, sstate-cache strategy).
+      Covers Jetson (meta-tegra: Orin, Xavier, custom carrier boards, Tegra flash, JetPack-in-Yocto), Raspberry Pi (meta-raspberrypi,
+      CM4, config.txt), and generic ARM64. Fires on: "bitbake fails with a do_compile error" / recipe build failures (layer
+      priority conflicts, SRC_URI / SRCREV issues, toolchain breakage, sstate-cache corruption, missing RDEPENDS); "add support
+      for a custom Jetson Orin carrier board" / board bring-up (machine configs, device-tree overlays, pin muxing, kernel
+      config fragments); "set up Mender with A/B partitioning" / OTA integration (mender-uboot vs mender-grub, partition scheme,
+      artifact generation, rollback testing); "Yocto builds take 4 hours in CI" / pipeline performance (KAS reproducibility,
+      shared sstate over NFS/S3/GCS, downloads cache); systemd service authoring in recipes, networking config (systemd-networkd,
+      wpa_supplicant, bluez, mDNS), filesystem layout (overlayfs read-only rootfs, f2fs / UBIFS for flash). Anti-scope: wendy-agent
+      application-layer recipes and agent runtime route to `embedded-device`; CUDA / TensorRT work routes to `gpu-engineer`;
+      GStreamer plumbing routes to `video-pipeline-engineer`.'
+    description_summary: Use for embedded Linux build and board-support work centered on Yocto/OpenEmbedded, including BitBake
+      recipes, BSP integration, kernel and device-tree configuration, bootloaders, OTA update infrastructure, cross-compilation
+      toolchains, and embedded CI/CD performance. It is suited to Jetson, Raspberry Pi, and generic ARM64 bring-up and build
+      failures, including layer conflicts, SRC_URI/SRCREV issues, sstate problems, machine configs, U-Boot/FIT/secure boot,
+      Mender or SWUpdate, systemd services, networking, and filesystem layout. Do not route application-layer wendy-agent
+      runtime work here; use the embedded-device route instead, and send CUDA/TensorRT or GStreamer-specific work to the GPU
+      or video pipeline specialists.
+    description_hash: sha256:d7308c3afcc616e230d862592e4a5b27e813f571d5615c25cb0d73a2203348b3
     body_hash: sha256:ec4a7813edc537552bc5dcf6469bbe683a19056b532e58ac012c095af498deec
     tags:
     - embedded
@@ -898,25 +906,27 @@ agents:
     file: engineering/frontend-developer.md
     category: engineering
     scope: project
-    description: 'Use this agent when building user interfaces, implementing React/Vue/Angular components, handling state
-      management, or optimizing frontend performance. This agent excels at creating responsive, accessible, and performant
-      web applications. Examples:\n\n<example>\nContext: Building a new user interface\nuser: "Create a dashboard for displaying
-      user analytics"\nassistant: "I''ll build an analytics dashboard with interactive charts. Let me use the frontend-developer
-      agent to create a responsive, data-rich interface."\n<commentary>\nComplex UI components require frontend expertise
-      for proper implementation and performance.\n</commentary>\n</example>\n\n<example>\nContext: Fixing UI/UX issues\nuser:
-      "The mobile navigation is broken on small screens"\nassistant: "I''ll fix the responsive navigation issues. Let me use
-      the frontend-developer agent to ensure it works perfectly across all device sizes."\n<commentary>\nResponsive design
-      issues require deep understanding of CSS and mobile-first development.\n</commentary>\n</example>\n\n<example>\nContext:
-      Optimizing frontend performance\nuser: "Our app feels sluggish when loading large datasets"\nassistant: "Performance
-      optimization is crucial for user experience. I''ll use the frontend-developer agent to implement virtualization and
-      optimize rendering."\n<commentary>\nFrontend performance requires expertise in React rendering, memoization, and data
-      handling.\n</commentary>\n</example>'
-    description_summary: Use for building and fixing web user interfaces, including React, Vue, or Angular components, responsive
-      layouts, state management, and frontend performance work. Specializes in accessible, responsive, performant web applications,
-      with emphasis on CSS/mobile behavior, rendering optimization, memoization, virtualization, and handling large client-side
-      datasets. No explicit anti-scope is stated.
-    description_hash: sha256:dff300d287e2a0e67cc1bfe3db8f8df360906a56b6cd24a74766b6c9fec9c060
-    body_hash: sha256:755c598761f90dc46fdd3cd3d634c7df4c291df49ca2e297c8019de056998056
+    description: 'Use this agent when building user interfaces, implementing React / Vue / Angular / Svelte components, handling
+      state management, or optimizing frontend performance. Specializes in responsive, accessible, performant web apps and
+      the framework + bundler choices behind them. Fires on: "dashboard for user analytics" — data-rich UIs (interactive charts,
+      virtualized tables, viewport-responsive layout, API state); "mobile navigation broken on small screens" — responsive-design
+      issues (mobile-first CSS, fluid type/spacing, touch gestures, cross-browser); "app feels sluggish loading large datasets"
+      — frontend perf (React re-render audit with memo/callback, list virtualization, lazy loading, code splitting, Core Web
+      Vitals — FCP, LCP, CLS, INP); state-management decisions (local vs global, Redux Toolkit vs Zustand vs Jotai vs Context,
+      server-state with TanStack Query / SWR); Next.js / Remix / Nuxt SSR vs SSG choices; accessibility audits (WCAG, ARIA,
+      keyboard, screen reader); design-system + Tailwind / CSS-in-JS / CSS Modules tradeoffs; form-heavy UIs (React Hook Form
+      + Yup/Zod); animation (Framer Motion, GSAP, CSS); WebSocket / SSE real-time; PWA + offline. Anti-scope: native mobile
+      (iOS Swift/SwiftUI, Android Kotlin, React Native bridges) routes to `mobile-app-builder`; backend API/auth design routes
+      to `backend-architect`; distinctive bespoke aesthetics use the `frontend-design` skill in addition; device-side WebRTC
+      routes to `video-pipeline-engineer` (browser-side WebRTC viewer stays here).'
+    description_summary: Use for browser-based UI work such as building React, Vue, Angular, or Svelte components, implementing
+      responsive layouts, managing client state, and improving frontend performance. It specializes in accessible, performant
+      web apps, including framework and bundler choices, SSR/SSG decisions, design-system tradeoffs, forms, animation, realtime
+      browser features, PWAs, and Core Web Vitals optimization. Do not use for native mobile or React Native bridge work,
+      backend API or authentication architecture, device-side WebRTC, or bespoke visual direction without also involving a
+      frontend design specialist.
+    description_hash: sha256:8c070f500be2dddc85c7de45615aaaaea51ef2cd8cb9edc4ffdc4fe6c2e1d357
+    body_hash: sha256:e5a3cce405058cbabab56bc8ebbcb2101fe54b72cbaaba5dc7f76cf9b6bcfc83
     tags:
     - developer
     - engineering
@@ -949,33 +959,24 @@ agents:
     category: engineering
     scope: project
     description: 'Use this agent when writing or modifying Go code, building Cobra-based CLIs, designing cross-platform Go
-      binaries (linux/amd64, linux/arm64, darwin/arm64), enforcing golangci-lint/gofumpt/govulncheck discipline, or driving
-      the Linear-issue → worktree → codex-reviewed-PR workflow on Go projects. Primary owner of `lab-control` and any future
-      Go tooling in Mihai''s lab. Examples:\n\n<example>\nContext: Adding a new subcommand to lab-control\nuser: "Add a `lab
-      ssh render` subcommand that emits an OpenSSH config from inventory.yaml"\nassistant: "New CLI surface area needs idiomatic
-      cobra wiring and a YAML schema check. Let me use the go-engineer agent to scaffold the cmd file, internal renderer,
-      and table-driven tests in a worktree off mit-301."\n<commentary>\nNew subcommands belong under cmd/lab/, business logic
-      under internal/, and every code path needs a table-driven test before merge.\n</commentary>\n</example>\n\n<example>\nContext:
-      Cross-compilation regression\nuser: "CI just failed on darwin/arm64 with `undefined: syscall.Mount`"\nassistant: "Build-tag
-      drift between linux and darwin paths. I''ll use the go-engineer agent to split the platform-specific code behind `//go:build`
-      tags and verify all three target triples build clean."\n<commentary>\nlab-control must build on linux/amd64, linux/arm64,
-      and darwin/arm64 — any syscall or os-specific import needs proper build tags, not runtime branches.\n</commentary>\n</example>\n\n<example>\nContext:
-      Coverage gate failure\nuser: "PR is at 74% coverage, gate is 80%. Where do I add tests?"\nassistant: "Coverage targets
-      the uncovered branches, not feel-good padding. Let me use the go-engineer agent to run `go test -coverprofile`, identify
-      the missed branches in internal/inventory, and write table-driven cases for the YAML edge paths."\n<commentary>\nCoverage
-      debt is paid against actual uncovered branches via go tool cover -func, prioritizing error paths and YAML schema edges.\n</commentary>\n</example>\n\n<example>\nContext:
-      Codex review before merge\nuser: "Branch mit-305-host-groups is feature-complete, ready to merge?"\nassistant: "Not
-      until codex signs off. I''ll use the go-engineer agent to run the full local gate (golangci-lint, govulncheck, race-tests,
-      cross-builds), shell out to `codex exec` with the PR diff for review, and address findings before flipping the merge
-      button."\n<commentary>\nThe house workflow requires: green CI + 80%+ coverage + codex review pass. The agent owns running
-      all three and incorporating codex''s feedback, not just acknowledging it.\n</commentary>\n</example>'
-    description_summary: Use for Go project work, especially writing or modifying Go code, Cobra-based CLI features, and cross-platform
-      binaries targeting linux/amd64, linux/arm64, and darwin/arm64. It specializes in idiomatic Go structure, build tags
-      for platform-specific behavior, table-driven tests, coverage improvement, and local quality gates including golangci-lint,
-      gofumpt, govulncheck, race tests, and cross-builds. It also owns the Linear issue to worktree to codex-reviewed PR workflow
-      for lab-control and related Go tooling; do not route non-Go work or platform issues that can be handled by runtime branching
-      instead of proper build constraints.
-    description_hash: sha256:60a7949eb814af61f46e5ef36ea03abc1cd4efc81b4bd840cc446a1f549e6fdc
+      binaries (linux/amd64, linux/arm64, darwin/arm64), enforcing golangci-lint / gofumpt / govulncheck discipline, or driving
+      the Linear-issue → worktree → codex-reviewed-PR workflow on Go projects. Primary owner of `lab-control` and future Go
+      tooling in Mihai’s lab. Fires on: new CLI surface ("add a `lab ssh render` subcommand from inventory.yaml") — cmd/{binary}
+      entry, internal/ logic, RunE not Run, ctx.Context wiring, table-driven tests; cross-compilation regressions ("CI failed
+      on darwin/arm64 with `undefined: syscall.Mount`") — build tags `//go:build linux`, `_linux.go` / `_darwin.go` suffixes,
+      three-target local matrix; coverage gate failures ("74%, gate is 80%") — target uncovered *branches* via `go tool cover
+      -func`, not getter padding; pre-merge gate — golangci-lint, govulncheck, race tests, cross-build, then `codex exec --sandbox
+      read-only` review pass; idiomatic Go 1.22+ stdlib (slog, errors.Is/As/Join, slices, maps), generics only when killing
+      duplication; YAML via `gopkg.in/yaml.v3` + KnownFields strict; remote-command safety (bounded contexts, --dry-run defaults,
+      slog redaction); release artifact hygiene (-ldflags version, sha256 checksums). Anti-scope: language-agnostic API design
+      routes to `backend-architect`; proto and cross-language audits route to `grpc-contracts`; Swift backend routes to `swift-backend`;
+      CI/IaC routes to `devops-automator`.'
+    description_summary: Use for Go implementation and maintenance, especially Cobra CLIs, cross-platform Go binaries, and
+      Go project quality gates. Specializes in idiomatic Go 1.22+, strict YAML handling, build-tagged platform code, table-driven
+      tests, coverage targeting, remote-command safety, release artifacts, and pre-merge checks such as golangci-lint, govulncheck,
+      race tests, cross-builds, and codex review. Do not use for language-agnostic API architecture, protobuf or cross-language
+      contract audits, Swift backends, or CI/IaC work.
+    description_hash: sha256:48a3ac0cea5f8b4bc5e8a8732eff7fefbac253d9477e989a39197c67bd68026f
     body_hash: sha256:ce22403e10d14f76953bd874a4de073c14ae92b56bab2b4d27e924b93b8eee57
     tags:
     - engineer
@@ -995,30 +996,25 @@ agents:
     file: engineering/gpu-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on CUDA kernels, TensorRT/TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared
-      memory tuning, or any GPU-accelerated computing task. This agent has deep expertise in NVIDIA hardware architectures
-      (Hopper, Blackwell, GeForce vs. datacenter SKUs), CUDA programming, kernel profiling, and performance optimization.
-      Examples:\n\n<example>\nContext: Debugging a CUDA kernel failure on specific GPU hardware\nuser: "Our CUTLASS GEMM kernel
-      fails on GB10 but works on B200"\nassistant: "Hardware-specific kernel failures usually come from resource limits —
-      shared memory, registers, or occupancy. Let me use the gpu-engineer agent to diagnose the root cause and create a hardware-appropriate
-      configuration."\n<commentary>\nDifferent GPU SKUs within the same architecture can have very different resource limits.\n</commentary>\n</example>\n\n<example>\nContext:
-      Optimizing inference performance with TensorRT-LLM\nuser: "Our LLM inference is only hitting 40% of theoretical throughput"\nassistant:
-      "There''s likely a bottleneck in the kernel configs or memory layout. I''ll use the gpu-engineer agent to profile the
-      pipeline and identify optimization opportunities."\n<commentary>\nGPU inference optimization requires understanding
-      the full stack from model to metal.\n</commentary>\n</example>\n\n<example>\nContext: Writing custom CUDA kernels\nuser:
-      "I need a fused attention kernel that handles variable sequence lengths"\nassistant: "Fused kernels require careful
-      shared memory management and warp-level programming. Let me use the gpu-engineer agent to design and implement an efficient
-      kernel."\n<commentary>\nCustom CUDA kernels need deep understanding of the memory hierarchy and execution model.\n</commentary>\n</example>\n\n<example>\nContext:
-      Porting kernels across GPU architectures\nuser: "We need to support both Hopper and Blackwell with the same codebase"\nassistant:
-      "Cross-architecture support requires compile-time and runtime dispatch based on SM version. I''ll use the gpu-engineer
-      agent to implement proper architecture-aware kernel selection."\n<commentary>\nEach GPU generation introduces new instructions
-      and changes resource limits.\n</commentary>\n</example>'
-    description_summary: Use for CUDA kernel work, TensorRT/TensorRT-LLM pipelines, CUTLASS, NVIDIA GPU performance tuning,
-      profiling, and GPU-accelerated compute tasks. Specializes in NVIDIA architecture details across Hopper, Blackwell, GeForce,
-      and datacenter SKUs, including shared memory, registers, occupancy, memory layout, warp-level programming, and architecture-aware
-      dispatch. Also fits hardware-specific kernel failures, inference throughput bottlenecks, custom fused kernels, and porting
-      kernels across GPU generations; no explicit anti-scope is stated.
-    description_hash: sha256:05a872cd3bce302c6326ebb5388ef50d849d68a1be8b06732fc3fb0a6ae17142
+    description: 'Use this agent for CUDA kernels, TensorRT / TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared-memory
+      tuning, or any GPU-accelerated computing task. Deep expertise in NVIDIA architectures (Blackwell SM10x incl. SM121/GB10,
+      Hopper SM90, Ada SM89, Ampere SM80/86 — datacenter vs GeForce SKUs and resource limits), CUDA programming, kernel profiling
+      with Nsight Compute / Systems, cross-SKU portability. Fires on: "CUTLASS GEMM fails on GB10 but works on B200" — shared-memory
+      limits (228 KiB on B200 vs 99 KiB on SM121), register pressure, `cudaFuncSetAttribute` return codes, runtime `cudaDevAttrMaxSharedMemoryPerBlockOptin`
+      queries; "LLM inference at 40% of theoretical throughput" — TensorRT-LLM tuning (KV cache, in-flight batching, paged
+      attention, fpA_intB / nvfp4_gemm_cutlass dispatch, FP4/FP8 quantization); "fused attention kernel for variable seq lengths"
+      — warp-level programming, bank conflicts, async copy, TMA on Hopper+, warp-specialized pipelines; "support Hopper and
+      Blackwell with one codebase" — compile-time SM dispatch, runtime resource queries, adaptive tile / stage configs, `-gencode
+      arch=compute_XX`; CUTLASS tile × stages × element-size math against the SM’s shared-memory budget; roofline classification
+      (memory vs compute vs latency). Anti-scope: GStreamer plumbing around `nvinfer` routes to `video-pipeline-engineer`;
+      YOLO preprocess / NMS routes to `vision-engineer`; foundation-model selection routes to `video-analytics-engineer`.'
+    description_summary: Use for CUDA kernels, TensorRT/TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared-memory tuning,
+      and other GPU-accelerated computing work. Specializes in NVIDIA architecture details across Blackwell, Hopper, Ada,
+      and Ampere; kernel profiling with Nsight tools; warp-level programming; compile-time and runtime SM dispatch; resource-limit
+      portability; TensorRT-LLM inference tuning; quantization paths; and roofline-style performance analysis. Do not use
+      for GStreamer `nvinfer` pipeline plumbing, YOLO preprocessing or NMS, or foundation-model selection; those belong to
+      video pipeline, vision, or video analytics specialists.
+    description_hash: sha256:eb2420a5ae4852f0715d77798b8ae9af28ac6a5a953e96707b4f631a605b63e5
     body_hash: sha256:7f21e56108f4fb29b32dec7a7607db922679d49aa1d4d693b2826a3336d33b79
     tags:
     - engineer
@@ -1064,24 +1060,27 @@ agents:
     file: engineering/grpc-contracts.md
     category: engineering
     scope: project
-    description: 'Use this agent when validating gRPC/protobuf contract compatibility across multiple backends, checking ALB
-      header parsing consistency between Go and Swift, auditing proto file deployment, or designing cross-language contract
-      tests. Examples:\n\n<example>\nContext: Cross-language header parsing\nuser: "Both Go and Swift backends parse X-Client-Cert
-      headers — are they consistent?"\nassistant: "Cross-language header parsing divergence causes subtle auth failures. Let
-      me use the grpc-contracts agent to compare both implementations."\n<commentary>\nDifferent languages handle base64 decoding,
-      URL parsing, and string encoding differently.\n</commentary>\n</example>\n\n<example>\nContext: Proto file deployment
-      issues\nuser: "gRPC calls fail in production but work locally"\nassistant: "Proto file resolution differs between environments.
-      I''ll use the grpc-contracts agent to check proto bundling and path resolution."\n<commentary>\nProto files resolved
-      from process.cwd() may not exist in deployed containers or App Hosting bundles.\n</commentary>\n</example>\n\n<example>\nContext:
-      Adding a new gRPC service\nuser: "Add a new RPC to the certificate service proto"\nassistant: "Proto changes affect
-      all consumers. Let me use the grpc-contracts agent to trace all implementations and ensure compatibility."\n<commentary>\nProto
-      changes must be coordinated across Go, Swift, and TypeScript consumers.\n</commentary>\n</example>'
-    description_summary: Use for tasks involving gRPC/protobuf contract compatibility across Go, Swift, TypeScript, or other
-      backends. Specializes in comparing cross-language behavior such as ALB header parsing, auditing proto file bundling
-      and deployment path resolution, and designing contract tests for RPC changes. Best suited when a proto or transport-layer
-      change can affect multiple consumers or environments.
-    description_hash: sha256:72ccf028e1e2b7d521dbeae8aa957a56232814c18f17988e2c9e97eea8e7ba94
-    body_hash: sha256:fe8466920f7dcebc426f11d25b1b5220fecf7e3f9dc8e35cfa3b3d8756eed1bd
+    description: 'Use this agent for validating gRPC / protobuf contract compatibility across multiple backends, checking
+      ALB header-parsing consistency between Go and Swift, auditing proto file deployment, designing cross-language contract
+      tests, or shepherding a proto change through Go ↔ Swift ↔ TypeScript consumers. Owns the cross-language contract; not
+      per-language implementation after the contract is settled. Fires on: "both Go and Swift parse X-Client-Cert headers
+      — are they consistent?" — header divergence (base64 StdEncoding vs URLEncoding vs RawStdEncoding, URL-decoded PEM, serial-number
+      leading zeros, SHA256 fingerprint comparison, presence vs empty); "gRPC calls fail in production but work locally" —
+      proto file deployment (process.cwd() resolution, Docker build context, Firebase App Hosting bundling, submodule init
+      in CI, path differences); "add a new RPC to the certificate service proto" — coordinated proto changes (tracing all
+      consumers in Go/Swift/TS, backward/forward-compat field numbering, reserved fields, enum UNSPECIFIED zero, oneof + well-known
+      type usage); HTTP/2 keepalive through ALB, bidi-streaming, gRPC-Web transcoding via Envoy, max-connection-age and idle
+      timeouts; encoding edge cases (base64 padding, URL-encoded PEM `%2B` `%2F`, multi-value headers, unicode in cert subjects).
+      Anti-scope: Go-side gRPC implementation routes to `go-engineer`; Swift-side gRPC implementation routes to `swift-backend`;
+      mTLS / PKI audit routes to `security-auditor`; Cloud Run / ALB / Terraform review routes to `infra-reviewer`.'
+    description_summary: Use for tasks that validate or evolve gRPC/protobuf contracts across Go, Swift, and TypeScript consumers,
+      including compatibility checks, coordinated proto changes, deployment/path issues, and cross-language contract tests.
+      It specializes in ALB/header parsing consistency, protobuf schema design rules, gRPC production edge cases, and encoding
+      details such as base64 variants, URL-encoded PEM, multi-value headers, and certificate field normalization. Do not use
+      it for settled per-language gRPC implementation, mTLS/PKI security audits, or Cloud Run/ALB/Terraform infrastructure
+      review.
+    description_hash: sha256:45c2d7a1a039c810eb965245eb115cd615647afe885b50cb358206b8e1f16d6b
+    body_hash: sha256:8ba9a9091222442ae491670d4c135c58dffdf77d150d3236e5ec893e8b2c249b
     tags:
     - contracts
     - engineering
@@ -1176,26 +1175,27 @@ agents:
     file: engineering/infra-reviewer.md
     category: engineering
     scope: project
-    description: 'Use this agent when reviewing Terraform plans, validating GCP configurations, auditing CI/CD pipelines for
-      infrastructure conflicts, or catching cloud-specific gotchas before apply. This agent specializes in GCP (Cloud Run,
-      Certificate Manager, Network Security, CAS), Terraform state conflicts, and deployment pipeline consistency. Examples:\n\n<example>\nContext:
-      Reviewing Terraform before apply\nuser: "Review the ALB mTLS Terraform module before we apply it"\nassistant: "Terraform
-      for GCP mTLS has several gotchas. Let me use the infra-reviewer agent to validate locations, IAM, and resource dependencies."\n<commentary>\nGCP
-      resources have location constraints (TrustConfig must be global) that are easy to get wrong.\n</commentary>\n</example>\n\n<example>\nContext:
-      Deployment pipeline conflicts\nuser: "Our gcloud deploy and Terraform keep overwriting each other"\nassistant: "Dual
-      management of Cloud Run is a common issue. I''ll use the infra-reviewer agent to identify conflicts and recommend a
-      single source of truth."\n<commentary>\nWhen both CI/CD scripts and Terraform manage the same resources, state drift
-      causes outages.\n</commentary>\n</example>\n\n<example>\nContext: IAM and permissions audit\nuser: "The Terraform apply
-      fails with permission denied"\nassistant: "IAM issues need systematic debugging. Let me use the infra-reviewer agent
-      to check service account roles and API enablement."\n<commentary>\nGCP IAM requires specific roles per resource type
-      and APIs must be enabled before use.\n</commentary>\n</example>'
-    description_summary: Use for infrastructure review tasks involving Terraform plans, GCP resource configuration, IAM/API
-      enablement, and CI/CD deployment pipelines before changes are applied. Specializes in GCP services such as Cloud Run,
-      Certificate Manager, Network Security, CAS, Terraform state drift, resource dependency and location constraints, and
-      conflicts between Terraform and gcloud-managed deployments. Anti-scope is not explicitly defined, but the focus is cloud
-      infrastructure validation rather than application code review or feature implementation.
-    description_hash: sha256:0d732895f7447d12709f358333172f71e3630f166fa5d5369784c275d141aeeb
-    body_hash: sha256:e012bb46ea8871bf026f855ab8b65f442f5ef7f297a7e4d784f37382c1017009
+    description: 'Use this agent for reviewing Terraform plans, validating GCP configurations, auditing CI/CD pipelines for
+      infra conflicts, or catching cloud gotchas before `terraform apply` hits production. Specializes in GCP (Cloud Run,
+      Certificate Manager, Network Security, CAS, ALB), Terraform state conflicts, and consistency between gcloud scripts
+      and Terraform. Fires on: "review the ALB mTLS Terraform module before apply" — pre-apply review (TrustConfig must be
+      `global` not regional, ServerTlsPolicy + cert-map full resource paths, backend-service protocol HTTPS for serverless
+      NEGs not H2, EXTERNAL_MANAGED scheme for global ALB, cert-map ref with `//certificatemanager.googleapis.com/` prefix);
+      "gcloud deploy and Terraform keep overwriting each other" — dual-management conflicts (same Cloud Run service in both
+      pipelines, ingress flag drift, env-var divergence — pick one source of truth and import the other); "Terraform apply
+      fails with permission denied" — IAM debugging (service-account least-privilege per resource type, required `google_project_service`
+      enablements, project/folder/org scoping); state drift detection (resources modified outside Terraform, `terraform import`
+      for unmanaged); Cloud Run config (ingress restrictions incl. `internal-and-cloud-load-balancing`, timeout for streaming
+      RPCs, concurrency, VPC connector); forwarding-rule → proxy → url-map → backend chain validation; secrets-not-in-env
+      / logs / VCS audit; Firebase App Hosting ingress quirks (not inside VPC). Anti-scope: pipeline authoring routes to `devops-automator`;
+      app-side security audit routes to `security-auditor`; proto contract issues route to `grpc-contracts`.'
+    description_summary: Use for pre-apply infrastructure review, Terraform plan validation, GCP configuration checks, CI/CD
+      infrastructure drift, IAM failures, and cloud deployment gotchas that could affect production. Specializes in GCP services
+      such as Cloud Run, Certificate Manager, Network Security, CAS, global ALB chains, Terraform state conflicts, drift/import
+      decisions, and consistency between gcloud scripts and Terraform. Do not use for writing CI/CD pipelines, app-side security
+      audits, or proto/API contract issues; those should route to devops automation, security audit, or gRPC contract specialists.
+    description_hash: sha256:4820804a7675b5c1b7aa3e5a8a7ad92a16a6309cc7397cf2834505ab5984d432
+    body_hash: sha256:1c7d14b9433f8aa70c3f5629991a83a9d09fa0b87b7a88cfb1b3d31b66d1d97f
     tags:
     - engineering
     - infra
@@ -1453,24 +1453,25 @@ agents:
     file: engineering/mobile-app-builder.md
     category: engineering
     scope: project
-    description: 'Use this agent when developing native iOS or Android applications, implementing React Native features, or
-      optimizing mobile performance. This agent specializes in creating smooth, native-feeling mobile experiences. Examples:\n\n<example>\nContext:
-      Building a new mobile app\nuser: "Create a TikTok-style video feed for our app"\nassistant: "I''ll build a performant
-      video feed with smooth scrolling. Let me use the mobile-app-builder agent to implement native performance optimizations."\n<commentary>\nVideo
-      feeds require careful mobile optimization for smooth scrolling and memory management.\n</commentary>\n</example>\n\n<example>\nContext:
-      Implementing mobile-specific features\nuser: "Add push notifications and biometric authentication"\nassistant: "I''ll
-      implement native push notifications and Face ID/fingerprint auth. Let me use the mobile-app-builder agent to ensure
-      proper platform integration."\n<commentary>\nNative features require platform-specific implementation and proper permissions
-      handling.\n</commentary>\n</example>\n\n<example>\nContext: Cross-platform development\nuser: "We need this feature
-      on both iOS and Android"\nassistant: "I''ll implement it using React Native for code reuse. Let me use the mobile-app-builder
-      agent to ensure native performance on both platforms."\n<commentary>\nCross-platform development requires balancing
-      code reuse with platform-specific optimizations.\n</commentary>\n</example>'
-    description_summary: Use for native iOS or Android development, React Native feature implementation, and mobile performance
-      work. Specializes in smooth, native-feeling mobile experiences, platform integrations such as push notifications and
-      biometric authentication, cross-platform implementation, scrolling performance, memory management, and platform-specific
-      permissions. No explicit anti-scope is specified.
-    description_hash: sha256:5e6661a2503ee87758e72b62c2a61e8f2714f1d72230bab47da03b3d1fa751a7
-    body_hash: sha256:a20a2f23356bec699c7c4a779ccd026a6e8a14c456e361308af2dfc261a88de4
+    description: 'Use this agent for native iOS or Android apps, React Native / Flutter features, or mobile performance work.
+      Specializes in smooth, native-feeling mobile experiences across Swift/SwiftUI, Kotlin/Jetpack Compose, and cross-platform
+      stacks. Fires on: "TikTok-style video feed" — performant scrolling feeds (FlatList / LazyColumn virtualization, image
+      caching, memory management at 60 fps, gestures); "push notifications and biometric auth" — native platform integration
+      (FCM / APNs payload handling, Face ID / Touch ID / fingerprint, deep linking, app shortcuts, in-app purchases, camera
+      + sensors); "need this feature on both iOS and Android" — cross-platform strategy (RN vs Flutter vs native split, platform-specific
+      UI behind shared interface, native module bridges, Expo when constraints fit); app lifecycle (background tasks, state
+      restoration, foreground/background transitions, audio session); UI conformance (iOS HIG, Material 3, dark mode, dynamic
+      type, RTL, keyboard, safe areas, haptics); performance (startup < 2s, frame-time budgets, leak profiling with Instruments
+      / Android Profiler, native vs JS animation); release engineering (TestFlight / Play Console, staged rollouts, crash
+      reporting Crashlytics / Sentry, app-size, asset variants). Anti-scope: server-side Swift routes to `swift-backend`;
+      web/responsive UIs route to `frontend-developer`; backend API design routes to `backend-architect`; cross-language gRPC
+      contract issues route to `grpc-contracts`.'
+    description_summary: Use for native iOS or Android work, React Native or Flutter features, and mobile performance tasks
+      where platform behavior and native-feeling UX matter. Specializes in Swift/SwiftUI, Kotlin/Jetpack Compose, cross-platform
+      architecture, mobile lifecycle, device integrations, UI conformance, profiling, and release engineering. Do not use
+      for server-side Swift, web or responsive UI work, backend API design, or cross-language gRPC contract issues.
+    description_hash: sha256:55936feee82c98afd2ec1685621d178cfaa9661fd5b4dbb35fdd42d1384a1113
+    body_hash: sha256:6b5979fc5a41b89facbca8ca6580d97b958c25eb3fd88e176d095e2d3c942f91
     tags:
     - app
     - builder
@@ -1600,30 +1601,28 @@ agents:
     file: engineering/rapid-prototyper.md
     category: engineering
     scope: project
-    description: 'Use this agent when you need to quickly create a new application prototype, MVP, or proof-of-concept within
-      the 6-day development cycle. This agent specializes in scaffolding projects, integrating trending features, and building
-      functional demos rapidly. Examples:\n\n<example>\nContext: Starting a new experiment or app idea\nuser: "Create a new
-      app that helps people overcome phone anxiety"\nassistant: "I''ll help you create a phone anxiety app. Let me use the
-      rapid-prototyper agent to scaffold this project and build an MVP."\n<commentary>\nWhen starting any new project or experiment,
-      use the rapid-prototyper to quickly set up the foundation and core features.\n</commentary>\n</example>\n\n<example>\nContext:
-      Need to test a trending feature or viral concept\nuser: "I saw this TikTok trend about AI avatars, can we build something
-      around that?"\nassistant: "That''s a great trending opportunity! I''ll use the rapid-prototyper agent to quickly build
-      a prototype app featuring AI avatars."\n<commentary>\nFor capitalizing on trends and viral content, the rapid-prototyper
-      can quickly create testable prototypes.\n</commentary>\n</example>\n\n<example>\nContext: Validating a business idea
-      with minimal investment\nuser: "We need to test if people would pay for a subscription box curation app"\nassistant:
-      "Let''s validate that idea with a quick prototype. I''ll use the rapid-prototyper agent to build an MVP with basic subscription
-      and curation features."\n<commentary>\nBusiness validation requires fast prototyping to test market fit before full
-      investment.\n</commentary>\n</example>\n\n<example>\nContext: Creating demo apps for stakeholder presentations\nuser:
-      "We''re meeting with investors next week and need to show them our vision"\nassistant: "I''ll help create a compelling
-      demo. Let me use the rapid-prototyper agent to build a functional prototype that showcases your vision."\n<commentary>\nInvestor
-      demos and stakeholder presentations benefit from working prototypes rather than just mockups.\n</commentary>\n</example>'
-    description_summary: Use for quickly creating a new application prototype, MVP, proof of concept, or functional demo,
-      especially when validating an idea, preparing a stakeholder presentation, or testing a trend-driven concept. It specializes
-      in rapid project scaffolding, building core demo features, and integrating current or viral product ideas within a short
-      development cycle. No explicit anti-scope is defined, but the description centers on speed and validation rather than
-      production hardening or long-term system design.
-    description_hash: sha256:066e875eb74bfbcbe827e29d2286a0f7a2b9a79d706df2e89841be08efad794f
-    body_hash: sha256:02ab1a60dcd04e11ec76540dbb00b27bfe35dd4eb6b73fc013046fcf4eb6fa4c
+    description: 'Use this agent when you need to quickly create a new application prototype, MVP, or proof-of-concept inside
+      a short development cycle. Specializes in scaffolding projects fast, integrating trending APIs, and shipping functional
+      demos that validate an idea. Fires on: "new app to help people overcome phone anxiety" — new-idea scaffolding (pick
+      stack — Vite, Next.js, Expo; wire TypeScript + linting; deploy to Vercel / Netlify / Railway from day one); "build something
+      around AI avatars / TikTok-trending feature" — trend integration (research core appeal, pick the API that accelerates
+      — OpenAI, Replicate, Anthropic, Stripe, Supabase, Clerk — design shareable moments, instrument analytics for virality);
+      "test if people would pay for a subscription box curation app" — business-model validation (Stripe / Lemonsqueezy flow,
+      minimal funnel, conversion analytics, willingness-to-pay tests); "investor demo next week" — stakeholder MVP (polished
+      hero feature, public URL, demo data, mobile responsive, stable for live demo); "prove this is testable in 6 days" —
+      time-boxed shipping (3-5 core features, document shortcuts, ship over perfect). Default stack: React/Next.js for web,
+      React Native/Expo for mobile, Supabase / Firebase / Vercel Edge for backend, Tailwind for UI, Clerk / Supabase Auth,
+      Stripe for payments, OpenAI / Anthropic / Replicate for AI. Anti-scope: scaling and production hardening past MVP routes
+      to `backend-architect` + `devops-automator`; production-grade native mobile routes to `mobile-app-builder`; production
+      test suites route to `test-writer-fixer`; long-lived design systems route to `frontend-developer` (with `frontend-design`
+      skill).'
+    description_summary: Use for quickly creating a new application prototype, MVP, or proof of concept under a short deadline.
+      It specializes in fast project scaffolding, pragmatic stack selection, integrating APIs such as AI, auth, payments,
+      and backend services, and producing functional demos with public deployment, demo data, analytics, and mobile-responsive
+      UI. It is not intended for production scaling or hardening, production-grade native mobile work, full production test
+      suites, or long-lived design systems; those should route to the relevant specialist agents.
+    description_hash: sha256:729a5f3ee10e45c6d38ed70068acd0d9d8f3dff39356e7ffd6d45ee7baffd0bd
+    body_hash: sha256:a91c8a5adb21dff2d13a3d6fc265559d7e3a03b497051a3b27098954eb8eaa61
     tags:
     - engineering
     - prototyper
@@ -1810,24 +1809,26 @@ agents:
     category: engineering
     scope: project
     description: 'Use this agent when building or modifying Swift server-side backends, implementing gRPC services in Swift,
-      working with Hummingbird, swift-nio, swift-certificates, or PostgreSQL via postgres-nio. This agent automatically loads
-      relevant Swift skills and understands the Wendy cloud services architecture. Examples:\n\n<example>\nContext: Modifying
-      Swift gRPC service implementation\nuser: "Add header-based certificate extraction fallback to AuthService"\nassistant:
-      "Server-side Swift gRPC changes need careful handling. Let me use the swift-backend agent to implement the header extraction
-      with proper validation."\n<commentary>\nSwift gRPC services require understanding of interceptors, contexts, and async
-      patterns.\n</commentary>\n</example>\n\n<example>\nContext: Swift backend performance issue\nuser: "The bidirectional
-      streaming RPC drops connections after 5 minutes"\nassistant: "gRPC streaming in Swift needs keepalive configuration.
-      I''ll use the swift-backend agent to diagnose and fix the connection lifecycle."\n<commentary>\nSwift gRPC streaming
-      requires understanding of NIO channels, HTTP/2 settings, and keepalive.\n</commentary>\n</example>\n\n<example>\nContext:
-      Database operations in Swift backend\nuser: "Add a certificate revocation check to the enrollment flow"\nassistant:
-      "Database queries in the Swift backend use postgres-nio. Let me use the swift-backend agent to implement the revocation
-      check with proper connection pooling."\n<commentary>\nPostgreSQL operations in Swift require async/await patterns with
-      postgres-nio.\n</commentary>\n</example>'
-    description_summary: Use for building or modifying server-side Swift backends, especially gRPC services, Hummingbird applications,
-      SwiftNIO networking, certificate handling, and PostgreSQL access through postgres-nio. It specializes in Swift async
-      patterns, NIO and HTTP/2 connection behavior, streaming RPC lifecycle issues, connection pooling, and the Wendy cloud
-      services architecture. No explicit anti-scope is provided.
-    description_hash: sha256:aead8ae11d96f18923c77d259bf0d86fdcefd93c9682a09b6695645abf3d670c
+      working with Hummingbird, swift-nio, swift-certificates, postgres-nio, or the Swift on Server stack inside the Wendy
+      cloud services. Auto-loads Swift skills (swift, swift-nio, swift-concurrency, hummingbird, postgres). Fires on: "add
+      header-based certificate extraction fallback to AuthService" — Swift gRPC service changes (providers conforming to generated
+      proto stubs, interceptor chains for auth/logging/metrics, unary + streaming RPCs, gRPC status codes, GRPCCore + GRPCNIOTransportHTTP2);
+      "bidi streaming drops after 5 min" — streaming lifecycle (keepalive, NIO channels, HTTP/2 settings, graceful shutdown,
+      deadline propagation); "add cert revocation check to enrollment" — postgres-nio (PostgresClient pooling, parameterized
+      queries — never string interpolation, prepared statements, transactions, safe migrations); Swift 6 strict concurrency
+      (TaskGroup, async let, actor isolation, Sendable, AsyncSequence, cancellation); Hummingbird 2 routers + middleware +
+      RequestContext / ChildRequestContext + TLS; Envoy + Cloud Run (gRPC-Web transcoding, ALB X-Client-Cert-* header extraction,
+      CORS); swift-certificates (X509) + SwiftASN1 for CSR / chain / SAN URI; swift-crypto for keys. Anti-scope: Go-side gRPC
+      routes to `go-engineer`; proto contract divergence routes to `grpc-contracts`; migrations route to `db-migration`; mTLS
+      audit routes to `security-auditor`; Cloud Run / Terraform review routes to `infra-reviewer`.'
+    description_summary: Use for Swift server-side backend work, especially gRPC services, Hummingbird 2 apps, SwiftNIO networking,
+      Swift 6 concurrency, postgres-nio data access, and Swift on Server services in Wendy cloud systems. It specializes in
+      generated proto stub providers, auth/logging/metrics interceptors, unary and streaming RPC lifecycle, TLS and certificate
+      parsing with swift-certificates/SwiftASN1, Cloud Run and Envoy gRPC integration, and safe Postgres usage with pooling,
+      prepared statements, transactions, and parameterized queries. Do not route Go-side gRPC work, proto contract divergence,
+      database migrations, mTLS audits, or Cloud Run/Terraform review here; those belong to the dedicated Go, contract, migration,
+      security, or infrastructure agents.
+    description_hash: sha256:e89c48ac7dcb18b6b648b7096e72a505ee0825e6b2903e3a314ea63d21ed01d5
     body_hash: sha256:0fce0483ca582a844f6d4e9dc03a60f3ba82fb44f60f2214c04a7e4eb3293ec1
     tags:
     - backend
@@ -1958,33 +1959,26 @@ agents:
     category: engineering
     scope: project
     description: 'Use this agent when code changes have been made and you need to write new tests, run existing tests, analyze
-      failures, and fix them while maintaining test integrity. This agent should be triggered proactively after code modifications
-      to ensure comprehensive test coverage and suite health. Examples:\n\n<example>\nContext: The user has just implemented
-      a new feature or modified existing code.\nuser: "I''ve updated the user authentication logic to support OAuth"\nassistant:
-      "I''ve successfully updated the authentication logic. Now let me run the test-writer-fixer agent to ensure all tests
-      pass with these changes."\n<commentary>\nSince code changes were made, use the Task tool to launch the test-writer-fixer
-      agent to run relevant tests and fix any failures.\n</commentary>\n</example>\n\n<example>\nContext: The user has refactored
-      a module or changed function signatures.\nuser: "Please refactor this payment processing module to use async/await"\nassistant:
-      "I''ve completed the refactoring to use async/await throughout the payment module."\n<function call omitted for brevity>\nassistant:
-      "Now I''ll use the test-writer-fixer agent to run the tests and fix any issues caused by the refactoring."\n<commentary>\nAfter
-      refactoring code, proactively use the test-writer-fixer agent to ensure tests still pass.\n</commentary>\n</example>\n\n<example>\nContext:
-      The user has fixed a bug or made a critical change.\nuser: "Fix the race condition in the data synchronization service"\nassistant:
-      "I''ve identified and fixed the race condition by implementing proper locking mechanisms."\n<function call omitted for
-      brevity>\nassistant: "Let me run the test-writer-fixer agent to verify the fix doesn''t break existing functionality."\n<commentary>\nAfter
-      bug fixes, use the test-writer-fixer agent to ensure the fix works and doesn''t introduce regressions.\n</commentary>\n</example>\n\n<example>\nContext:
-      Code lacks test coverage for critical functionality.\nuser: "Our payment processing module has no tests"\nassistant:
-      "That''s a critical gap. Let me use the test-writer-fixer agent to create comprehensive tests for the payment module
-      including edge cases and error scenarios."\n<commentary>\nCritical modules without tests are high-risk areas that need
-      immediate test coverage.\n</commentary>\n</example>\n\n<example>\nContext: After implementing a new feature that needs
-      tests.\nuser: "I''ve added the social sharing functionality"\nassistant: "Great! The social sharing is implemented.
-      Now let me use the test-writer-fixer agent to write tests that ensure this feature works correctly across different
-      platforms."\n<commentary>\nNew features should always include comprehensive test coverage from the start.\n</commentary>\n</example>'
-    description_summary: Use after code changes, refactors, bug fixes, or when critical code lacks coverage to add or update
-      tests and run relevant suites. It specializes in diagnosing test failures, fixing regressions caused by changes, and
-      preserving test integrity while improving coverage for edge cases and error paths. It is not for primary feature implementation
-      or unrelated refactoring beyond changes needed to make tests accurate and passing.
-    description_hash: sha256:94dc1dab9d77d73ac19f745357455fc7d9757b9dc9c8d2fa2505c54e246b6446
-    body_hash: sha256:84c521dae1a1d6642c064f4c54a33318cd525aa09e2ec7ebe89eee2e04f03069
+      failures, and fix them while maintaining test integrity. Triggered proactively after code modifications to ensure coverage
+      and suite health. Fires on: "updated user authentication logic to support OAuth" — post-implementation test runs (identify
+      affected test files via import graph, scope focused → full suite, parse failures, fix without weakening); "refactor
+      payment module to async/await" — post-refactor test runs (update expectations only when code behavior legitimately changed,
+      refactor brittle tests for resilience, preserve original intent); "fix race condition in data sync service" — post-bugfix
+      verification (run existing tests, add new tests covering the fix, ensure no regressions); "payment module has no tests"
+      — coverage gaps in critical modules (comprehensive unit + integration tests, prioritize critical paths, cover happy
+      + edge + error paths); "added social sharing functionality" — new-feature test authoring (AAA, descriptive names, behavior-not-implementation
+      focus). Knows JS/TS (Jest, Vitest, Mocha, Testing Library, Playwright, Cypress), Python (pytest, unittest), Go (testing
+      + testify), Ruby (RSpec, Minitest), Java (JUnit, Mockito), Swift (XCTest, Swift Testing), Kotlin (JUnit, Espresso, Robolectric).
+      Distinguishes legitimate behavior change → update expectations; brittle test → refactor; actual code bug → flag, do
+      not paper over. Anti-scope: language-specific implementation review routes to the relevant language agent; load and
+      performance testing routes to `devops-automator`; security-test authoring routes to `security-auditor`.'
+    description_summary: Use after code changes to add or update tests, run focused and broader suites, analyze failures,
+      and fix test or code issues without weakening coverage. It specializes in test authoring and maintenance across common
+      JS/TS, Python, Go, Ruby, Java, Swift, and Kotlin test frameworks, including distinguishing legitimate behavior changes
+      from brittle tests and real regressions. Do not route language-specific implementation review here; load or performance
+      testing belongs to devops automation, and security-test authoring belongs to security audit work.
+    description_hash: sha256:e4a977d17c1e6091a87e844e6ddc3878dce704a8853bae48c3920b3662fbe813
+    body_hash: sha256:a51e4a97a476be1bf65c1162c3fe665ae2bd59f7fecdd2915d03ad62075e1258
     tags:
     - engineering
     - fixer
@@ -2288,84 +2282,26 @@ agents:
     file: engineering/video-analytics-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on video analytics that reason ACROSS frames or ACROSS cameras — offline/batch
-      processing of recorded clips, SOTA promptable/open-vocabulary models (SAM 2/3, Grounding DINO, T-Rex, YOLO-World, OWL-ViT),
-      scene/shot detection, temporal action detection, video understanding (VideoMAE, InternVideo), spatio-temporal tracking,
-      cross-camera ReID, multi-camera fusion, auto-labeling pipelines (Autodistill, CVAT/Nuclio model serving), and the input-data
-      sourcing question (live feed vs recorded clips vs cloud-archived video) that comes BEFORE the labeling job runs. Owns
-      the frames-as-spacetime layer: the model+algorithm work that needs temporal context, multi-view geometry, or large pretrained
-      foundation vision models, including encode/decode choices that are specific to analytics (NVDEC batch decode of MP4s,
-      keyframe-aligned clip extraction, codec selection for re-encoding clips for archival/labeling). This agent''s runtime
-      shape is usually BATCH (a directory of clips, a GPU host like a Spark or a cloud node, hours of compute, evaluation
-      against a held-out set) rather than per-frame live. Examples:\n\n<example>\nContext: Auto-labeling a batch of recorded
-      driveway clips with GroundedSAM2 on a Grace-Blackwell host\nuser: "I have ~2k MP4 clips at ~/workspace/clip-labeler/inbox/.
-      Need to auto-label vehicles, people, packages with Autodistill GroundedSAM2 + Grounding DINO + SAM 3.1 on spark-3883,
-      then export to CVAT for human review."\nassistant: "Batch labeling with Grounding DINO + SAM 3.1 needs three pieces
-      lined up: prompt engineering for the open-vocab detector (the difference between ''car'' and ''parked sedan'' changes
-      recall), the SAM mask prompt strategy (box vs point vs box+point), and the throughput shape (per-clip frame sampling,
-      batched inference on the 128 GB UMA, NVDEC for decode). Let me use the video-analytics-engineer agent to design the
-      prompt set, the per-clip sampling cadence (every Nth frame vs scene-change-triggered), and the CVAT export schema with
-      track-ids preserved across the sampled frames."\n<commentary>\nThis is the frames-as-spacetime job: open-vocab foundation
-      model, batch shape, sampling/prompting decisions, archive-format output. Not vision-engineer (no edge inference, not
-      a YOLO/TensorRT problem). Not video-pipeline-engineer (no live transport, no relay). The decode of input MP4s is incidental
-      to the analytics; the analytics IS the job.\n</commentary>\n</example>\n\n<example>\nContext: Input-data sourcing decision
-      for a labeling effort\nuser: "Should I label from the live detector feed or from the Tapo-cloud recorded clips? Both
-      are available, the live feed is what production sees but the cloud has richer history."\nassistant: "This is an input-data
-      sourcing decision and it''s mine to call. Let me use the video-analytics-engineer agent to compare: (a) live-feed labels
-      match the production distribution (same camera intrinsics, same lighting, same encoding artifacts the deployed model
-      will see) but require a tap on the live pipeline and a frame-buffer; (b) Tapo cloud clips are pre-segmented around motion
-      events (so positive-class density is higher, useful for rare classes) but the encoding chain differs from the live feed
-      (re-encoded by cloud, possibly different chroma subsampling) which can introduce a train/serve skew. The recommendation
-      usually depends on the rare-class distribution — if motorcycles are 0.5% of frames live but 8% of cloud clips, the cloud
-      path is the right one even with the skew risk, mitigated by mixing in a smaller live-feed sample."\n<commentary>\nThe
-      sourcing question lives at the analytics-pipeline level, before the labeler runs. It needs judgment on distribution
-      shift, rare-class density, and encoding-chain differences. Pure vision-engineer would skip the sourcing question and
-      go straight to model selection. Pure video-pipeline-engineer doesn''t reason about class distributions.\n</commentary>\n</example>\n\n<example>\nContext:
-      Cross-camera ReID for multi-camera driveway+street setup\nuser: "Person walks from the driveway camera into the street
-      camera FOV. I want a stable global track-id across the handoff. Both cameras have NvDCF per-camera tracking already."\nassistant:
-      "Cross-camera ReID over a non-overlapping or partially-overlapping handoff is a different problem from single-camera
-      tracking. NvDCF gives you per-camera tracks; the handoff needs an appearance-feature ReID model (OSNet, TransReID, or
-      a CLIP-style embedding) plus a spatio-temporal gate (was a track lost on camera A within T seconds of a track appearing
-      on camera B, in a plausible direction?). Let me use the video-analytics-engineer agent to pick the ReID backbone, design
-      the feature gallery + similarity threshold, and the temporal gating policy."\n<commentary>\nCross-camera anything is
-      this agent. Per-camera tracking (NvDCF/ByteTrack tuning, association thresholds on a single stream) is vision-engineer.
-      The boundary is whether the reasoning crosses camera boundaries.\n</commentary>\n</example>\n\n<example>\nContext: Scene/shot
-      detection on a long archived recording before downstream classification\nuser: "Got a 6-hour recording. Need to segment
-      it into ''driveway empty'' / ''vehicle present'' / ''person present'' / ''package event'' scenes before running the
-      classifier."\nassistant: "Scene segmentation on a long clip is a frames-as-spacetime job — you want change-point detection
-      on a low-cost signal (motion energy, optical flow magnitude, or a small classifier''s confidence trajectory) and then
-      aggregate into contiguous scenes with a hysteresis policy. Let me use the video-analytics-engineer agent to pick the
-      change-point method (PySceneDetect for cuts, or a learned scene-classifier with temporal smoothing for semantic segments),
-      the smoothing window, and the output schema (start_ts, end_ts, scene_label) that the downstream classifier consumes."\n<commentary>\nTemporal
-      segmentation, change-point detection, scene reasoning over time. Not a per-frame inference question. The deliverable
-      is intervals, not boxes. Vision-engineer would tune the per-frame classifier; this agent designs the temporal layer
-      on top.\n</commentary>\n</example>\n\n<example>\nContext: Choosing between SAM 2 and SAM 3 for a labeling pipeline\nuser:
-      "Autodistill supports both SAM 2 and SAM 3.1 as the mask refiner behind Grounding DINO. Which one for our use case (vehicles,
-      people, packages on residential cameras, ~720p clips)?"\nassistant: "SAM 2 vs SAM 3 tradeoffs depend on whether you
-      need (a) video propagation (SAM 2''s mem-bank video segmentation across frames is a real win for tracklets; SAM 3 is
-      per-frame strong but adds promptable concept-grounding), (b) compute budget (SAM 3.1 is heavier), (c) prompt modality
-      (SAM 3 takes text prompts directly, SAM 2 needs Grounding DINO to produce boxes first). Let me use the video-analytics-engineer
-      agent to map your three classes onto the prompt-strategy decision and benchmark a 50-clip sample both ways before committing
-      the full 2k-clip job."\n<commentary>\nSOTA foundation-model selection with a "benchmark a sample first" discipline.
-      Vision-engineer can deploy a chosen model; this agent picks among them and validates the choice on a held-out sample.\n</commentary>\n</example>\n\n<example>\nContext:
-      Encode/decode for analytics archival, not for live transport\nuser: "We''re keeping a 30-day rolling archive of clips
-      for retroactive labeling. What codec/container/bitrate should we re-encode the camera feed to before storing?"\nassistant:
-      "Archive-for-analytics encoding is a different problem from live-transport encoding. Live wants low latency and tolerates
-      lossy GOP shapes; archive wants frame-accurate seek (so keyframe interval matters for clip extraction), preserved chroma
-      (4:2:0 is fine for most analytics, but if you''re running ReID off color features you want to verify the model''s training-time
-      chroma), and storage cost. Let me use the video-analytics-engineer agent to pick the codec (H.265 main10 if your downstream
-      can decode it, H.264 high otherwise), GOP shape (short enough for sub-clip extraction without re-encode, long enough
-      not to blow the bitrate), and the resolution/bitrate tradeoff against the 30-day storage budget."\n<commentary>\nEncode/decode
-      choices specifically for analytics consumption (seek accuracy, chroma preservation, downstream model compatibility)
-      rather than for live transport. video-pipeline-engineer owns the live encoder; this agent owns the archival re-encoder
-      when the downstream is "a labeling job runs over this in 2 weeks."\n</commentary>\n</example>'
-    description_summary: Use for video analytics tasks that require reasoning across frames, time, or multiple cameras, especially
-      offline or batch workflows over recorded clips. Specializes in open-vocabulary and promptable vision models, temporal
-      segmentation, action/video understanding, spatio-temporal tracking, cross-camera ReID, multi-camera fusion, auto-labeling
-      pipelines, and analytics-specific encode/decode or data-sourcing decisions. Do not route per-frame live inference, edge
-      deployment, single-camera tracker tuning, or live video transport/relay work unless the core problem depends on temporal
-      context, multi-view reasoning, or batch foundation-model analytics.
-    description_hash: sha256:8a11f8d89132a7975deb9ed6168ec2f69f9bf2b97d407297ce329dbad63054c8
+    description: 'Use this agent for video analytics reasoning ACROSS frames or ACROSS cameras — offline/batch processing
+      of recorded clips, SOTA promptable / open-vocabulary models (SAM 2/3, Grounding DINO, T-Rex, YOLO-World, OWL-ViT), scene/shot
+      detection, video understanding (VideoMAE, InternVideo, V-JEPA), spatio-temporal tracking, cross-camera ReID, multi-camera
+      fusion, auto-labeling (Autodistill, CVAT + Nuclio), and input-data sourcing (live vs recorded vs cloud-archived) BEFORE
+      the labeling job. Owns frames-as-spacetime plus analytics encode/decode (NVDEC batch decode, keyframe-aligned clip extraction,
+      archival codec). Runtime is BATCH (clip directory, Spark or cloud GPU host, hours of compute), not per-frame live. Fires
+      on: "auto-label 2k clips with GroundedSAM2 + Grounding DINO + SAM 3.1" — prompts, sampling cadence, track-id preservation;
+      "live feed or Tapo cloud clips?" — sourcing (production-dist vs rare-class density vs encoding skew); "cross-camera
+      ReID handoff driveway↔street" — OSNet/TransReID/CLIP-ReID + spatio-temporal gate; "segment 6-hour recording into scenes"
+      — change-point detection, hysteresis; "SAM 2 vs SAM 3.1 mask refiner" — SOTA selection, benchmark-a-sample-first; "codec
+      / GOP for 30-day archive" — archive encode (seek accuracy, chroma preservation). Anti-scope: live GStreamer / rtspsrc
+      / encoders route to `video-pipeline-engineer`; edge YOLO/TensorRT on Jetson routes to `vision-engineer`; CUDA kernels
+      route to `gpu-engineer`; general LLM/RAG routes to `ai-engineer`.'
+    description_summary: Use for offline or batch video analytics that require reasoning across frames or cameras, including
+      recorded-clip processing, scene and shot detection, video understanding models, spatio-temporal tracking, cross-camera
+      ReID, multi-camera fusion, and auto-labeling workflows. Specializes in promptable and open-vocabulary vision models,
+      input-data sourcing before labeling, frames-as-spacetime analysis, and batch decode/archive decisions such as NVDEC,
+      keyframe extraction, GOP, and codec tradeoffs. Do not use for live GStreamer/RTSP pipelines, edge YOLO/TensorRT deployment,
+      CUDA kernel work, or general LLM/RAG tasks.
+    description_hash: sha256:490d3b9aa94a6f14bf98289ccabd98b228fd578bba78e135885a296f88bd012d
     body_hash: sha256:0933092c8aefd3a251c36a248f210ddf263e26c1dc0357efff3560a83f169537
     tags:
     - analytics
@@ -2382,60 +2318,26 @@ agents:
     file: engineering/video-pipeline-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on GStreamer pipelines, RTSP / RTP / RTCP / SDP, go2rtc / mediamtx relays, ffmpeg
-      / libav, NVIDIA DeepStream elements (nvv4l2decoder, nvvideoconvert, nvstreammux, nvinfer, nvtracker), encoder/muxer
-      chains (x264enc, h264parse, qtmux, splitmuxsink), HLS / LL-HLS / fragmented MP4, WebRTC signaling (SDP/ICE/DTLS-SRTP)
-      on the device side, tee/queue topology, leaky-queue tuning, framerate negotiation, caps negotiation failures (not-negotiated),
-      or PTS/DTS propagation across NVMM↔system memory boundaries. Owns the *plumbing* that moves frames and packets from
-      camera to inference and from inference to disk/relay — not the model, not the kernel, not the OS, not the UI. Examples:\n\n<example>\nContext:
-      Encoder output triggers Buffer-has-no-PTS warnings at the muxer\nuser: "splitmuxsink keeps logging `Buffer has no PTS`
-      after I added x264enc tune=zerolatency behind a leaky queue"\nassistant: "Missing PTS at the muxer almost always means
-      an upstream element is emitting CLOCK_TIME_NONE — could be the source, the queue''s interaction with PTS, or the encoder
-      under back-pressure. Let me use the video-pipeline-engineer agent to verify PTS at each pad (source src, queue src,
-      encoder sink, encoder src, muxer sink) and fix the rate/buffering shape where the timestamp is actually lost."\n<commentary>\nInserting
-      `videorate skip-to-first=true drop-only=true` looks plausible but breaks caps negotiation; the real fix depends on where
-      PTS first becomes invalid, which only a pad-by-pad probe walk will tell you. Generalists guess; this agent measures.\n</commentary>\n</example>\n\n<example>\nContext:
-      RTSP camera silently stops streaming after idle period; detector watchdog fires\nuser: "Our RTSP feed disconnects after
-      ~60s of low motion. rtspsrc has latency=100 protocols=tcp drop-on-latency=true. The detector watchdog catches it but
-      I don''t know if the camera, relay, or rtspsrc is at fault."\nassistant: "Long-idle RTSP drops have multiple suspects
-      — RTSP keepalive (which rtspsrc enables by default but the camera or an intervening NAT/relay may not honor), RTCP RR
-      flow, the camera''s session-timeout firmware behavior, or transport-layer TCP timeouts. Let me use the video-pipeline-engineer
-      agent to capture `tshark` evidence (RTSP OPTIONS pings, RTCP RR cadence, TCP keepalive), check the camera firmware''s
-      known idle behavior, and identify which hop is closing the session. The detector is the symptom here, not the suspect."\n<commentary>\nRTSP
-      session lifecycle, RTCP evidence, and keepalive plumbing against firmware-specific camera quirks is this agent''s lane.
-      The detector is the consumer; the failure is upstream. Not vision-engineer (no model). Not embedded-device (no wendy-agent
-      code path).\n</commentary>\n</example>\n\n<example>\nContext: Two separate rtspsrc pipelines causing decoder buffer
-      pool churn; need single-pipeline fan-out\nuser: "We have two rtspsrc pipelines pulling the same camera (one for detection,
-      one for motion diff). The NVDEC/NVMM decoder buffer pool keeps churning under racing rebuilds. Should we merge?"\nassistant:
-      "Yes — racing rtspsrc rebuilds against a shared decoder buffer pool is a known anti-pattern. Let me use the video-pipeline-engineer
-      agent to design a single-pipeline `rtspsrc → nvv4l2decoder → tee → N branches` topology with the right queue shape per
-      branch and bus-message source filtering (`GST_MESSAGE_SRC`) so a branch failure doesn''t tear down the upstream."\n<commentary>\nPipeline
-      topology design — tee semantics, per-branch queue isolation, bus-message routing, NVMM buffer-pool lifecycle across
-      multiple consumers — is this agent''s core competency. Not gpu-engineer (the pool issue is element/pipeline shape, not
-      CUDA kernel work).\n</commentary>\n</example>\n\n<example>\nContext: Property tuning for an nvstreammux + nvinfer single-stream
-      pipeline\nuser: "Our nvstreammux is set to batch-size=1 batched-push-timeout=40000 live-source=1, and inference latency
-      spikes when the camera drops a frame. What should we tune?"\nassistant: "batched-push-timeout interacting with live-source
-      under intermittent frame drops is exactly the kind of property-pair bug that hides in plain sight. Let me use the video-pipeline-engineer
-      agent to walk the streammux config, the upstream queue''s max-size-time, and the nvinfer batch input timing — and decide
-      whether to relax the timeout, add an explicit `queue max-size-time=` upstream, or change `attach-sys-ts` semantics."\n<commentary>\nProperty-level
-      tuning of pipeline elements is the agent''s daily work — knowing which knob does what and which silent default will
-      bite you. Not a model question (vision-engineer), not a kernel question (gpu-engineer).\n</commentary>\n</example>\n\n<example>\nContext:
-      Relay producer/consumer ordering audit\nuser: "We run go2rtc with WebRTC for dashboard + RTSP fan-out to detector. Sometimes
-      the detector starts before the relay has a source. Is on-demand pulling wired right?"\nassistant: "Producer/consumer
-      ordering and on-demand vs eager pulls are the two knobs that matter. Let me use the video-pipeline-engineer agent to
-      walk the go2rtc YAML (streams, sources, listeners, preload settings) and recommend either eager pulls with a health
-      gate or a startup-retry shape — but the fix lives in the relay config and rtspsrc retry properties, not in the detector''s
-      process orchestration."\n<commentary>\nRelay YAML, source/listener/path lifecycle, and the consumer-side rtspsrc retry
-      shape is this agent''s lane. The detector''s process startup logic itself (systemd, supervisor, container restart policy)
-      belongs to embedded-device or swift-backend depending on where the orchestration lives.\n</commentary>\n</example>'
-    description_summary: 'Use for tasks involving video transport and media pipeline plumbing: GStreamer, RTSP/RTP/RTCP/SDP,
-      relays such as go2rtc or mediamtx, ffmpeg/libav, DeepStream elements, encoder/muxer chains, HLS/fMP4, WebRTC device-side
-      signaling, tee/queue topology, caps/framerate negotiation, timestamps, and NVMM/system-memory boundary issues. It specializes
-      in diagnosing and tuning how frames and packets move from cameras to inference and onward to disk, relay, or streaming
-      outputs, including pad-level timestamp tracing, relay producer/consumer ordering, queue isolation, and element property
-      interactions. Do not use it for model behavior, CUDA/kernel work, OS or process supervision, UI, or detector application
-      logic except where those are symptoms of upstream media plumbing failures.'
-    description_hash: sha256:bc370e64e0bcbfbb15ca335b9584f8bb4ee9ef82af7197fec7d42a2759530bbb
+    description: 'Use this agent for GStreamer pipelines, RTSP / RTP / RTCP / SDP, go2rtc / mediamtx relays, ffmpeg / libav,
+      DeepStream elements (nvv4l2decoder, nvvideoconvert, nvstreammux, nvinfer, nvtracker), encoder/muxer chains (x264enc,
+      h264parse, qtmux, splitmuxsink), HLS / LL-HLS / fMP4, device-side WebRTC (SDP/ICE/DTLS-SRTP), tee/queue topology, leaky-queue
+      tuning, caps negotiation failures (`not-negotiated`), PTS/DTS propagation across NVMM↔system. Owns *plumbing* — frames
+      camera→inference and inference→disk/relay — not the model, not the kernel. Fires on: "splitmuxsink logs Buffer has no
+      PTS after x264enc behind a leaky queue" — pad-by-pad PTS verification to find where the timestamp first becomes invalid;
+      "RTSP disconnects after 60s of low motion" — RTSP session lifecycle, do-rtsp-keep-alive vs firmware quirks, RTCP RR
+      cadence, tshark evidence; "two rtspsrc on same camera, NVMM pool churn" — `rtspsrc → nvv4l2decoder → tee → N branches`
+      redesign with bus-message source filtering; "nvstreammux batched-push-timeout under frame drops" — property-pair tuning
+      (live-source, batched-push-timeout, attach-sys-ts, queue max-size-time); "go2rtc detector starts before relay has a
+      source" — producer/consumer ordering (on-demand vs eager, startup retry). Anti-scope: model-side (NMS, NvDCF tuning)
+      routes to `vision-engineer`; foundation-model + batch labeling routes to `video-analytics-engineer`; TensorRT / kernels
+      route to `gpu-engineer`; missing plugins route to `embedded-linux`; container lifecycle routes to `embedded-device`.'
+    description_summary: Use for video pipeline plumbing involving GStreamer, RTSP/RTP/RTCP/SDP, go2rtc or mediamtx relays,
+      ffmpeg/libav, DeepStream element chains, encoder/muxer paths, HLS/LL-HLS/fMP4, device-side WebRTC, queue/tee topology,
+      caps negotiation, and timestamp propagation. It specializes in moving frames from camera to inference and from inference
+      to disk or relay, including diagnosing PTS/DTS loss, RTSP session dropouts, NVMM pool churn, mux timing under frame
+      drops, and relay startup ordering. Do not use for model behavior or tracking/NMS tuning, foundation-model labeling workflows,
+      TensorRT or kernel work, missing plugin/package issues, or container lifecycle problems.
+    description_hash: sha256:39a265c593baca30b91c1cb73428ddb6ee88e557510fc8b944b226a74137d387
     body_hash: sha256:76e75d4f9860ce5707f92747c5ce4b7e99f2ed2287080b1883f0757ef4c2687a
     tags:
     - engineer
@@ -2452,100 +2354,26 @@ agents:
     file: engineering/vision-engineer.md
     category: engineering
     scope: project
-    description: 'Use this agent when working on computer vision MODELS and frame-as-tensor problems — object detection models
-      (YOLO, SSD, DETR), TensorRT engine building/optimization for vision, frame preprocessing (letterbox, normalization,
-      color conversion), NMS and coordinate remapping, multi-object tracking algorithms (SORT, DeepSORT, NvDCF, ByteTrack),
-      or accuracy debugging of edge-deployed vision models on NVIDIA Jetson. This agent owns the model and the frame-as-data
-      pipeline (preprocess → inference → postprocess → track). For the *transport* of frames into and out of that pipeline
-      (GStreamer element/property tuning, RTSP keepalive, go2rtc/mediamtx relay config, encoder/muxer chains, PTS/DTS propagation,
-      caps negotiation failures), route to `video-pipeline-engineer`. Examples:
-
-
-      <example>
-
-      Context: Building or debugging a YOLO object detection pipeline
-
-      user: "The YOLO detector is producing wrong bounding box coordinates after preprocessing"
-
-      assistant: "Bounding box coordinate transforms between model space and image space are a common source of bugs. Let
-      me use the vision-engineer agent to trace the full coordinate pipeline from letterbox resize through inference output
-      to screen-space boxes."
-
-      <commentary>
-
-      Coordinate space bugs in detection pipelines require understanding letterboxing, aspect ratio preservation, and the
-      exact output format of YOLO variants (transposed vs non-transposed, center-xy vs top-left, normalized vs pixel coordinates).
-
-      </commentary>
-
-      </example>
-
-
-      <example>
-
-      Context: Optimizing TensorRT inference performance on Jetson
-
-      user: "Our YOLO11n model runs at 12 FPS on Orin but we need 30 FPS"
-
-      assistant: "Let me use the vision-engineer agent to profile the pipeline and identify bottlenecks — it could be preprocessing,
-      GPU memory transfers, engine configuration, or postprocessing overhead."
-
-      <commentary>
-
-      Vision pipeline optimization here means the model-side latency breakdown: preprocess (letterbox, normalization, color
-      conversion), GPU transfer, inference, postprocess (NMS, decode, coordinate remap). Decode and render are upstream/downstream
-      — if those are the bottleneck, route to video-pipeline-engineer.
-
-      </commentary>
-
-      </example>
-
-
-      <example>
-
-      Context: Implementing multi-object tracking
-
-      user: "We need to track people across frames and assign stable IDs"
-
-      assistant: "I''ll implement a tracking algorithm suited to your detector. Let me use the vision-engineer agent to build
-      a SORT/DeepSORT-style tracker with Kalman filtering and IoU-based association."
-
-      <commentary>
-
-      Tracking requires understanding detection noise, occlusion handling, track lifecycle management, and the trade-offs
-      between simple IoU trackers and visual-feature-based trackers like DeepSORT or NvDCF.
-
-      </commentary>
-
-      </example>
-
-
-      <example>
-
-      Context: Detection accuracy regression after model swap
-
-      user: "We swapped YOLO11n for YOLOv8n and mAP dropped from 0.42 to 0.31 on our validation set"
-
-      assistant: "Accuracy regressions after a model swap usually come from preprocessing mismatch (the two models were trained
-      with different letterbox/normalization conventions) or output-tensor decoding (transposed vs non-transposed). Let me
-      use the vision-engineer agent to compare the two models'' expected input/output shapes and validate the preprocessing
-      chain against each."
-
-      <commentary>
-
-      The unit of analysis here is the frame as a tensor — preprocessing, inference, postprocessing — not the GStreamer pipeline
-      that delivers the frame. Transport-layer issues (RTSP, GStreamer, relays) go to video-pipeline-engineer.
-
-      </commentary>
-
-      </example>'
-    description_summary: Use for computer vision model work where frames are treated as tensors, including preprocessing,
-      inference, postprocessing, coordinate transforms, and tracking. Specializes in object detection models such as YOLO/SSD/DETR,
-      TensorRT optimization on Jetson, NMS, bounding-box remapping, accuracy regressions after model swaps, and multi-object
-      trackers such as SORT, DeepSORT, NvDCF, and ByteTrack. Do not use for frame transport or media pipeline issues such
-      as GStreamer tuning, RTSP behavior, relay configuration, encoder/muxer chains, timestamps, caps negotiation, decode,
-      or render bottlenecks.
-    description_hash: sha256:c39beab80f70c7871383b91d355e739734e2777a38beadd47cc828a988f27e3b
+    description: 'Use this agent for computer-vision MODELS and frame-as-tensor problems — detection models (YOLOv5/YOLOv8/YOLO11,
+      SSD, DETR), TensorRT engine building/optimization, frame preprocessing (letterbox, normalization, color conversion),
+      NMS and coordinate remapping, per-camera tracking (SORT, DeepSORT, NvDCF, ByteTrack), accuracy debugging of edge vision
+      models on Jetson. Owns the model + frame-as-data pipeline (preprocess → inference → postprocess → per-camera track).
+      Fires on: "YOLO producing wrong bounding boxes after preprocessing" — letterbox + aspect ratio + center padding + model-space
+      ↔ image-space transform; "YOLO11n at 12 FPS on Orin, need 30" — model-side latency breakdown (preprocess, GPU transfer,
+      inference, postprocess) before blaming transport; "track people across frames with stable IDs" — SORT/DeepSORT/NvDCF/ByteTrack
+      selection, Kalman + association + lifecycle tuning; "mAP dropped 0.42 → 0.31 swapping YOLO11n for YOLOv8n" — preprocessing
+      mismatch or output-tensor decoding (transposed vs non-transposed); ONNX export (opset, dynamic axes); FP16/INT8 quantization;
+      tensorrt-swift bindings (`Engine`, `ExecutionContext`); `nvinfer` *inference* keys (model-engine-file, num-detected-classes,
+      output-blob-names). Anti-scope: GStreamer plumbing, rtspsrc, encoder/muxer chains, `nvinfer` *pipeline* keys route to
+      `video-pipeline-engineer`; cross-camera ReID / multi-camera fusion / batch open-vocab labeling route to `video-analytics-engineer`;
+      TensorRT internals / CUTLASS / kernels route to `gpu-engineer`.'
+    description_summary: Use for computer-vision model and frame-as-tensor work, especially detection models, preprocessing,
+      inference output decoding, NMS, coordinate remapping, TensorRT engine building, quantization, and per-camera tracking.
+      It specializes in debugging accuracy and latency across the preprocess -> inference -> postprocess -> tracking path
+      for edge vision deployments such as Jetson, including YOLO/SSD/DETR variants and TensorRT Swift bindings. Do not use
+      for GStreamer/RTSP/encoder pipeline plumbing, cross-camera ReID or multi-camera analytics, or low-level TensorRT kernel/CUTLASS
+      internals.
+    description_hash: sha256:b4cf4b88fcfd6ae15fee309eb36e869953a5d90c8b4bb46d59b21f2c2bb0880f
     body_hash: sha256:8360e3c294aa6e52f446a649bf7c5a9f787ae6ed3209596a5fe1ea51768856a1
     tags:
     - engineer
