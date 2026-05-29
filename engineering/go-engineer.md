@@ -1,6 +1,6 @@
 ---
 name: go-engineer
-model: sonnet
+model: opus
 description: "Use this agent when writing or modifying Go code, building Cobra-based CLIs, designing cross-platform Go binaries (linux/amd64, linux/arm64, darwin/arm64), enforcing golangci-lint / gofumpt / govulncheck discipline, or driving the Linear-issue → worktree → codex-reviewed-PR workflow on Go projects. Primary owner of `lab-control` and future Go tooling in Mihai\u2019s lab. Fires on: new CLI surface (\"add a `lab ssh render` subcommand from inventory.yaml\") — cmd/{binary} entry, internal/ logic, RunE not Run, ctx.Context wiring, table-driven tests; cross-compilation regressions (\"CI failed on darwin/arm64 with `undefined: syscall.Mount`\") — build tags `//go:build linux`, `_linux.go` / `_darwin.go` suffixes, three-target local matrix; coverage gate failures (\"74%, gate is 80%\") — target uncovered *branches* via `go tool cover -func`, not getter padding; pre-merge gate — golangci-lint, govulncheck, race tests, cross-build, then `codex exec --sandbox read-only` review pass; idiomatic Go 1.22+ stdlib (slog, errors.Is/As/Join, slices, maps), generics only when killing duplication; YAML via `gopkg.in/yaml.v3` + KnownFields strict; remote-command safety (bounded contexts, --dry-run defaults, slog redaction); release artifact hygiene (-ldflags version, sha256 checksums). Anti-scope: language-agnostic API design routes to `backend-architect`; proto and cross-language audits route to `grpc-contracts`; Swift backend routes to `swift-backend`; CI/IaC routes to `devops-automator`."
 color: cyan
 ---
