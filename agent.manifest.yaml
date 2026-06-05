@@ -19,17 +19,12 @@ agents:
       integrity); "I want to grade with Opus 4.7 — is that sound or is it cheating?" (judge config with pinned version, blind
       pairwise, 50-item human-labeled gold set, quarterly drift check); "PR #141 passed all unit tests but the agent feels
       off — keeps running `ls` before every Read" (trajectory eval surfacing tool-selection regressions invisible to pass/fail
-      tests). Anti-scope: not for per-PR unit tests (route to `test-writer-fixer`); not for A/B feature-flag rollout tracking
-      (route to `experiment-tracker`); not for shipping AI features (route to `ai-engineer`); not for defining threat models
-      (route to `security-auditor`); not for production observability or API contract monitoring (route to `infrastructure-maintainer`
-      or `api-tester`); not for conventional test-suite analysis (route to `test-results-analyzer`).'
-    description_summary: Use for designing, implementing, and maintaining evaluation harnesses for LLM-based autonomous agents
-      where quality, behavior, and regressions are not captured by ordinary unit tests. Specializes in pinned judge-model
-      rubrics, blind pairwise and gold-set calibration, deterministic eval runs, drift detection, cost/latency regression
-      tracking, tool-call and trajectory analysis, and CI-ready security-policy eval matrices with false-positive and false-negative
-      rates. Do not use for per-PR unit tests, conventional test-suite analysis, A/B rollout tracking, shipping AI product
-      features, threat modeling, production observability, or API contract monitoring.
-    description_hash: sha256:c24575dae123a7735f0ead515b1c8f83e7a12ee5eeeb565e7893d2a7aee41517
+      tests). Input to this agent should include: the specific agent under eval and the regression scenario or behavior to
+      measure. Anti-scope: not per-PR unit tests (`test-writer-fixer`); not A/B rollout tracking (`experiment-tracker`); not
+      shipping AI features (`ai-engineer`); not threat modeling (`security-auditor`); not prod observability (`infrastructure-maintainer`);
+      not conventional test-suite analysis (`test-results-analyzer`).'
+    description_summary: ''
+    description_hash: sha256:e057fbf5fe716652e4682632252fdb1ab44eb2812b7a46c35b3c25e4a1aa002b
     body_hash: sha256:a1e2698a80ec312997a48142464a8f7a11129b57c2fbb6548f81ac6d5f6f54d3
     tags:
     - agent
@@ -91,18 +86,14 @@ agents:
       our fitness app?" (feature usage analysis for prioritization); "our revenue is plateauing, need to find growth opportunities"
       (conversion-funnel diagnostics, ARPU breakdown, upsell opportunities); "we ran three different onboarding flows — which
       performed best?" (A/B test interpretation with confidence intervals and practical significance). Knows the tool landscape
-      — GA4, Mixpanel, Amplitude, RevenueCat, AppsFlyer, Hotjar, Looker, Optimizely. Anti-scope: not for A/B test instrumentation
-      or experiment design with feature flags (route to `experiment-tracker`); not for synthesizing qualitative user feedback
-      (route to `feedback-synthesizer`); not for budget allocation or P&L work (route to `finance-tracker`); not for infrastructure
+      — GA4, Mixpanel, Amplitude, RevenueCat, AppsFlyer, Hotjar, Looker, Optimizely. Input to this agent should include: the
+      metric of interest, the time window, and the comparison baseline. Anti-scope: not for A/B test instrumentation or experiment
+      design with feature flags (route to `experiment-tracker`); not for synthesizing qualitative user feedback (route to
+      `feedback-synthesizer`); not for budget allocation or P&L work (route to `finance-tracker`); not for infrastructure
       performance monitoring and APM (route to `infrastructure-maintainer`); not for judge-graded LLM agent quality (route
       to `agent-eval-engineer`).'
-    description_summary: Use for analytics work that turns product, revenue, or user-behavior data into decisions, including
-      performance reviews, feature usage analysis, funnel diagnostics, cohort and retention analysis, LTV modeling, forecasting,
-      dashboards, and A/B test result interpretation. Specializes in event-schema design, metric analysis, confidence/practical
-      significance for experiment readouts, and common analytics tools such as GA4, Mixpanel, Amplitude, RevenueCat, AppsFlyer,
-      Hotjar, Looker, and Optimizely. Do not use for A/B test instrumentation or feature-flag experiment design, qualitative
-      feedback synthesis, budget or P&L planning, infrastructure/APM monitoring, or judge-graded LLM agent evaluation.
-    description_hash: sha256:084b392b3fc083908324e5f0cf9eef1cfd0774943f2298b6bb487432e1b0180e
+    description_summary: ''
+    description_hash: sha256:54ca5cbfd32ca7552760830a4bc5dcfa07d5b57d60a98e5eef616e1b9c301e85
     body_hash: sha256:6b029c056db76b195988e306bcc38d3adea4fedc3a40a5b5aaa8312cdb23d2e3
     tags:
     - analytics
@@ -137,7 +128,7 @@ agents:
       eval harnesses, infrastructure capacity planning, broad security threat modeling, or writing ordinary unit and integration
       tests.
     description_hash: sha256:ae75e4a3c8029da134fda8849ca7583435ce012506518bb31fec7e3f7f3dda05
-    body_hash: sha256:355dbefa0270da5c118e2c45a1314bb59d45ea2c437f3033bff07b97397a9a58
+    body_hash: sha256:28abb2882f6a366938a11a15d11632a77a7146a511903149cdfdcd4a23fa855e
     tags:
     - api
     - tester
@@ -229,16 +220,12 @@ agents:
       a 1920s bungalow in Westbrae listed at $1.2M, sat 45 days, one price cut — worth a look?" (stale DOM + price cut + permit/hazard
       check); "find me fixer SFHs in Albany under $1.1M" (flats vs hill, I-80 noise, liquefaction flags); "rank these three
       candidates: Outer Sunset, South Berkeley, Albany" (cross-market scoring with per-city policy normalization); "this Elmwood
-      listing looks amazing — under comps, nice photos" (skepticism pass for what the listing isn''t telling you). Anti-scope:
-      pure architectural or interior-design opinions route elsewhere; mortgage underwriting and loan products are out of scope;
-      not for commercial or multifamily 5+ unit deals.'
-    description_summary: Use for evaluating Bay Area residential real estate opportunities, especially owner-occupant or investor
-      purchases in San Francisco, Berkeley, and Albany. It specializes in identifying mispriced homes, fixer-uppers, stale
-      listings, estate or probate sales, and producing buy targets, rehab ranges, ARV estimates, and pursue/monitor/pass verdicts
-      using local permit, hazard, neighborhood, and rent-control context. It is not for pretty-home shopping, architectural
-      or interior-design opinions, mortgage underwriting, loan product selection, commercial deals, or multifamily properties
-      with 5+ units.
-    description_hash: sha256:e4add67f00f3e0190c1197aec536a015143d8f305a8748adc4e18215c7b4d340
+      listing looks amazing — under comps, nice photos" (skepticism pass for what the listing isn''t telling you). Input to
+      this agent should include: the specific listing URL, address, or candidate set to underwrite. Anti-scope: pure architectural
+      or interior-design opinions route elsewhere; mortgage underwriting and loan products are out of scope; not for commercial
+      or multifamily 5+ unit deals.'
+    description_summary: ''
+    description_hash: sha256:91519552cb06773e63176be7ad6a07bc23fc28f3f2ed0d7edd72159fd7490439
     body_hash: sha256:86a9c3ac3b46a5f6d538199a38131b5f5e710fdfc13208f40eca86dbb1e7cbdc
     tags:
     - bay
@@ -325,16 +312,14 @@ agents:
       doing?" (decode strategic direction from funding + roadmap); "every meditation app looks the same — how do we stand
       out?" (positioning gaps when products converge); "could Spotify just build what we''re building?" (platform-risk and
       incumbent-threat assessment with timeline). Uses public signals — job postings, engineering blogs, pricing pages, app
-      store data, LinkedIn movement, funding announcements. Ethical only — never fake reviews or impersonation. Anti-scope:
-      not for raw market sizing or unit economics (route to `market-validator`); not for trend / virality research (route
-      to `trend-researcher`); not for customer interviews (route to `customer-interviewer`); not for shipping a positioning/messaging
-      artifact (route to `content-creator`); not for the final go/no-go scoring call on an idea (route to `idea-evaluator`).'
-    description_summary: Use for deep competitive analysis that explains how competitors win, where whitespace exists, and
-      what strategic moves imply. It specializes in public-signal research such as job postings, pricing, app store data,
-      funding news, engineering blogs, and LinkedIn movement, with attention to moats, network effects, switching costs, platform
-      risk, and disruption patterns. It should not be used for raw market sizing, unit economics, trend or virality research,
-      customer interviews, final idea scoring, or producing the finished positioning or messaging artifact.
-    description_hash: sha256:7595561d34357fbef00052d71d2006b0906e20bd1d7a4b8daf444df7047feeba
+      store data, LinkedIn movement, funding announcements. Ethical only — never fake reviews or impersonation. Input to this
+      agent should include: the specific competitor set or category to analyze, the strategic question to answer, and the
+      time window. Anti-scope: not for raw market sizing or unit economics (route to `market-validator`); not for trend /
+      virality research (route to `trend-researcher`); not for customer interviews (route to `customer-interviewer`); not
+      for shipping a positioning/messaging artifact (route to `content-creator`); not for the final go/no-go scoring call
+      on an idea (route to `idea-evaluator`).'
+    description_summary: ''
+    description_hash: sha256:7558a775cc919576fd345bc001368b3aafdcd2e7709e17a51379a95e05b4e07b
     body_hash: sha256:9dcbd738a00617921194b7e5c10916726e6b2f959e8d8b8192215b561ac9a33c
     tags:
     - competitive
@@ -626,17 +611,15 @@ agents:
       prioritization grounded in real signal); "our new feature has been live for a week — what are users saying?" (post-launch
       impact and friction report); "users seem frustrated but I can''t pinpoint why" (digging through vague complaints to
       find specific, fixable pain points). Produces synthesis deliverables: top issues with quotes + %, top feature requests
-      by segment, quick wins shippable this week, sentiment trends week-over-week. Anti-scope: not for one-on-one customer
-      discovery interviews (route to `customer-interviewer`); not for usability research and persona building (route to `ux-researcher`);
-      not for responding to individual support tickets (route to `support-responder`); not for market sizing or business-model
-      evaluation (route to `market-validator`); not for the ship/kill product call (route to `product-manager`).'
-    description_summary: Use for synthesizing user feedback across app store reviews, in-app submissions, social/support channels,
-      forums, Reddit, and beta reports. It specializes in extracting recurring themes, sentiment trends, urgency scores, prioritized
-      issues, feature requests by segment, representative quotes, and quick wins. Do not use for individual customer interviews,
-      usability research or personas, support-ticket replies, market sizing, business-model evaluation, or final ship/kill
-      product decisions.
-    description_hash: sha256:a6774ce77f47c6762a83e0d59cfc551e16aa35ac2ab3dd58ef2000726e62a36a
-    body_hash: sha256:c6883f9d23457541a518e16f0b997e0ac17c647a7e65b70be089efb4e6070fd5
+      by segment, quick wins shippable this week, sentiment trends week-over-week. Input to this agent should include: the
+      source (Linear, Slack, GitHub issues, App Store reviews), the date range, and any segmentation. Anti-scope: not for
+      one-on-one customer discovery interviews (route to `customer-interviewer`); not for usability research and persona building
+      (route to `ux-researcher`); not for responding to individual support tickets (route to `support-responder`); not for
+      market sizing or business-model evaluation (route to `market-validator`); not for the ship/kill product call (route
+      to `product-manager`).'
+    description_summary: ''
+    description_hash: sha256:d5fa2ea900b7cd36cf04ca38fd2f1270be6383425330b997c3ed0601548c63b9
+    body_hash: sha256:a147ab09d94753ee680ae7edc2747133b96baa7b68cb085ab50b2cf863bfa563
     tags:
     - feedback
     - product
@@ -829,7 +812,7 @@ agents:
       execution, App Store listing optimization, content production, randomized in-product experiment statistics, or analytics
       infrastructure and dashboarding.
     description_hash: sha256:7cf74cfe82ff0f1d2285a32a0e250f58f539e5bd0d0b101a5fdf11102a7dff2e
-    body_hash: sha256:1839d242ce5e1c845c5d158017a4e4929bba86cbfd39f780d26a67c66af8d276
+    body_hash: sha256:12d90ad5a6db14a491acea24b52e340ee02ffab45669e74cc3d1ee37aebe92cd
     tags:
     - growth
     - hacker
@@ -961,14 +944,11 @@ agents:
       enablements, project/folder/org scoping); state drift detection (resources modified outside Terraform, `terraform import`
       for unmanaged); Cloud Run config (ingress restrictions incl. `internal-and-cloud-load-balancing`, timeout for streaming
       RPCs, concurrency, VPC connector); forwarding-rule → proxy → url-map → backend chain validation; secrets-not-in-env
-      / logs / VCS audit; Firebase App Hosting ingress quirks (not inside VPC). Anti-scope: pipeline authoring routes to `devops-automator`;
+      / logs / VCS audit; Firebase App Hosting ingress quirks (not inside VPC). Input to this agent should include: the exact
+      PR number or Terraform plan path, and the GCP project context. Anti-scope: pipeline authoring routes to `devops-automator`;
       app-side security audit routes to `security-auditor`; proto contract issues route to `grpc-contracts`.'
-    description_summary: Use for pre-apply infrastructure review, Terraform plan validation, GCP configuration checks, CI/CD
-      infrastructure drift, IAM failures, and cloud deployment gotchas that could affect production. Specializes in GCP services
-      such as Cloud Run, Certificate Manager, Network Security, CAS, global ALB chains, Terraform state conflicts, drift/import
-      decisions, and consistency between gcloud scripts and Terraform. Do not use for writing CI/CD pipelines, app-side security
-      audits, or proto/API contract issues; those should route to devops automation, security audit, or gRPC contract specialists.
-    description_hash: sha256:4820804a7675b5c1b7aa3e5a8a7ad92a16a6309cc7397cf2834505ab5984d432
+    description_summary: ''
+    description_hash: sha256:f10163a8cae5439f62aa0e4c9d7f77f05df5e006f841b82f95079c6c60c1e525
     body_hash: sha256:0e93e166695937297146826e434816a1ea1ac61d9b91c2510dfd2b4525e57a28
     tags:
     - engineering
@@ -1088,19 +1068,14 @@ agents:
       implications); "our fitness app will track heart rate and sleep patterns" (HIPAA scope determination, data minimization,
       retention policy); "we want to add a coin store to our kids'' game" (COPPA-compliant purchases, verifiable parental
       consent, no behavioral ads, parental access rights). Drafts privacy policies, ToS, cookie banners; runs compliance checklists;
-      surfaces platform-policy traps before they cause rejections or fines. Anti-scope: not for tax/corporate structuring
+      surfaces platform-policy traps before they cause rejections or fines. Input to this agent should include: the feature
+      spec, the user data flows, and the jurisdictions in scope (US/EU/UK/CA). Anti-scope: not for tax/corporate structuring
       (route to external accountants); not for security threat modeling and pen testing (route to `security-auditor`); not
       for data infrastructure encryption or backup engineering (route to `infrastructure-maintainer`); not for marketing copy
       review (route to `content-creator` for voice, this agent for legal claims only); not a replacement for licensed counsel
       on serious regulatory decisions — flags when to escalate.'
-    description_summary: Use for privacy policy, terms of service, cookie banner, and regulatory compliance work involving
-      GDPR, CCPA, COPPA, HIPAA, WCAG, international expansion, data handling, platform policies, or legal-risk review. It
-      specializes in compliance audits, data-protection requirements, consent and retention flows, policy drafting, and identifying
-      App Store or Google Play policy issues before launch. Do not use for tax or corporate structuring, security threat modeling
-      or penetration testing, infrastructure encryption or backup implementation, or general marketing copy review except
-      for legal claims. It should flag matters that require licensed legal counsel rather than serving as a substitute for
-      counsel on serious regulatory decisions.
-    description_hash: sha256:4546a5a016e9e49e24729fa27a6b8f556ee021b4d085808155032e55a9fe1eb0
+    description_summary: ''
+    description_hash: sha256:5b81b62c8a1925e76362c0b0fbacf7d911c7950106e4107e1a1ef83e42a158f5
     body_hash: sha256:765e8dce7dcebe8e9a56498bc241005222684f41d6fce927ba07bfe43f5f4aaf
     tags:
     - checker
@@ -1209,7 +1184,7 @@ agents:
       Do not use for API load or contract testing, infrastructure capacity planning or autoscaling, security performance-impact
       review, LLM latency-quality evaluation, unit or integration test implementation, or conventional test-suite trend analysis.
     description_hash: sha256:0b6eb03dbde2ca25b50ca794f61bfea628ae61211538ae3b321d2774a28c70c5
-    body_hash: sha256:e65ffef61ef565500d0d309e1624d25fcac94f90e302dc462b1ca306eb92f847
+    body_hash: sha256:3a5baf92dc6d45b6ed6c215210947699b2f30712d7578cf0040087cdf872ceb0
     tags:
     - benchmarker
     - performance
@@ -1372,14 +1347,10 @@ agents:
       propagation; Terraform / gcloud IAM least-privilege review; Cloud Run ingress restrictions, secrets not in env / logs
       / VCS; OWASP coverage (SQLi, command injection in shell-outs, XSS, SSRF, insecure deserialization, broken access control,
       security misconfig, insufficient logging); constant-time comparison gaps, timing side-channels, race conditions in auth
-      state transitions, error messages that leak.'
-    description_summary: Use for reviewing application code, infrastructure, and certificate-based systems for security vulnerabilities
-      and misconfigurations. It specializes in PKI/mTLS, OAuth and browser-to-CLI enrollment flows, certificate revocation
-      and signing paths, JWT/RBAC validation, gRPC TLS, IAM least privilege, Cloud Run ingress and secrets handling, and OWASP-style
-      issues such as injection, SSRF, XSS, broken access control, and insecure deserialization. It is also suited to subtle
-      auth and crypto risks including spoofable forwarded certificate headers, unsafe SAN URI parsing, timing side channels,
-      auth race conditions, and error-message leakage; no explicit anti-scope is defined.
-    description_hash: sha256:9518bf9ee0972d2779f7d814702d1845e66e66cf483e57289372457a012de447
+      state transitions, error messages that leak. Input to this agent should include: the specific code paths, auth flow
+      files, or PR diff to audit.'
+    description_summary: ''
+    description_hash: sha256:2877c1f1b60714b8c3146a377f78fec2a14480c1ca45bf69e293ca9626050f34
     body_hash: sha256:a01ebe123c3e63129e4cd2a31abe996c8a55b1622fe61f4f9a33ac934326f3e7
     tags:
     - auditor
@@ -1509,13 +1480,10 @@ agents:
       `infra-reviewer`, `security-auditor`, `gpu-engineer`, `embedded-linux`, `vision-engineer`, `video-pipeline-engineer`,
       etc. — TL owns the *shape* of the feature, specialists own the *depth* of their slice. Schedule and dependency tracking
       belongs to `tpm` (TL does not track dates). Rollout belongs to `release-engineer` (TL hands off at code-complete). TL
-      is generalist; pulls specialists in for depth and trusts them within their slice.'
-    description_summary: Use for non-trivial feature work that needs a technical design, implementation approach, cross-component
-      sequencing, or coherence review across specialist PRs. It specializes in framing the overall technical shape, evaluating
-      tradeoffs such as protocols or execution models, and reconciling implementation reality with product scope. Do not route
-      deep domain implementation, schedule tracking, dependency tracking, or rollout ownership here; those belong to specialist
-      agents, TPM, or release engineering.
-    description_hash: sha256:87440e2d02a609112ce4ed05a62bf2ca0cb0aff8c6845c4406d843b450b1f7cb
+      is generalist; pulls specialists in for depth and trusts them within their slice. Input to this agent should include:
+      the design problem statement (from PM), the constraints, and the components in scope.'
+    description_summary: ''
+    description_hash: sha256:308d19ecd64a167dc900653981345a4071324987db8659e5e11ccf57ad4c4d04
     body_hash: sha256:2be32bf052a75fbdd4106fa0aa6da627b99d2eee9a489c459574660a037cf202
     tags:
     - engineering
@@ -1538,17 +1506,13 @@ agents:
       concurrency triggers); "generate a quality report for this sprint" (pass rates, coverage, defect trends, MTTR, recommendations);
       "are our tests getting slower over time?" (execution-time trend analysis, slow-test identification, parallelization
       efficiency); "which parts of our codebase lack test coverage?" (coverage gap analysis, mutation-test suggestions, priority
-      targets). Anti-scope: not for writing or fixing the tests themselves (route to `test-writer-fixer`); not for application
-      or API performance benchmarking (route to `performance-benchmarker` or `api-tester`); not for LLM agent quality evaluation
-      (route to `agent-eval-engineer` — judge transcripts and eval traces are a different artifact class); not for infrastructure-level
-      CI/CD pipeline failures (route to `devops-automator` or `infrastructure-maintainer`); not for product-feedback synthesis
-      (route to `feedback-synthesizer`).'
-    description_summary: Use for interpreting conventional test-suite artifacts such as JUnit XML, coverage reports, pytest/framework
-      output, and CI flake logs. It specializes in finding flaky-test patterns, pass-rate and coverage trends, slow-test regressions,
-      coverage gaps, and quality risks, then turning those findings into actionable reporting. Do not route tasks that require
-      writing or fixing tests, benchmarking application/API performance, evaluating LLM agents, debugging CI/CD infrastructure
-      failures, or synthesizing product feedback.
-    description_hash: sha256:659496f1327c7c07ad9c1893e34f5cbe8c62bd57d59da59869e77b3aabcd7494
+      targets). Input to this agent should include: the test run artifact path and the failing assertion. Anti-scope: not
+      for writing or fixing the tests themselves (route to `test-writer-fixer`); not for application or API performance benchmarking
+      (route to `performance-benchmarker` or `api-tester`); not for LLM agent quality evaluation (route to `agent-eval-engineer`
+      — judge transcripts and eval traces are a different artifact class); not for infrastructure-level CI/CD pipeline failures
+      (route to `devops-automator` or `infrastructure-maintainer`); not for product-feedback synthesis (route to `feedback-synthesizer`).'
+    description_summary: ''
+    description_hash: sha256:b1b53bcf04b25c386ce1acb0c78306f37ce7dccc2b82ee3262e33b0f0418e587
     body_hash: sha256:91b8ae6648810b79ce99d3a35d0c530f0034b374fecc7eff42a7fef3408383ec
     tags:
     - analyzer
@@ -1585,7 +1549,7 @@ agents:
       from brittle tests and real regressions. Do not route language-specific implementation review here; load or performance
       testing belongs to devops automation, and security-test authoring belongs to security audit work.
     description_hash: sha256:e4a977d17c1e6091a87e844e6ddc3878dce704a8853bae48c3920b3662fbe813
-    body_hash: sha256:5b5bf1c20066bc04e65a88118a6b68b156dcaa44f2662c4c692665de48e1e6d6
+    body_hash: sha256:364cad1fb03e3621fd63c2f01b4013d90997b50dc7e88224cd6051be3a0dc6c3
     tags:
     - engineering
     - fixer
@@ -1618,7 +1582,7 @@ agents:
       identifying app moments that can become TikTok-native content. Do not use for Instagram Reels, Twitter/X, Reddit, general
       cross-platform copywriting, App Store optimization, or broad paid acquisition work.
     description_hash: sha256:0112e6dfa4c9ba34edbf7142bb9df9031914e800379bb6604eef5fe62404a9fc
-    body_hash: sha256:5f0555370fee3256a6716f0ab2eb1206792435616d82ddd13bbf536ad5995c68
+    body_hash: sha256:8af3dcad35581e5892f0e97ae9b52c9461813a0d968ff5f71f8f0687b0d82fcd
     tags:
     - marketing
     - strategist
@@ -1783,7 +1747,7 @@ agents:
       spacing, class, dark-mode, and responsive interaction guidance for developer handoff. Do not route brand identity, micro-interactions,
       user research validation, or production component implementation here.
     description_hash: sha256:3638e7eadd2153f0baa48efa92edf2e61338c04f6ada604e5e3a5765b446a486
-    body_hash: sha256:9c13eb68354eed57054d9a2a574564d4e56241d8c63c37b3e03181b8b6ba0c46
+    body_hash: sha256:5284dbc2ec26f1daa5b516dd14a64682f96cb837c2679fe1b3b87229fa788462
     tags:
     - design
     - designer

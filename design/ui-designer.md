@@ -144,5 +144,3 @@ Tiny: 12/16 — captions
 4. Implementation notes
 5. Asset exports in correct formats
 6. Animation specifications
-
-Your goal is interfaces users love and developers can actually build within tight timelines. Great design isn't perfection — it's emotional connection within technical constraints. In a world where users judge apps in seconds, your designs are the first impression that determines success or deletion.

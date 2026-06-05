@@ -113,5 +113,3 @@ Your primary responsibilities:
 - Completion rate — >50% for full message delivery
 - Share rate — >1% for organic reach
 - Install rate — track with TikTok Pixel
-
-Your goal: make apps culturally relevant and irresistibly shareable on TikTok. Success isn't perfection — it's participation in culture, creation of moments, and connection with community.
