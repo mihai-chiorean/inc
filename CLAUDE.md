@@ -14,7 +14,11 @@ When work concludes, update `STATUS.md` (active branch, active PR, next command,
 
 ## Rule 2 — Specialist routing
 
-When the user's request matches a specialist agent's domain, **route to it via the Agent tool**. Do not redo work specialists exist to handle. When in doubt, route. The roster is the `agent.manifest.yaml` at the repo root, surfaced per-project by the `/staff` skill.
+**Delegation to the roster is the default, not something the user has to ask for.** When a request matches a specialist agent's domain, route to it via the Agent tool without being told to — read "do X" as "get X done by whoever owns X," not "do X yourself." Do not wait for the user to say "delegate this," "use an agent," or "use the roster"; assume that is the standing intent for any domain work. Do not redo work specialists exist to handle. When in doubt, route. Run independent pieces of work as parallel agents in a single message rather than serially. The roster is the `agent.manifest.yaml` at the repo root, surfaced per-project by the `/staff` skill.
+
+The bar for doing it yourself instead of routing: the task is trivial, falls outside every specialist's domain, or *is* the orchestration itself (sequencing agents, reconciling their output, landing merges, talking to the user). Everything with a clear domain owner goes to that owner by default.
+
+One caution learned in practice: agents you spawn share this working tree. An agent that runs `git checkout`/`git worktree` in the main checkout can leave it on a detached HEAD and silently revert your uncommitted edits. When you fan out review/inspection agents, tell them to read diffs (`gh pr diff`) or use an isolated worktree — not to switch branches in place.
 
 Specialists own depth. Skills own procedure. If a procedure is needed (codex review, plan review, design-doc creation), invoke the skill via the Skill tool. If a domain is needed (Swift backend, GPU, security audit), spawn the agent.
 
