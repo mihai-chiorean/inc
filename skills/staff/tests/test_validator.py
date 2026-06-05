@@ -215,31 +215,47 @@ class TestSkillValidation(unittest.TestCase):
             self.assertEqual(r["warnings"], [])
 
     def test_skill_with_non_spec_field_new_hard_fails(self) -> None:
-        """`version` on a fresh (non-grandfathered) skill: NEW debt → HARD."""
+        """Non-spec key on a fresh (non-grandfathered) skill: NEW debt → HARD.
+        Uses `references` since `version` is now spec-correct per MIT-437."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            write_skill(root, "verz",
-                        "---\nname: verz\ndescription: Verz.\nversion: 1.2.3\n---\n\nBody.\n")
+            write_skill(root, "refz",
+                        "---\nname: refz\ndescription: Refz.\nreferences: foo\n---\n\nBody.\n")
             code, payload = run_validator(root)
             self.assertEqual(code, 1)
-            r = _find(payload, "skills/verz/SKILL.md")
-            self.assertTrue(any("'version'" in e for e in r["hard_errors"]),
-                            f"expected HARD on 'version', got {r['hard_errors']}")
+            r = _find(payload, "skills/refz/SKILL.md")
+            self.assertTrue(any("'references'" in e for e in r["hard_errors"]),
+                            f"expected HARD on 'references', got {r['hard_errors']}")
 
     def test_skill_with_non_spec_field_grandfathered_warns(self) -> None:
-        """Grandfathered skills WARN, not HARD, on listed non-spec keys."""
+        """Grandfathered skills WARN, not HARD, on listed non-spec keys.
+        Uses `references` since `version` is now spec-correct per MIT-437."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            write_skill(root, "verz",
-                        "---\nname: verz\ndescription: Verz.\nversion: 1.2.3\n---\n\nBody.\n")
+            write_skill(root, "refz",
+                        "---\nname: refz\ndescription: Refz.\nreferences: foo\n---\n\nBody.\n")
             write_baseline(root, grandfathered_skills=[
-                {"file": "skills/verz/SKILL.md", "non_spec_keys": ["version"]},
+                {"file": "skills/refz/SKILL.md", "non_spec_keys": ["references"]},
             ])
             code, payload = run_validator(root)
             self.assertEqual(code, 0)
-            r = _find(payload, "skills/verz/SKILL.md")
-            self.assertTrue(any("'version'" in w and "grandfathered" in w
+            r = _find(payload, "skills/refz/SKILL.md")
+            self.assertTrue(any("'references'" in w and "grandfathered" in w
                                 for w in r["warnings"]))
+
+    def test_skill_with_version_is_clean_after_mit_437(self) -> None:
+        """MIT-437 added `version` and `deprecation-notice` to skill spec —
+        these should now validate clean as Anthropic distribution metadata."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "vskill",
+                        "---\nname: vskill\ndescription: V.\nversion: 1.0.0\n"
+                        "deprecation-notice: Use foo instead\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/vskill/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
+            self.assertEqual(r["warnings"], [])
 
     def test_agent_name_optional_per_spec(self) -> None:
         """Per Anthropic spec, `name` is optional for agents — must not HARD-fail."""
