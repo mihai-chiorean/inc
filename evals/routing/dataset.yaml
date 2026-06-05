@@ -25,25 +25,199 @@
   expected: ai-engineer
   category: engineering
   difficulty: easy
-  rationale: 'Textbook ai-engineer: LLM integration, streaming, prompt engineering, semantic caching for
-    cost — all squarely in its scope.'
+  rationale: LLM integration, streaming, semantic caching for cost — squarely ai-engineer.
 - id: route-002
   prompt: Can you review this Terraform module before I apply it to prod?
   expected: infra-reviewer
   category: engineering
   difficulty: medium
-  rationale: Infrastructure-as-code review (Terraform) is infra-reviewer's job. It superficially reads
-    as a security review, but security-auditor is threat modeling, not IaC change review.
+  rationale: Pre-apply IaC/Terraform review is infra-reviewer. Reads like a security task, but security-auditor
+    is threat modeling, not IaC change review.
   adversarial_against: security-auditor
 - id: route-003
   prompt: What's the best espresso machine under $500 for a home office?
   expected: NONE
   category: meta
   difficulty: easy
-  rationale: Personal shopping advice unrelated to any specialist's software/product/ops domain. No roster
-    agent should claim this.
+  rationale: Personal shopping advice unrelated to any specialist's software/product/ops domain.
 - id: route-004
   prompt: Review this gRPC service definition for backward-compatibility before we cut a release.
+  expected: grpc-contracts
+  category: engineering
+  difficulty: medium
+  rationale: gRPC/protobuf contract evolution + backward-compat is grpc-contracts. Looks like swift-backend,
+    but the artifact is the .proto contract, not a Swift service.
+  adversarial_against: swift-backend
 - id: route-005
   prompt: Our onboarding funnel drops 60% of users at the email-verification step — help me figure out
     why and what to test.
+  expected: growth-hacker
+  category: marketing
+  difficulty: medium
+  rationale: Funnel drop-off + conversion optimization + what-to-test is growth-hacker's core.
+- id: route-006
+  prompt: Build a responsive React dashboard with a sortable, filterable data table and a dark-mode toggle.
+  expected: frontend-developer
+  category: engineering
+  difficulty: easy
+  rationale: Browser UI in React — frontend-developer.
+- id: route-007
+  prompt: Set up a GitHub Actions pipeline that builds, tests, and deploys our service to Cloud Run on
+    every merge to main.
+  expected: devops-automator
+  category: engineering
+  difficulty: easy
+  rationale: CI/CD pipeline + deployment automation to cloud — devops-automator.
+- id: route-008
+  prompt: Write a fused CUDA kernel for layernorm and tune the shared-memory tiling for our A100s.
+  expected: gpu-engineer
+  category: engineering
+  difficulty: hard
+  rationale: CUDA kernels + shared-memory tuning on NVIDIA GPUs — gpu-engineer.
+- id: route-009
+  prompt: Implement a Hummingbird 2 endpoint that calls a downstream gRPC service using SwiftNIO and structured
+    concurrency.
+  expected: swift-backend
+  category: engineering
+  difficulty: medium
+  rationale: 'Swift server-side: Hummingbird 2 + SwiftNIO + gRPC client — swift-backend.'
+- id: route-010
+  prompt: Write a zero-downtime Postgres migration that adds a nullable column with a safe backfill and
+    a rollback path.
+  expected: db-migration
+  category: engineering
+  difficulty: medium
+  rationale: PostgreSQL migration authoring + safe backfill/rollback — db-migration.
+- id: route-011
+  prompt: We have 50 feature requests but only one cycle — help me prioritize and make the ship/kill calls.
+  expected: product-manager
+  category: product
+  difficulty: easy
+  rationale: Roadmap prioritization + ship/kill decisions — product-manager.
+- id: route-012
+  prompt: I'm running 8 user discovery interviews next week — prep me a non-leading interview guide.
+  expected: customer-interviewer
+  category: product
+  difficulty: easy
+  rationale: Preparing customer discovery interviews — customer-interviewer.
+- id: route-013
+  prompt: Do a deep competitive teardown of Linear vs Jira vs Shortcut to sharpen our positioning.
+  expected: competitive-intel
+  category: product
+  difficulty: medium
+  rationale: Deep competitive analysis of a defined competitor set — competitive-intel.
+- id: route-014
+  prompt: Design the screen flow and component layout for a new multi-step onboarding wizard.
+  expected: ui-designer
+  category: design
+  difficulty: easy
+  rationale: Implementable screen flow + component design — ui-designer.
+- id: route-015
+  prompt: Plan a lean usability study, runnable this sprint, to find where users get stuck in checkout.
+  expected: ux-researcher
+  category: design
+  difficulty: medium
+  rationale: Lean, sprint-timeline usability research — ux-researcher.
+- id: route-016
+  prompt: Improve our App Store listing — keywords, title, and screenshots — to lift install conversion.
+  expected: app-store-optimizer
+  category: marketing
+  difficulty: easy
+  rationale: App Store keyword/metadata/screenshot optimization — app-store-optimizer.
+- id: route-017
+  prompt: Plan a TikTok content series with hooks and a posting cadence for our app launch.
+  expected: tiktok-strategist
+  category: marketing
+  difficulty: easy
+  rationale: TikTok-specific content/strategy — tiktok-strategist.
+- id: route-018
+  prompt: Run load, spike, and soak tests against our REST API and check responses against the OpenAPI
+    spec.
+  expected: api-tester
+  category: testing
+  difficulty: medium
+  rationale: API load/soak/contract validation — api-tester.
+- id: route-019
+  prompt: Parse our CI's JUnit XML and coverage reports and summarize what's failing and trending.
+  expected: test-results-analyzer
+  category: testing
+  difficulty: medium
+  rationale: Interpreting conventional test-suite artifacts (JUnit/coverage) — test-results-analyzer.
+- id: route-020
+  prompt: Build a 12-month budget and a cost-optimization plan for our cloud and tooling spend.
+  expected: finance-tracker
+  category: studio-operations
+  difficulty: easy
+  rationale: Budget allocation + cost optimization — finance-tracker.
+- id: route-021
+  prompt: Draft support response templates and a triage workflow for our incoming customer tickets.
+  expected: support-responder
+  category: studio-operations
+  difficulty: easy
+  rationale: Support templates + ticket triage ops — support-responder.
+- id: route-022
+  prompt: Coordinate the cross-team dependencies and dates to hit our launch milestone across backend,
+    mobile, and infra.
+  expected: tpm
+  category: project-management
+  difficulty: medium
+  rationale: Date-bearing cross-team dependency coordination — tpm.
+- id: route-023
+  prompt: Help me draft a long-form blog post about the three-day Triton SM121 PTX bug I chased.
+  expected: blog-writer
+  category: writing
+  difficulty: easy
+  rationale: Long-form personal blog drafting — blog-writer.
+- id: route-024
+  prompt: Our checkout API's p99 latency spiked right after the last deploy — find the bottleneck.
+  expected: performance-benchmarker
+  category: testing
+  difficulty: medium
+  rationale: Profiling/finding a perf regression — performance-benchmarker. Reads like backend-architect,
+    but the ask is measure-and-locate, not redesign.
+  adversarial_against: backend-architect
+- id: route-025
+  prompt: I just refactored the payments module — write the unit and integration tests for it.
+  expected: test-writer-fixer
+  category: engineering
+  difficulty: medium
+  rationale: Adding/updating tests after a code change — test-writer-fixer. Looks like backend work, but
+    the deliverable is tests, not the module.
+  adversarial_against: backend-architect
+- id: route-026
+  prompt: We're expanding to the EU next quarter — update our privacy policy and data-processing terms.
+  expected: legal-compliance-checker
+  category: studio-operations
+  difficulty: medium
+  rationale: Privacy policy + regulatory (GDPR) terms — legal-compliance-checker. Sounds like a PM roadmap
+    item, but the artifact is legal/compliance text.
+  adversarial_against: product-manager
+- id: route-027
+  prompt: Our React Native feed drops frames when scrolling — make it smooth.
+  expected: mobile-app-builder
+  category: engineering
+  difficulty: medium
+  rationale: React Native mobile performance — mobile-app-builder. The word 'React' lures frontend-developer,
+    but this is native mobile, not browser UI.
+  adversarial_against: frontend-developer
+- id: route-028
+  prompt: Cross-compile our Swift agent for ARM64 and get it running on a Raspberry Pi 5.
+  expected: embedded-device
+  category: engineering
+  difficulty: hard
+  rationale: Cross-compiling for ARM64 + running on edge device (WendyOS/Pi) — embedded-device. 'Swift'
+    lures swift-backend, but this is device-side cross-compilation, not server work.
+  adversarial_against: swift-backend
+- id: route-029
+  prompt: Should I refinance my mortgage now or wait for rates to drop?
+  expected: NONE
+  category: meta
+  difficulty: medium
+  rationale: bay-value-hunter covers Bay Area residential *listing underwriting* (buy/monitor/pass), not
+    personal mortgage-refinance advice — no agent fits.
+- id: route-030
+  prompt: Recommend a good sci-fi novel for a long flight.
+  expected: NONE
+  category: meta
+  difficulty: easy
+  rationale: General-knowledge recommendation unrelated to any specialist domain.
