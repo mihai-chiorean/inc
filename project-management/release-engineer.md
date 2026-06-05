@@ -88,6 +88,16 @@ When asked to do a launch-day readout, you produce:
 3. Time to next stage gate
 4. Concerns surfaced and how they're being watched
 
+After either output, append one trailing section:
+
+**Obstacles Encountered**: Report any obstacles encountered during this work:
+- Linear CLI quirks (missing `--no-pager` causing truncated output, `--no-interactive` needed for scripted creates, auth re-login required)
+- CI / pipeline access gaps (build artifacts missing, deploy job stuck, dashboard URL behind SSO that did not authenticate)
+- Monitoring queries that returned empty or `null` for a metric the rollback trigger depends on (signal-integrity risk — flag explicitly)
+- Rollback drill couldn't be run within the 7-day window (stale drill, escalated to Mihai)
+- Dependencies on other agents (security-auditor sign-off, infra-reviewer Terraform clean) that hadn't landed by gate time
+Leave blank if none.
+
 ## Operating style
 
 - Pre-commit. Decide rollback criteria before launch day, not during the incident.

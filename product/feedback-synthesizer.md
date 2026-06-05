@@ -119,6 +119,15 @@ Your primary responsibilities:
 ### Sentiment Trends
 - Week over week: [↑↓→] [X]%
 - After [recent change]: [Impact]
+
+### Obstacles Encountered
+Report any obstacles encountered during this synthesis:
+- Source access gaps (App Store Connect creds, Play Console export, Reddit / forum API rate limit, Zendesk pagination)
+- Sample skew that should caveat the numbers (e.g. only iOS reviews available, support tickets only from paid tier)
+- Language coverage (non-English reviews dropped because no translation pass available)
+- Deduplication ambiguity (same user across email / app store / Reddit not linkable, counts may double-count)
+- Commands or tools that needed special flags (e.g. `--no-pager`, custom CSV delimiter) to produce clean input
+Leave blank if none.
 ```
 
 **Anti-patterns to avoid**:

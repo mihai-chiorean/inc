@@ -30,7 +30,7 @@ agents:
       rates. Do not use for per-PR unit tests, conventional test-suite analysis, A/B rollout tracking, shipping AI product
       features, threat modeling, production observability, or API contract monitoring.
     description_hash: sha256:c24575dae123a7735f0ead515b1c8f83e7a12ee5eeeb565e7893d2a7aee41517
-    body_hash: sha256:8b2d734bf6dcb029f0dd3c2ce04f03f49e0746a4edbdb4af5324255711a996db
+    body_hash: sha256:a1e2698a80ec312997a48142464a8f7a11129b57c2fbb6548f81ac6d5f6f54d3
     tags:
     - agent
     - engineer
@@ -137,7 +137,7 @@ agents:
       eval harnesses, infrastructure capacity planning, broad security threat modeling, or writing ordinary unit and integration
       tests.
     description_hash: sha256:ae75e4a3c8029da134fda8849ca7583435ce012506518bb31fec7e3f7f3dda05
-    body_hash: sha256:eaba28d0bf92b25fb122239f1387e669a75ef3bd88d1776aa1737bcf6cfa9f44
+    body_hash: sha256:355dbefa0270da5c118e2c45a1314bb59d45ea2c437f3033bff07b97397a9a58
     tags:
     - api
     - tester
@@ -205,7 +205,7 @@ agents:
       hands-on Go or Swift implementation, detailed database migration mechanics, cross-language protobuf contract audits,
       or security review of a specific implementation.
     description_hash: sha256:d2fff803d60f90e030277fe5fcd9b64c74337945889423324a1d70ab1c684df3
-    body_hash: sha256:d0ed29b22d9910206c77afa83ed29a957838d207a76d9d4bd043f949e885f0f7
+    body_hash: sha256:446dd2cd7ae081c1b58116fce5bcd5b81aadf6089229c681eb192cbe276d2703
     tags:
     - architect
     - backend
@@ -636,7 +636,7 @@ agents:
       usability research or personas, support-ticket replies, market sizing, business-model evaluation, or final ship/kill
       product decisions.
     description_hash: sha256:a6774ce77f47c6762a83e0d59cfc551e16aa35ac2ab3dd58ef2000726e62a36a
-    body_hash: sha256:7e52dd0a7e5037423bbb6d523423cd9d6a19aacb6ab4d4dca94aee59068355fb
+    body_hash: sha256:c6883f9d23457541a518e16f0b997e0ac17c647a7e65b70be089efb4e6070fd5
     tags:
     - feedback
     - product
@@ -864,7 +864,7 @@ agents:
       it for settled per-language gRPC implementation, mTLS/PKI security audits, or Cloud Run/ALB/Terraform infrastructure
       review.
     description_hash: sha256:45c2d7a1a039c810eb965245eb115cd615647afe885b50cb358206b8e1f16d6b
-    body_hash: sha256:8ba9a9091222442ae491670d4c135c58dffdf77d150d3236e5ec893e8b2c249b
+    body_hash: sha256:946aaac48a8a8d325ef06ccb84f1d1bfd95e1a95ab67c26551e8b9205c9fb449
     tags:
     - contracts
     - engineering
@@ -969,7 +969,7 @@ agents:
       decisions, and consistency between gcloud scripts and Terraform. Do not use for writing CI/CD pipelines, app-side security
       audits, or proto/API contract issues; those should route to devops automation, security audit, or gRPC contract specialists.
     description_hash: sha256:4820804a7675b5c1b7aa3e5a8a7ad92a16a6309cc7397cf2834505ab5984d432
-    body_hash: sha256:1c7d14b9433f8aa70c3f5629991a83a9d09fa0b87b7a88cfb1b3d31b66d1d97f
+    body_hash: sha256:0e93e166695937297146826e434816a1ea1ac61d9b91c2510dfd2b4525e57a28
     tags:
     - engineering
     - infra
@@ -1008,7 +1008,7 @@ agents:
       CI/CD pipelines, release rollout management, endpoint-specific API or load testing, application-level benchmarking,
       business-unit budget allocation, or security threat modeling.
     description_hash: sha256:2c09291077163d94a8341236d934b2d675cd63c2ae6d59eeb79e9e8d0c58ba78
-    body_hash: sha256:1f2a9782e1e051e4927a50bd5bf24f98acfb3da4cb485f219fc47b0f0c100817
+    body_hash: sha256:cb88b5918fc712b1cd762d4ca3897f6e75d43973f79372d84c4bbda865835bca
     tags:
     - infrastructure
     - maintainer
@@ -1101,7 +1101,7 @@ agents:
       for legal claims. It should flag matters that require licensed legal counsel rather than serving as a substitute for
       counsel on serious regulatory decisions.
     description_hash: sha256:4546a5a016e9e49e24729fa27a6b8f556ee021b4d085808155032e55a9fe1eb0
-    body_hash: sha256:c4540f93e19e4c557c40648f58343bb12b55b1b6d8b9d811a34c43c6572edc2c
+    body_hash: sha256:765e8dce7dcebe8e9a56498bc241005222684f41d6fce927ba07bfe43f5f4aaf
     tags:
     - checker
     - compliance
@@ -1209,7 +1209,7 @@ agents:
       Do not use for API load or contract testing, infrastructure capacity planning or autoscaling, security performance-impact
       review, LLM latency-quality evaluation, unit or integration test implementation, or conventional test-suite trend analysis.
     description_hash: sha256:0b6eb03dbde2ca25b50ca794f61bfea628ae61211538ae3b321d2774a28c70c5
-    body_hash: sha256:e9298f63d3ffe24ef134691d688c840525c0ad0381f6eab6abdf3a953d6e8099
+    body_hash: sha256:e65ffef61ef565500d0d309e1624d25fcac94f90e302dc462b1ca306eb92f847
     tags:
     - benchmarker
     - performance
@@ -1345,7 +1345,7 @@ agents:
       on-call coordination, and monitoring queries or dashboards. Do not use for pre-code-complete program management, building
       CI/CD infrastructure, product ship/kill decisions, marketing or app-store launch work, or randomized experiment analysis.'
     description_hash: sha256:0dab1d5bc73c863a1c2a935c76b7ec000c1940633d82dc150ca142ec83708e8d
-    body_hash: sha256:1acd4243ee4b429af8081ef5c48f3cee078ee55ab96a68af4ae8a68d89c259ec
+    body_hash: sha256:7b15689b6477198c6f8df414ac020a3c31de2160dacea55bc602d38932d7af68
     tags:
     - engineer
     - project-management
@@ -1380,7 +1380,7 @@ agents:
       auth and crypto risks including spoofable forwarded certificate headers, unsafe SAN URI parsing, timing side channels,
       auth race conditions, and error-message leakage; no explicit anti-scope is defined.
     description_hash: sha256:9518bf9ee0972d2779f7d814702d1845e66e66cf483e57289372457a012de447
-    body_hash: sha256:e63b4eca1fe4748048d01d9e09f848c4b26c90f06c5dea4a28b5f4aaa2d44c51
+    body_hash: sha256:a01ebe123c3e63129e4cd2a31abe996c8a55b1622fe61f4f9a33ac934326f3e7
     tags:
     - auditor
     - engineering
@@ -1516,7 +1516,7 @@ agents:
       deep domain implementation, schedule tracking, dependency tracking, or rollout ownership here; those belong to specialist
       agents, TPM, or release engineering.
     description_hash: sha256:87440e2d02a609112ce4ed05a62bf2ca0cb0aff8c6845c4406d843b450b1f7cb
-    body_hash: sha256:ceed9e163a777d8e8218a35a147b90c31ff04c3f7cc140db329031b6ed492ae2
+    body_hash: sha256:2be32bf052a75fbdd4106fa0aa6da627b99d2eee9a489c459574660a037cf202
     tags:
     - engineering
     - lead
@@ -1549,7 +1549,7 @@ agents:
       writing or fixing tests, benchmarking application/API performance, evaluating LLM agents, debugging CI/CD infrastructure
       failures, or synthesizing product feedback.
     description_hash: sha256:659496f1327c7c07ad9c1893e34f5cbe8c62bd57d59da59869e77b3aabcd7494
-    body_hash: sha256:7c98901924871a6214a29d2c56870da945514b9308586a7ab929aa6da0aaf2b4
+    body_hash: sha256:91b8ae6648810b79ce99d3a35d0c530f0034b374fecc7eff42a7fef3408383ec
     tags:
     - analyzer
     - results
@@ -1585,7 +1585,7 @@ agents:
       from brittle tests and real regressions. Do not route language-specific implementation review here; load or performance
       testing belongs to devops automation, and security-test authoring belongs to security audit work.
     description_hash: sha256:e4a977d17c1e6091a87e844e6ddc3878dce704a8853bae48c3920b3662fbe813
-    body_hash: sha256:a51e4a97a476be1bf65c1162c3fe665ae2bd59f7fecdd2915d03ad62075e1258
+    body_hash: sha256:5b5bf1c20066bc04e65a88118a6b68b156dcaa44f2662c4c692665de48e1e6d6
     tags:
     - engineering
     - fixer
@@ -1653,7 +1653,7 @@ agents:
       studio-wide budget planning, LLM agent quality evaluation, API load testing, production implementation, or vendor security
       audits.
     description_hash: sha256:24cccd5dc17340dc0344ac856c06e8adc467fa9ba41b500e7c21ebdece173502
-    body_hash: sha256:bed3dd64aae4e844c1fe11f72874816c1b2b7cf3ffedbfa122ab63b0fa27b9c3
+    body_hash: sha256:68b55894e6e307a87c8b3ba53c9894d0d9eea181c1780e7b95604a2cc3c075c2
     tags:
     - evaluator
     - testing

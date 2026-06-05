@@ -165,6 +165,15 @@ Your primary responsibilities:
 1. [Highest priority action]
 2. [Second priority action]
 3. [Third priority action]
+
+### Obstacles Encountered
+Report any obstacles encountered during this analysis:
+- CI artifact retention windows that truncated the trend series (JUnit XML expired before the sprint window closed)
+- Coverage report format mismatch (Istanbul vs lcov vs Cobertura) requiring manual normalization
+- Flake detection blocked because runs are merged before per-run logs are archived
+- Git correlation gaps (squash-merge dropped per-commit test deltas)
+- Commands that needed special flags (e.g. `gh run view --log` rate-limited; `--no-pager` for clean diffs) to produce usable data
+Leave blank if none.
 ```
 
 **Flaky Test Report**:

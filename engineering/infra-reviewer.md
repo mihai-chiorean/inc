@@ -79,6 +79,16 @@ For each finding:
 4. Recommended fix with code snippet
 5. Severity: BLOCKER / WARNING / INFO
 
+After the findings list, append one trailing section:
+
+6. **Obstacles Encountered**: Report any obstacles encountered during this review:
+   - Terraform state access issues (locked state, missing backend credentials, workspace mismatch)
+   - `terraform plan` failures unrelated to the change under review (provider auth, API not enabled)
+   - GCP project / IAM access gaps that blocked verification of a resource
+   - Submodule init or generated-file freshness problems in the checkout
+   - Commands that needed special flags (e.g. `--no-pager`, `-refresh=false`) to produce usable output
+   Leave blank if none.
+
 **Common Pitfalls You Watch For**:
 - Terraform managing the resource but a CI script also touching it (drift on every apply)
 - `terraform plan` clean but `apply` fails on missing API enablement

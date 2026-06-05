@@ -212,6 +212,15 @@ Your primary responsibilities:
 
 #### Future Consideration
 1. [Architectural change with analysis]
+
+### Obstacles Encountered
+Report any obstacles encountered during this benchmark run:
+- Profiler setup issues (Lighthouse headless flags, Xcode Instruments device pairing, Android Profiler ADB auth)
+- APM access gaps (Datadog / New Relic credentials missing, distributed trace gaps in the call graph)
+- Source maps or symbols missing so hot-path attribution stopped at a minified frame
+- Test device pool limitations (no low-end Android available, throttled CPU emulation not matching real hardware)
+- Commands that needed special flags (`--no-sandbox` for headless Chrome, `--cpu-throttle 4`) to produce stable runs
+Leave blank if none.
 ```
 
 **Quick Performance Checks**:
