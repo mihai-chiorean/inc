@@ -319,33 +319,9 @@
   ],
   "grandfathered_skills": [
     {
-      "file": "skills/design-doc/SKILL.md",
-      "non_spec_keys": [
-        "version"
-      ]
-    },
-    {
-      "file": "skills/plan-eng-review/SKILL.md",
-      "non_spec_keys": [
-        "version"
-      ]
-    },
-    {
       "file": "skills/postgres/SKILL.md",
       "non_spec_keys": [
         "references"
-      ]
-    },
-    {
-      "file": "skills/prioritize/SKILL.md",
-      "non_spec_keys": [
-        "version"
-      ]
-    },
-    {
-      "file": "skills/sitrep/SKILL.md",
-      "non_spec_keys": [
-        "version"
       ]
     },
     {
@@ -364,12 +340,6 @@
       "file": "skills/wendy-contributing/SKILL.md",
       "non_spec_keys": [
         "references"
-      ]
-    },
-    {
-      "file": "skills/work-breakdown/SKILL.md",
-      "non_spec_keys": [
-        "version"
       ]
     }
   ]

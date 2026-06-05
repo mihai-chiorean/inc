@@ -22,3 +22,4 @@ venv/
 
 # /staff scripts: bytecode caches show up because add.py and remove.py
 # import apply.py via sys.path. Gitignore catches them; keep them out of PRs.
+.claude/worktrees/

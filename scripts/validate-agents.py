@@ -79,6 +79,10 @@ SKILL_SPEC_KEYS = {
     "disable-model-invocation", "user-invocable",
     "allowed-tools", "disallowed-tools",
     "model", "effort", "context", "agent", "hooks", "paths", "shell",
+    # Distribution metadata per Anthropic's Jan 2026 skills guide and
+    # the org-wide deployment feature shipped Dec 2025. Optional fields;
+    # accept without warning. Added via MIT-437.
+    "version", "deprecation-notice",
 }
 
 # inc-repo extension. `scope:` on agents is consumed by install.sh's
@@ -252,13 +256,42 @@ def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
     return {"kind": "agent", "file": rel, "hard_errors": hard, "warnings": warn}
 
 
-def validate_skill(path: Path, baseline: dict[str, set[str]]) -> dict:
+def _check_portability(text: str) -> list[str]:
+    """Opt-in scan for portability issues per MIT-437. Returns informational
+    warnings — does not affect exit code. Caller decides whether to surface."""
+    findings: list[str] = []
+    # Absolute paths outside the skill (typical user-specific paths).
+    abs_path_re = re.compile(r"(?<![\w/])/(home|Users)/[a-zA-Z0-9._-]+/")
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if abs_path_re.search(line):
+            findings.append(
+                f"line {lineno}: hardcoded user-specific absolute path "
+                "(consider $HOME or relative paths for portability)"
+            )
+            break  # one finding per file is enough for the signal
+    # `!` shell references with non-portable commands (heuristic: gnu-specific
+    # tools that don't exist on macOS without homebrew).
+    non_portable = ("gsed ", "gawk ", "greadlink ", "g[a-z]+ ")
+    for tool in ("gsed", "gawk", "greadlink"):
+        if f"!`{tool}" in text or f"! `{tool}" in text:
+            findings.append(
+                f"dynamic context uses `{tool}` — not portable to macOS "
+                "without homebrew aliases"
+            )
+    return findings
+
+
+def validate_skill(path: Path, baseline: dict[str, set[str]],
+                   check_portability: bool = False) -> dict:
     """Check a single SKILL.md. Returns hard_errors and warnings.
 
     Per Anthropic skills.md, `name` is optional (defaults to directory name)
     and `description` is "recommended" — if omitted it falls back to the
     first paragraph of the markdown body. Validator only hard-fails when
-    there is no usable routing text from either source."""
+    there is no usable routing text from either source.
+
+    When `check_portability=True`, runs the opt-in portability scan from
+    MIT-437 and appends any findings as informational warnings."""
     rel = path.relative_to(REPO_ROOT).as_posix()
     parsed, hard, warn = _parse_frontmatter(path)
     if parsed is None:
@@ -323,6 +356,11 @@ def validate_skill(path: Path, baseline: dict[str, set[str]]) -> dict:
                 f"non-spec frontmatter keys {existing_debt!r} on skill — "
                 "grandfathered per scripts/validate-agents-baseline.json."
             )
+
+    if check_portability:
+        text = path.read_text(encoding="utf-8")
+        for finding in _check_portability(text):
+            warn.append(f"portability: {finding}")
 
     return {"kind": "skill", "file": rel, "hard_errors": hard, "warnings": warn}
 
@@ -413,6 +451,15 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="emit JSON instead of text")
     parser.add_argument("--quiet", action="store_true",
                         help="only print files with hard failures")
+    parser.add_argument("--check-portability", action="store_true",
+                        help=(
+                            "opt-in portability scan for skills: flags "
+                            "absolute paths, machine-specific hardcoded "
+                            "paths, and shell-`!` references that may not "
+                            "exist on typical systems. Adds informational "
+                            "warnings; does not change exit code. Added "
+                            "via MIT-437 per Anthropic skills guide."
+                        ))
     args = parser.parse_args()
 
     agent_files = collect_agent_files()
@@ -424,7 +471,10 @@ def main() -> int:
     baseline = load_baseline()
     results: list[dict] = []
     results.extend(validate_agent(p, baseline) for p in agent_files)
-    results.extend(validate_skill(p, baseline) for p in skill_files)
+    results.extend(
+        validate_skill(p, baseline, check_portability=args.check_portability)
+        for p in skill_files
+    )
     hard_count = sum(1 for r in results if r["hard_errors"])
 
     if args.json:

@@ -1,4 +1,4 @@
-.PHONY: help test test-cov mypy lint manifest accuracy
+.PHONY: help test test-cov mypy lint manifest accuracy zip-skill
 
 PYTHON := python3
 COVERAGE := coverage
@@ -66,3 +66,13 @@ manifest-llm:
 # Hits the LLM provider for each (project x strategy) combination.
 accuracy:
 	$(PYTHON) skills/staff/tests/eval_suggest_accuracy.py --labels skills/staff/tests/labels.yaml
+
+# Package a skill folder as a zip for sharing or external distribution.
+# Per Anthropic skills guide: skills are folder-based units that can be
+# zipped, shared, and unzipped into ~/.claude/skills/. Added via MIT-437.
+# Usage: make zip-skill SKILL=staff
+zip-skill:
+	@if [ -z "$(SKILL)" ]; then echo "usage: make zip-skill SKILL=<name>"; exit 2; fi
+	@if [ ! -d "skills/$(SKILL)" ]; then echo "error: skills/$(SKILL) not found"; exit 2; fi
+	cd skills && zip -r ../$(SKILL).zip $(SKILL) -x '$(SKILL)/__pycache__/*' '$(SKILL)/*/__pycache__/*' '$(SKILL)/.DS_Store'
+	@echo "wrote $(SKILL).zip — recipient unzips into ~/.claude/skills/"
