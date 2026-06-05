@@ -22,21 +22,44 @@ from pathlib import Path
 
 import yaml
 
-# The 9 manifest categories, plus "meta" allowed in the dataset only.
-MANIFEST_CATEGORIES = (
-    "bonus",
-    "design",
-    "engineering",
-    "marketing",
-    "product",
-    "project-management",
-    "studio-operations",
-    "testing",
-    "writing",
-)
-DATASET_CATEGORIES = MANIFEST_CATEGORIES + ("meta",)
+# Valid dataset categories are derived from the manifest at validation time
+# (every agent's `category`) plus "meta" for NONE / non-agent rows — see
+# valid_categories() — so adding or renaming a manifest category does not
+# require editing this file.
+META_CATEGORY = "meta"
 DIFFICULTIES = ("easy", "medium", "hard")
 NONE_SENTINEL = "NONE"
+
+# Prepended to dataset.yaml on every write so the schema contract survives the
+# lossy yaml.safe_dump round-trip (PyYAML drops comments).
+SCHEMA_HEADER = """\
+# Agent-routing eval dataset (MIT-294)
+#
+# Labeled ground truth for the routing eval: given a natural-language task a
+# user might type, which specialist agent SHOULD handle it? Feeds the eval
+# runner (MIT-297), touchfile selection (MIT-439), and the extended EvalResult
+# schema (MIT-438). Full docs: evals/routing/README.md.
+#
+# Schema — each list entry is a mapping:
+#   id                  REQUIRED. Unique, zero-padded: route-NNN.
+#   prompt              REQUIRED. The natural-language task.
+#   expected            agent stable-id (key under `agents:` in
+#                       agent.manifest.yaml) or the literal NONE. Absent /
+#                       null / blank => the entry is UNLABELED.
+#   category            one of the manifest agent categories OR "meta".
+#   difficulty          easy | medium | hard.
+#   rationale           REQUIRED on labeled rows. Why `expected` is right.
+#   adversarial_against OPTIONAL. The agent this prompt superficially looks
+#                       like but is NOT. Must differ from `expected`.
+#
+# Maintained by label.py — prefer the tool over hand-editing.
+"""
+
+
+def valid_categories(agents: dict[str, str]) -> set[str]:
+    """Categories accepted in the dataset: every manifest agent category plus
+    the 'meta' bucket for NONE / non-agent rows."""
+    return {c for c in agents.values() if c} | {META_CATEGORY}
 
 # Canonical key order preserved on write.
 KEY_ORDER = (
@@ -99,19 +122,20 @@ def _ordered(entry: dict) -> dict:
 
 def dump_dataset(entries: list[dict], path: Path) -> None:
     ordered = [_ordered(e) for e in entries]
-    path.write_text(
-        yaml.safe_dump(
-            ordered,
-            sort_keys=False,
-            allow_unicode=True,
-            default_flow_style=False,
-            width=100,
-        )
+    body = yaml.safe_dump(
+        ordered,
+        sort_keys=False,
+        allow_unicode=True,
+        default_flow_style=False,
+        width=100,
     )
+    path.write_text(SCHEMA_HEADER + "\n" + body)
 
 
 def is_labeled(entry: dict) -> bool:
-    return entry.get("expected") is not None
+    # Unlabeled if `expected` is absent, null, or blank — a blank `expected`
+    # is malformed input the labeling tool should still be able to pick up.
+    return bool(str(entry.get("expected") or "").strip())
 
 
 def next_id(entries: list[dict]) -> str:
@@ -137,6 +161,7 @@ def validate_entries(entries: list[dict], agents: dict[str, str]) -> list[str]:
     errors: list[str] = []
     seen_ids: dict[str, int] = {}
     id_re = re.compile(r"^route-\d{3,}$")
+    categories = valid_categories(agents)
 
     for i, e in enumerate(entries):
         tag = e.get("id", f"<index {i}>")
@@ -160,12 +185,18 @@ def validate_entries(entries: list[dict], agents: dict[str, str]) -> list[str]:
             errors.append(f"{tag}: expected '{expected}' is not a manifest agent id (or NONE)")
 
         category = e.get("category")
-        if category not in DATASET_CATEGORIES:
-            errors.append(f"{tag}: category '{category}' invalid (must be one of {DATASET_CATEGORIES})")
+        if category not in categories:
+            errors.append(
+                f"{tag}: category '{category}' invalid "
+                f"(must be a manifest category or '{META_CATEGORY}')"
+            )
 
         difficulty = e.get("difficulty")
         if difficulty not in DIFFICULTIES:
             errors.append(f"{tag}: difficulty '{difficulty}' invalid (must be one of {DIFFICULTIES})")
+
+        if not str(e.get("rationale") or "").strip():
+            errors.append(f"{tag}: missing rationale (required on labeled rows)")
 
         adv = e.get("adversarial_against")
         if adv is not None:

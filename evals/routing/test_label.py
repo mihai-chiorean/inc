@@ -141,6 +141,31 @@ def test_label_rejects_bad(d: Path) -> None:
     raise AssertionError("expected label_entry to raise on unknown agent")
 
 
+def test_validate_missing_rationale(d: Path) -> None:
+    ents = good_dataset()
+    ents[0].pop("rationale")
+    errs = L.validate_entries(ents, AGENTS)
+    expect(any("rationale" in e for e in errs), f"expected missing-rationale error, got {errs}")
+
+
+def test_validate_category_derived_from_manifest(d: Path) -> None:
+    # every real manifest category is accepted; "meta" too; junk is not.
+    cats = L.valid_categories(AGENTS)
+    expect("engineering" in cats and "meta" in cats, f"derived cats missing expected: {sorted(cats)}")
+    expect("frobnicate" not in cats, "junk category should not be derived")
+
+
+def test_empty_expected_is_unlabeled(d: Path) -> None:
+    # a blank `expected` is treated as unlabeled so the tool can pick it up,
+    # rather than being a stuck "labeled-but-invalid" row.
+    expect(not L.is_labeled({"id": "route-009", "prompt": "p", "expected": ""}),
+           "blank expected should count as unlabeled")
+    expect(not L.is_labeled({"id": "route-009", "prompt": "p", "expected": None}),
+           "null expected should count as unlabeled")
+    expect(L.is_labeled({"id": "route-009", "prompt": "p", "expected": "NONE"}),
+           "expected=NONE is a real label")
+
+
 def test_stats_counts(d: Path) -> None:
     s = L.compute_stats(good_dataset())
     expect(s["total"] == 4, f"total {s['total']}")
@@ -163,6 +188,9 @@ def main() -> int:
         test_label_writes_back,
         test_label_omits_blank_adversarial,
         test_label_rejects_bad,
+        test_validate_missing_rationale,
+        test_validate_category_derived_from_manifest,
+        test_empty_expected_is_unlabeled,
         test_stats_counts,
     ]
     for fn in tests:
