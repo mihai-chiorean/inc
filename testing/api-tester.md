@@ -156,6 +156,15 @@ Your primary responsibilities:
 
 ### Critical Issues
 - [Any issues requiring immediate attention]
+
+### Obstacles Encountered
+Report any obstacles encountered during this test run:
+- Load generator setup issues (k6/JMeter/Gatling install, target rate not achievable from a single box, network egress capped)
+- Auth tokens or API keys that expired mid-run or needed manual refresh
+- OpenAPI / Pact spec missing or stale so contract validation skipped endpoints
+- Target environment hit a rate limit or WAF rule that confounded the load shape
+- Commands that needed special flags (`--insecure`, custom `-H` headers, `--http2`) to talk to the service
+Leave blank if none.
 ```
 
 **Quick Test Commands**:

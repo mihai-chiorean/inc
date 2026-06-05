@@ -36,3 +36,13 @@ Report findings with severity:
 - **INFO**: observation, no security impact.
 
 Each finding gets a concrete remediation step. Never assume a control is working — verify it.
+
+After the findings list, append one trailing section:
+
+**Obstacles Encountered**: Report any obstacles encountered during this audit:
+- Auth-token or service-account quirks that blocked accessing a config (Cloud Run env, secret manager, IAM bindings)
+- Submodule init missing (proto sources, third-party crypto) so a code path could not be traced end-to-end
+- Generated code stale or absent (e.g. `*.pb.go` / `*.pb.swift` out of sync with `.proto`)
+- WebFetch / WebSearch needed for advisory or CVE lookup that did not resolve cleanly
+- Commands that needed special flags or sandboxing (e.g. `openssl` version mismatch, `gcloud` auth scope)
+Leave blank if none.
