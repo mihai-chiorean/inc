@@ -10,10 +10,16 @@ blocked_on_user: []
 next_command: "/prioritize the backlog: Project B routing-eval (MIT-294–302), MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all). Plus a small cleanup-nits issue from the 5-PR review (see decisions log)."
 last_verified_state: 2026-06-05T19:30:00Z
 linear_scope:
-  - "Agent/skill spec conformance + canonicalization (MIT-410–437)"
-  - "gstack borrow — bootstrap/breakdown/planning/prioritize skills (complete)"
+  # NOTE: these MUST be exact Linear project names (sitrep-linear filters on them).
+  # Verify against `linear project list` before editing — invented strings get silently excluded.
+  - "Agent roster eval framework"
   - "Per-project agent staffing skill"
-  - "Agent roster eval framework (Project B, MIT-294–302)"
+  - "gstack borrow — workflow & onboarding docs"
+  - "gstack borrow — eval mechanics (parallel to Project B)"
+  - "gstack borrow — Week 1: bootstrap loop"
+  - "gstack borrow — Week 2: /work-breakdown"
+  - "gstack borrow — Week 3: planning discipline"
+  - "gstack borrow — Week 4: /prioritize"
 links:
   initiative: https://linear.app/mitzoku/initiative/gstack-borrow-4e2936810b96
   project: null
