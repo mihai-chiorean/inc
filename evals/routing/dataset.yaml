@@ -1,0 +1,59 @@
+# Agent-routing eval dataset (MIT-294)
+#
+# This file is the labeled ground truth for the routing eval: given a
+# natural-language task a user might type, which specialist agent SHOULD
+# handle it? It feeds the eval runner (MIT-297), touchfile selection
+# (MIT-439), and the extended EvalResult schema (MIT-438).
+#
+# Schema — each list entry is a mapping:
+#   id                 string,  REQUIRED. Unique, zero-padded: route-NNN.
+#   prompt             string,  REQUIRED. The natural-language task.
+#   expected           string,  OPTIONAL. The agent stable-id (key under
+#                               `agents:` in agent.manifest.yaml) that should
+#                               handle this, or the literal NONE if no agent
+#                               fits. Missing/null => the entry is UNLABELED.
+#   category           string,  one of the 9 manifest categories
+#                               (bonus, design, engineering, marketing,
+#                               product, project-management, studio-operations,
+#                               testing, writing) OR "meta".
+#   difficulty         string,  easy | medium | hard.
+#   rationale          string,  why `expected` is the right answer.
+#   adversarial_against string, OPTIONAL. Present only for traps: the agent
+#                               this prompt superficially looks like, but is
+#                               NOT the correct answer. Must differ from
+#                               `expected`.
+#
+# An entry is "unlabeled" iff `expected` is null/missing. The labeling tool
+# (label.py) pops unlabeled entries and writes the label fields back.
+
+# --- seed example: clear positive ---
+- id: route-001
+  prompt: "Add an AI chatbot to our app with streaming responses and semantic caching to keep token costs down."
+  expected: ai-engineer
+  category: engineering
+  difficulty: easy
+  rationale: "Textbook ai-engineer: LLM integration, streaming, prompt engineering, semantic caching for cost — all squarely in its scope."
+
+# --- seed example: adversarial trap ---
+- id: route-002
+  prompt: "Can you review this Terraform module before I apply it to prod?"
+  expected: infra-reviewer
+  category: engineering
+  difficulty: medium
+  rationale: "Infrastructure-as-code review (Terraform) is infra-reviewer's job. It superficially reads as a security review, but security-auditor is threat modeling, not IaC change review."
+  adversarial_against: security-auditor
+
+# --- seed example: NONE (no agent fits) ---
+- id: route-003
+  prompt: "What's the best espresso machine under $500 for a home office?"
+  expected: NONE
+  category: meta
+  difficulty: easy
+  rationale: "Personal shopping advice unrelated to any specialist's software/product/ops domain. No roster agent should claim this."
+
+# --- unlabeled rows (for the labeling tool to pop) ---
+- id: route-004
+  prompt: "Review this gRPC service definition for backward-compatibility before we cut a release."
+
+- id: route-005
+  prompt: "Our onboarding funnel drops 60% of users at the email-verification step — help me figure out why and what to test."

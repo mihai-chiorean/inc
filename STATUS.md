@@ -1,14 +1,14 @@
 ---
 status_version: 1
-current_objective: "Agent/skill spec-conformance + canonicalization initiative (MIT-410→437) advancing. Validator + frontmatter aligned to Anthropic spec, ~57 agents rewritten to canonical v3, per-field refinements landing. 5 open PRs (#49/#50/#51/#52/#53) all reviewed + merged to main on 2026-06-05. Next: pick the next thread."
-active_branch: main
+current_objective: "Started Project B — Agent roster eval framework (MIT-294–302 + folded gstack-eval issues MIT-438/439/440). First issue MIT-294 (routing dataset schema + interactive labeling tool) in progress. The spec-conformance initiative (MIT-410→437) is fully merged."
+active_branch: mit-294-routing-dataset-schema-labeling-tool
 active_pr: null
-linear_issue: null
+linear_issue: MIT-294
 linear_team: MIT
-linear_project: null
+linear_project: "Agent roster eval framework"
 blocked_on_user: []
-next_command: "/prioritize the backlog: Project B routing-eval (MIT-294–302), MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all). Plus a small cleanup-nits issue from the 5-PR review (see decisions log)."
-last_verified_state: 2026-06-05T19:30:00Z
+next_command: "Finish + PR MIT-294 (evals/routing/ schema + label.py). Then MIT-295 (hand-label 30 prompts using the tool) → MIT-296 (judge) → MIT-297 (runner) → MIT-438 (EvalResult schema) → MIT-439 (touchfile selection) → MIT-298 (conflict detection) → MIT-299 (reports) → MIT-440 (gate/periodic CI)."
+last_verified_state: 2026-06-05T20:00:00Z
 linear_scope:
   # NOTE: these MUST be exact Linear project names (sitrep-linear filters on them).
   # Verify against `linear project list` before editing — invented strings get silently excluded.
@@ -36,29 +36,31 @@ Agent/skill spec-conformance + canonicalization initiative (MIT-410→437). Grou
 
 ## What's next
 
-No open PRs; on main, validator + manifest + staff test suite all green. Pick the next thread via `/prioritize`:
+**Project B is started.** MIT-294 (routing dataset schema + labeling tool) in progress on `mit-294-routing-dataset-schema-labeling-tool` — `evals/routing/{dataset.yaml,label.py,test_label.py,README.md}`. Sequence:
 
-1. Project B — routing eval framework (MIT-294–302), Backlog. Parallel track; fold the gstack eval mechanics when picked up.
-2. MIT-374 — detect non-symlink skill dirs that conflict with inc names (Backlog cleanup).
-3. MIT-345 — /sitrep --all cross-project rollup (Backlog, S).
-4. Small cleanup-nits issue from the 5-PR review (validator dead var, trailing newlines, one manifest description_summary artifact) — file + batch.
+1. **MIT-294** (in progress) — `evals/routing/dataset.yaml` schema + `label.py` incremental labeling tool. PR pending.
+2. MIT-295 — hand-label 30 routing prompts using the tool (20 clear / 7 adversarial / 3 NONE).
+3. MIT-296 (judge config) → MIT-297 (eval runner) → **MIT-438** (extended EvalResult schema, foundational) → **MIT-439** (touchfile diff selection) → MIT-298 (conflict detection) → MIT-299 (reports) → **MIT-440** (gate/periodic CI).
+
+Side backlog (not Project B): MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all). The 5-PR review nits were fixed in PR #55, not deferred.
 
 ## Open items needing my attention
 
-- Review nits deferred from the 5-PR merge (non-blocking): `scripts/validate-agents.py:274` dead `non_portable` variable; missing trailing newlines in `scripts/validate-agents-baseline.json`, `testing/api-tester.md`, `testing/performance-benchmarker.md`; `agent.manifest.yaml` `feedback-synthesizer.description_summary` is a malformed JSON blob (LLM-gen artifact, not fixed by regen). File one cleanup issue.
-- [MIT-374](https://linear.app/mitzoku/issue/MIT-374), [MIT-345](https://linear.app/mitzoku/issue/MIT-345/sitrep-all-for-cross-project-rollup), Project B (MIT-294–302) — Backlog.
+- MIT-294 PR (pending) — review + merge once opened.
+- Backlog: rest of Project B (MIT-295–302, MIT-438/439/440), MIT-374, MIT-345.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
 
 ## Future work (not inbox)
 
 - [research/gstack-borrow-2026-05-11.md](research/gstack-borrow-2026-05-11.md) — handoff doc. Reference for Week 3+ (`/design-doc`, `plan-eng-review`) and Week 4 (`/prioritize`).
-- Project B (MIT-294–302) — fold gstack eval mechanics (touchfile diff selection + tier system + extended EvalResult schema) when picked up. Parallel track.
+- Project B gstack-eval mechanics — now tracked as issues: [MIT-438](https://linear.app/mitzoku/issue/MIT-438) (extended EvalResult schema + persistence + auto-compare), [MIT-439](https://linear.app/mitzoku/issue/MIT-439) (touchfile diff selection), [MIT-440](https://linear.app/mitzoku/issue/MIT-440) (gate/periodic tiers + CI). Sequenced after the core runner; see "What's next".
 - **Workflow & onboarding docs** ([project](https://linear.app/mitzoku/project/gstack-borrow-workflow-and-onboarding-docs-074488a4d805)) — three issues queued for after Week 3b ships: MIT-364 (workflow walkthrough), MIT-365 (project bootstrap), MIT-366 (skill catalog). Audience: future-me 6-months-out + outside reader getting-started. Lives in `docs/` (probably `docs/getting-started/{workflow,bootstrap}.md` + `docs/reference/skills.md`). Specialist: plan-devex-review will review the developer-experience side.
 - **Label-based scoping for `/sitrep` (long-term direction).** v0 (MIT-362) uses Linear project names in `linear_scope`. Project-based misses orphan issues (no project assigned) and breaks if a project gets renamed or split. Long-term: every repo-relevant issue gets a label like `repo:inc` and `linear_scope` accepts a `labels:` key. Survives project moves and covers orphan/triage items. Defer until v0 friction is observed.
 
 ## Decisions log (recent)
 
+- 2026-06-05 — **Started Project B (Agent roster eval framework).** Created 3 issues folding the gstack eval mechanics into the project: MIT-438 (extended EvalResult schema — precision/recall/F1, expected/suggested IDs, FP/FN, judge metadata, persisted + auto-compare), MIT-439 (touchfile-driven diff selection), MIT-440 (gate/periodic tiers + CI), each cross-linked to the core issues (MIT-297/298/299) and assigned to me. Granularity chosen: 3 new issues over augmenting existing ones (user call). Began MIT-294 (routing dataset schema + interactive labeling tool) — built `evals/routing/{dataset.yaml,label.py,README.md,test_label.py}` via a general-purpose agent against a detailed spec. Note: the natural owner (agent-eval-engineer) is an HR-repo definition not spawnable in this session's subagent set, so used general-purpose. `linear_scope` fix (PR #56) was required first — #54 had broken it with invented project names, silently gutting the inbox.
 - 2026-06-05 — **Cleared the 5-PR open queue.** Reviewed all five in parallel (one general-purpose review agent each) — all APPROVE / APPROVE-WITH-NITS, no blocking content issues. Merge order **#49 → #53 → #51 → #50 → #52**: #49 (skill portability, scripts/skills) and #53 (/cso skill) are independent; #53 needed a rebase (branch was 52 commits behind main). The trio #50/#51/#52 overlap heavily (all edit `infra-reviewer`/`feedback-synthesizer`/`test-results-analyzer`/`legal-compliance-checker` + others; #50 & #52 regen the manifest) so they could NOT merge in parallel — serialized with a rebase between each. Only real conflict was `agent.manifest.yaml` on #52 (#50 vs #52 body_hash collision); resolved by regenerating the manifest from the merged `.md` tree rather than hand-merging the derived file. `.md` files auto-merged cleanly (frontmatter/body regions disjoint). Validator 0 hard-fail + manifest zero-drift + 10/10 staff test files green at each step and on final main. Base-branch ruleset required `--admin` to merge each PR (CI was green; enforce_admins=false).
 - 2026-06-05 — **Incident + CLAUDE.md Rule 2 amendment.** A review agent ran `git checkout` in the *main* working tree (not an isolated worktree), leaving it on a detached HEAD and silently reverting in-flight STATUS.md/CLAUDE.md edits twice. Added a caution to Rule 2: fan-out review/inspection agents must read diffs (`gh pr diff`) or use isolated worktrees, never switch branches in place. Same commit makes roster delegation the *default* (no need for the user to ask) and notes parallel fan-out.
 - 2026-05-12 — **gstack-borrow initiative complete.** All four weeks merged today: Week 3b (PR #25, /plan-eng-review + audit wrapper, recursive v0 test passed), workflow + onboarding docs (PR #26, MIT-364/365/366), Week 4 (PR #27, /prioritize). Plus the rebrand to `inc` (PR #24 + Phase-2 live ops). Six PRs merged, six skills shipped total. 24 skills now in the catalog. Pipeline composes end-to-end: /sitrep → /work-breakdown → /design-doc → /plan-eng-review → code → /prioritize → repeat.
