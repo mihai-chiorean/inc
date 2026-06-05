@@ -1,0 +1,49 @@
+# Agent-routing eval dataset (MIT-294)
+#
+# Labeled ground truth for the routing eval: given a natural-language task a
+# user might type, which specialist agent SHOULD handle it? Feeds the eval
+# runner (MIT-297), touchfile selection (MIT-439), and the extended EvalResult
+# schema (MIT-438). Full docs: evals/routing/README.md.
+#
+# Schema — each list entry is a mapping:
+#   id                  REQUIRED. Unique, zero-padded: route-NNN.
+#   prompt              REQUIRED. The natural-language task.
+#   expected            agent stable-id (key under `agents:` in
+#                       agent.manifest.yaml) or the literal NONE. Absent /
+#                       null / blank => the entry is UNLABELED.
+#   category            one of the manifest agent categories OR "meta".
+#   difficulty          easy | medium | hard.
+#   rationale           REQUIRED on labeled rows. Why `expected` is right.
+#   adversarial_against OPTIONAL. The agent this prompt superficially looks
+#                       like but is NOT. Must differ from `expected`.
+#
+# Maintained by label.py — prefer the tool over hand-editing.
+
+- id: route-001
+  prompt: Add an AI chatbot to our app with streaming responses and semantic caching to keep token costs
+    down.
+  expected: ai-engineer
+  category: engineering
+  difficulty: easy
+  rationale: 'Textbook ai-engineer: LLM integration, streaming, prompt engineering, semantic caching for
+    cost — all squarely in its scope.'
+- id: route-002
+  prompt: Can you review this Terraform module before I apply it to prod?
+  expected: infra-reviewer
+  category: engineering
+  difficulty: medium
+  rationale: Infrastructure-as-code review (Terraform) is infra-reviewer's job. It superficially reads
+    as a security review, but security-auditor is threat modeling, not IaC change review.
+  adversarial_against: security-auditor
+- id: route-003
+  prompt: What's the best espresso machine under $500 for a home office?
+  expected: NONE
+  category: meta
+  difficulty: easy
+  rationale: Personal shopping advice unrelated to any specialist's software/product/ops domain. No roster
+    agent should claim this.
+- id: route-004
+  prompt: Review this gRPC service definition for backward-compatibility before we cut a release.
+- id: route-005
+  prompt: Our onboarding funnel drops 60% of users at the email-verification step — help me figure out
+    why and what to test.
