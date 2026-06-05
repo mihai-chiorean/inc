@@ -169,21 +169,22 @@
   difficulty: easy
   rationale: Long-form personal blog drafting — blog-writer.
 - id: route-024
-  prompt: Our checkout API's p99 latency spiked right after the last deploy — find the bottleneck.
+  prompt: Our checkout API's p99 latency tripled after last night's deploy — profile it and find which
+    call is the bottleneck.
   expected: performance-benchmarker
   category: testing
   difficulty: medium
-  rationale: Profiling/finding a perf regression — performance-benchmarker. Reads like backend-architect,
-    but the ask is measure-and-locate, not redesign.
+  rationale: '''Profile it and find the bottleneck'' is a measure-and-locate task — performance-benchmarker.
+    Reads like backend-architect, but nothing is being (re)designed.'
   adversarial_against: backend-architect
 - id: route-025
   prompt: I just refactored the payments module — write the unit and integration tests for it.
   expected: test-writer-fixer
   category: engineering
   difficulty: medium
-  rationale: Adding/updating tests after a code change — test-writer-fixer. Looks like backend work, but
-    the deliverable is tests, not the module.
-  adversarial_against: backend-architect
+  rationale: Adding/updating tests after a code change — test-writer-fixer. The 'payments module' lures
+    the implementing backend agent, but the deliverable is tests, not the module.
+  adversarial_against: swift-backend
 - id: route-026
   prompt: We're expanding to the EU next quarter — update our privacy policy and data-processing terms.
   expected: legal-compliance-checker
@@ -201,12 +202,14 @@
     but this is native mobile, not browser UI.
   adversarial_against: frontend-developer
 - id: route-028
-  prompt: Cross-compile our Swift agent for ARM64 and get it running on a Raspberry Pi 5.
-  expected: embedded-device
+  prompt: Our Swift agent only compiles for x86 — set up the ARM64 cross-compilation toolchain so we can
+    build it for a Raspberry Pi 5.
+  expected: embedded-linux
   category: engineering
   difficulty: hard
-  rationale: Cross-compiling for ARM64 + running on edge device (WendyOS/Pi) — embedded-device. 'Swift'
-    lures swift-backend, but this is device-side cross-compilation, not server work.
+  rationale: Cross-compilation toolchain + ARM64 board support is embedded-linux (Yocto/OpenEmbedded/BSP).
+    'Swift agent' lures swift-backend, but the task is the build toolchain for the board, not the app's
+    server logic.
   adversarial_against: swift-backend
 - id: route-029
   prompt: Should I refinance my mortgage now or wait for rates to drop?
