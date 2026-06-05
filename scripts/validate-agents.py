@@ -271,7 +271,6 @@ def _check_portability(text: str) -> list[str]:
             break  # one finding per file is enough for the signal
     # `!` shell references with non-portable commands (heuristic: gnu-specific
     # tools that don't exist on macOS without homebrew).
-    non_portable = ("gsed ", "gawk ", "greadlink ", "g[a-z]+ ")
     for tool in ("gsed", "gawk", "greadlink"):
         if f"!`{tool}" in text or f"! `{tool}" in text:
             findings.append(
