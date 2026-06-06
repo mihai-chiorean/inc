@@ -105,20 +105,35 @@ class CodexJudge:
         self.applied = {"model": self.model, "model_reasoning_effort": self.reasoning}
 
     def judge(self, prompt: str, roster: str, row_id: str) -> dict:
+        import os
+        import tempfile
         rendered = J.render_prompt(_CFG, prompt, roster)
-        proc = subprocess.run(
-            ["codex", "exec",
-             "-c", f"model={self.model}",
-             "-c", f"model_reasoning_effort={self.reasoning}",
-             rendered],
-            capture_output=True, text=True, stdin=subprocess.DEVNULL,
-            timeout=self.timeout,
-        )
-        out = proc.stdout + "\n" + proc.stderr
-        m = _MODEL_RE.search(out)
+        fd, last_path = tempfile.mkstemp(suffix=".txt")
+        os.close(fd)
+        try:
+            proc = subprocess.run(
+                ["codex", "exec",
+                 "-c", f"model={self.model}",
+                 "-c", f"model_reasoning_effort={self.reasoning}",
+                 # -o writes ONLY the final assistant message, so the echoed
+                 # prompt (which contains the template's literal JSON) can't be
+                 # mis-parsed as the verdict.
+                 "-o", last_path,
+                 rendered],
+                capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                timeout=self.timeout,
+            )
+            last_msg = Path(last_path).read_text()
+        finally:
+            try:
+                os.unlink(last_path)
+            except OSError:
+                pass
+        m = _MODEL_RE.search(proc.stdout + "\n" + proc.stderr)
         if m:
             self.resolved_model = m.group(1)
-        return parse_judge_output(out)
+        # Parse the final message; fall back to full stdout only if -o was empty.
+        return parse_judge_output(last_msg.strip() or (proc.stdout + proc.stderr))
 
 
 # module-global config handle for CodexJudge.render (set in run_eval)
@@ -161,6 +176,8 @@ def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
     roster = build_roster(agents, summaries)
     rows = [e for e in dataset if L.is_labeled(e)]
     if limit is not None:  # explicit: --limit 0 means zero rows, not "all"
+        if limit < 0:
+            raise ValueError(f"--limit must be >= 0 (got {limit})")
         rows = rows[:limit]
 
     results = []
@@ -212,6 +229,9 @@ def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
 # CLI
 # --------------------------------------------------------------------------
 def cmd_run(args) -> int:
+    if args.limit is not None and args.limit < 0:
+        print(f"--limit must be >= 0 (got {args.limit})", file=sys.stderr)
+        return 2
     cfg = J.load_config()
     errs = J.validate_config(cfg)
     if errs:

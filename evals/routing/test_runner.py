@@ -99,6 +99,27 @@ def test_limit_zero_means_zero() -> None:
     expect(res["summary"]["n"] == 0, f"limit=0 should score 0 rows, got {res['summary']['n']}")
 
 
+def test_negative_limit_rejected() -> None:
+    try:
+        R.run_eval(ds(), CFG, R.MockJudge(), AGENTS, SUMM, limit=-1)
+    except ValueError:
+        return
+    raise AssertionError("negative limit must raise, not slice rows[:-1]")
+
+
+def test_parse_ignores_echoed_prompt_template() -> None:
+    # The judge prompt echoes a template JSON with placeholder (non-numeric)
+    # confidence. If only the echo is present, validate_verdict must reject it.
+    echoed = '{"selected_agent": "<agent-id or NONE>", "confidence": <number 0..1>, "runner_up": "<agent-id or null>"}'
+    # the echoed template is not even valid JSON (placeholders), so parse fails:
+    try:
+        R.parse_judge_output(echoed)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("echoed template placeholders should not parse as a verdict")
+
+
 def test_malformed_verdict_becomes_row_error() -> None:
     expect(R.validate_verdict({"selected_agent": "ai-engineer", "confidence": 0.9,
                                "runner_up": None}) is None, "well-formed verdict should pass")
@@ -128,6 +149,8 @@ def main() -> int:
         test_version_stamp_present,
         test_limit,
         test_limit_zero_means_zero,
+        test_negative_limit_rejected,
+        test_parse_ignores_echoed_prompt_template,
         test_malformed_verdict_becomes_row_error,
     ]
     for fn in tests:
