@@ -102,17 +102,22 @@ class CodexJudge:
         # What we can actually enforce on the call. Note: temperature/seed from
         # the frozen config are NOT here — codex-cli's reasoning judge ignores
         # them (recorded honestly in the version stamp).
-        self.applied = {"model": self.model, "model_reasoning_effort": self.reasoning}
+        self.applied = {"model": self.model, "model_reasoning_effort": self.reasoning,
+                        "cwd_isolated": True}
 
     def judge(self, prompt: str, roster: str, row_id: str) -> dict:
-        import os
         import tempfile
         rendered = J.render_prompt(_CFG, prompt, roster)
-        fd, last_path = tempfile.mkstemp(suffix=".txt")
-        os.close(fd)
-        try:
+        # Run from an isolated empty cwd so repo/project instructions (e.g. an
+        # AGENTS.md) cannot leak into the judge and skew results — the run must
+        # be driven only by the frozen judge_config. (User ~/.codex auth/config
+        # still loads; model + reasoning are pinned explicitly via -c.)
+        with tempfile.TemporaryDirectory(prefix="codex-iso-") as iso:
+            last_path = str(Path(iso) / "last.txt")
             proc = subprocess.run(
                 ["codex", "exec",
+                 "--cd", iso,
+                 "--skip-git-repo-check",
                  "-c", f"model={self.model}",
                  "-c", f"model_reasoning_effort={self.reasoning}",
                  # -o writes ONLY the final assistant message, so the echoed
@@ -123,12 +128,7 @@ class CodexJudge:
                 capture_output=True, text=True, stdin=subprocess.DEVNULL,
                 timeout=self.timeout,
             )
-            last_msg = Path(last_path).read_text()
-        finally:
-            try:
-                os.unlink(last_path)
-            except OSError:
-                pass
+            last_msg = Path(last_path).read_text() if Path(last_path).exists() else ""
         m = _MODEL_RE.search(proc.stdout + "\n" + proc.stderr)
         if m:
             self.resolved_model = m.group(1)

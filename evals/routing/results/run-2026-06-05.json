@@ -12,7 +12,8 @@
     },
     "applied_overrides": {
       "model": "gpt-5.5",
-      "model_reasoning_effort": "high"
+      "model_reasoning_effort": "high",
+      "cwd_isolated": true
     },
     "determinism_note": "temperature/seed are declared in judge_config but NOT enforced by the gpt-5.5 reasoning judge via codex-cli; runs are near-deterministic \u2014 see docs/judge.md",
     "resolved_model": "gpt-5.5",
@@ -35,7 +36,7 @@
       "adversarial_against": null,
       "selected_agent": "ai-engineer",
       "confidence": 0.98,
-      "runner_up": "backend-architect",
+      "runner_up": "tech-lead",
       "valid_agent": true,
       "correct": true
     },
@@ -58,7 +59,7 @@
       "category": "meta",
       "adversarial_against": null,
       "selected_agent": "NONE",
-      "confidence": 0.78,
+      "confidence": 0.72,
       "runner_up": "competitive-intel",
       "valid_agent": true,
       "correct": true
@@ -82,7 +83,7 @@
       "category": "marketing",
       "adversarial_against": null,
       "selected_agent": "analytics-reporter",
-      "confidence": 0.84,
+      "confidence": 0.86,
       "runner_up": "growth-hacker",
       "valid_agent": true,
       "correct": false
@@ -130,7 +131,7 @@
       "category": "engineering",
       "adversarial_against": null,
       "selected_agent": "swift-backend",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "backend-architect",
       "valid_agent": true,
       "correct": true
@@ -142,7 +143,7 @@
       "category": "engineering",
       "adversarial_against": null,
       "selected_agent": "db-migration",
-      "confidence": 0.99,
+      "confidence": 0.98,
       "runner_up": "backend-architect",
       "valid_agent": true,
       "correct": true
@@ -154,7 +155,7 @@
       "category": "product",
       "adversarial_against": null,
       "selected_agent": "product-manager",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "idea-evaluator",
       "valid_agent": true,
       "correct": true
@@ -178,7 +179,7 @@
       "category": "product",
       "adversarial_against": null,
       "selected_agent": "competitive-intel",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "product-manager",
       "valid_agent": true,
       "correct": true
@@ -190,7 +191,7 @@
       "category": "design",
       "adversarial_against": null,
       "selected_agent": "ui-designer",
-      "confidence": 0.96,
+      "confidence": 0.98,
       "runner_up": "frontend-developer",
       "valid_agent": true,
       "correct": true
@@ -214,7 +215,7 @@
       "category": "marketing",
       "adversarial_against": null,
       "selected_agent": "app-store-optimizer",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "growth-hacker",
       "valid_agent": true,
       "correct": true
@@ -238,7 +239,7 @@
       "category": "testing",
       "adversarial_against": null,
       "selected_agent": "api-tester",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "performance-benchmarker",
       "valid_agent": true,
       "correct": true
@@ -250,7 +251,7 @@
       "category": "testing",
       "adversarial_against": null,
       "selected_agent": "test-results-analyzer",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "devops-automator",
       "valid_agent": true,
       "correct": true
@@ -262,7 +263,7 @@
       "category": "studio-operations",
       "adversarial_against": null,
       "selected_agent": "finance-tracker",
-      "confidence": 0.93,
+      "confidence": 0.95,
       "runner_up": "infrastructure-maintainer",
       "valid_agent": true,
       "correct": true
@@ -286,7 +287,7 @@
       "category": "project-management",
       "adversarial_against": null,
       "selected_agent": "tpm",
-      "confidence": 0.98,
+      "confidence": 0.99,
       "runner_up": "release-engineer",
       "valid_agent": true,
       "correct": true
@@ -298,7 +299,7 @@
       "category": "writing",
       "adversarial_against": null,
       "selected_agent": "blog-writer",
-      "confidence": 0.98,
+      "confidence": 0.96,
       "runner_up": "content-creator",
       "valid_agent": true,
       "correct": true
@@ -310,7 +311,7 @@
       "category": "testing",
       "adversarial_against": "backend-architect",
       "selected_agent": "performance-benchmarker",
-      "confidence": 0.93,
+      "confidence": 0.96,
       "runner_up": "api-tester",
       "valid_agent": true,
       "correct": true
@@ -322,7 +323,7 @@
       "category": "engineering",
       "adversarial_against": "swift-backend",
       "selected_agent": "test-writer-fixer",
-      "confidence": 0.98,
+      "confidence": 0.96,
       "runner_up": "api-tester",
       "valid_agent": true,
       "correct": true
@@ -358,8 +359,8 @@
       "category": "engineering",
       "adversarial_against": "swift-backend",
       "selected_agent": "embedded-linux",
-      "confidence": 0.76,
-      "runner_up": "swift-backend",
+      "confidence": 0.82,
+      "runner_up": "embedded-device",
       "valid_agent": true,
       "correct": true
     },
@@ -382,7 +383,7 @@
       "category": "meta",
       "adversarial_against": null,
       "selected_agent": "NONE",
-      "confidence": 0.92,
+      "confidence": 0.95,
       "runner_up": null,
       "valid_agent": true,
       "correct": true
