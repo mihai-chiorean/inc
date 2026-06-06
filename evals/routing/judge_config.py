@@ -89,12 +89,19 @@ def render_prompt(cfg: dict, prompt: str, roster: str) -> str:
 
 
 def version_stamp(cfg: dict, *, resolved_model: str | None = None,
-                  resolved_snapshot: str | None = None, date: str | None = None) -> dict:
+                  resolved_snapshot: str | None = None, date: str | None = None,
+                  applied_overrides: dict | None = None) -> dict:
     """The provenance block the runner (MIT-297) records into each run's output.
 
     `resolved_model` / `resolved_snapshot` / `date` are filled in at call time
     from what Codex actually returned (the static config cannot know the dated
-    snapshot)."""
+    snapshot).
+
+    `declared_determinism` is what the frozen config *pins*; `applied_overrides`
+    is what the runner could actually enforce on the call. They differ on
+    purpose: the gpt-5.5 reasoning judge via codex-cli does not honor
+    temperature/seed, so those are declared-but-not-enforced — see docs/judge.md.
+    """
     model = cfg.get("model") or {}
     det = cfg.get("determinism") or {}
     return {
@@ -104,8 +111,11 @@ def version_stamp(cfg: dict, *, resolved_model: str | None = None,
         "provider_version": model.get("provider_version"),
         "reasoning_effort": model.get("reasoning_effort"),
         "judge_prompt_version": (cfg.get("judge_prompt") or {}).get("version"),
-        "temperature": det.get("temperature"),
-        "seed": det.get("seed"),
+        "declared_determinism": {"temperature": det.get("temperature"), "seed": det.get("seed")},
+        "applied_overrides": applied_overrides or {},
+        "determinism_note": "temperature/seed are declared in judge_config but NOT "
+                            "enforced by the gpt-5.5 reasoning judge via codex-cli; "
+                            "runs are near-deterministic — see docs/judge.md",
         # filled per-run by the runner:
         "resolved_model": resolved_model,
         "resolved_snapshot": resolved_snapshot,

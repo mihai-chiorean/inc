@@ -72,6 +72,29 @@ High-reasoning models may not honor `temperature`/`seed` exactly, so runs are
 records its resolved model + snapshot + date: when two runs disagree, you can
 check whether the judge snapshot moved underneath you before blaming the roster.
 
+## Reproducibility boundary (what is and isn't isolated)
+
+The runner drives the judge toward the frozen config, but it cannot make the
+codex-cli invocation fully hermetic, so be explicit about the boundary:
+
+- **Isolated:** the call runs from an empty temp cwd (`codex exec --cd … --skip-git-repo-check`),
+  so repo/project instructions (e.g. an `AGENTS.md`) cannot leak into the judge.
+- **Pinned:** `model` and `model_reasoning_effort` are passed explicitly via `-c`,
+  overriding whatever the user's config defaults to.
+- **NOT isolated:** the user's `~/.codex/config.toml` (and any user-level
+  instructions/profile) still load — there is no codex flag to ignore them, and
+  relocating `CODEX_HOME` would break auth. In practice this is low-risk: the
+  judge only answers a question (it executes no commands), so sandbox/approval/
+  execpolicy settings don't affect its routing answer, and model+reasoning are
+  pinned anyway.
+- **Recorded for provenance:** every run's stamp carries `applied_overrides`
+  (model, reasoning_effort, `cwd_isolated`), `provider_version` (the codex-cli
+  version), and the resolved model — so if two machines disagree you can see
+  what differed.
+
+Full user-config isolation (a clean `CODEX_HOME` profile with separate auth) is
+a tracked follow-up, not a blocker for the v1 runner.
+
 ## How it's consumed
 
 - `judge_config.py validate` — CI/local gate that the config still satisfies the
