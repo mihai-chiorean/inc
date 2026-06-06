@@ -1,14 +1,14 @@
 ---
 status_version: 1
-current_objective: "Started Project B — Agent roster eval framework (MIT-294–302 + folded gstack-eval issues MIT-438/439/440). First issue MIT-294 (routing dataset schema + interactive labeling tool) in progress. The spec-conformance initiative (MIT-410→437) is fully merged."
-active_branch: mit-294-routing-dataset-schema-labeling-tool
+current_objective: "Building Project B — Agent roster eval framework. MIT-294 (dataset schema + labeling tool) and MIT-295 (30 labeled prompts) merged. MIT-296 (Codex-as-judge config, pinned + frozen) in progress. The spec-conformance initiative (MIT-410→437) is fully merged."
+active_branch: mit-296-codex-judge-config
 active_pr: null
-linear_issue: MIT-294
+linear_issue: MIT-296
 linear_team: MIT
 linear_project: "Agent roster eval framework"
 blocked_on_user: []
-next_command: "Finish + PR MIT-294 (evals/routing/ schema + label.py). Then MIT-295 (hand-label 30 prompts using the tool) → MIT-296 (judge) → MIT-297 (runner) → MIT-438 (EvalResult schema) → MIT-439 (touchfile selection) → MIT-298 (conflict detection) → MIT-299 (reports) → MIT-440 (gate/periodic CI)."
-last_verified_state: 2026-06-05T20:00:00Z
+next_command: "Finish + PR MIT-296 (evals/routing/judge_config.yaml + judge_config.py + docs/judge.md). Then MIT-297 (eval runner — first chunky impl, scope-check first) → MIT-438 (EvalResult schema) → MIT-439 (touchfile selection) → MIT-298 (conflict detection) → MIT-299 (reports) → MIT-440 (gate/periodic CI)."
+last_verified_state: 2026-06-05T20:30:00Z
 linear_scope:
   # NOTE: these MUST be exact Linear project names (sitrep-linear filters on them).
   # Verify against `linear project list` before editing — invented strings get silently excluded.
@@ -36,18 +36,19 @@ Agent/skill spec-conformance + canonicalization initiative (MIT-410→437). Grou
 
 ## What's next
 
-**Project B is started.** MIT-294 (routing dataset schema + labeling tool) in progress on `mit-294-routing-dataset-schema-labeling-tool` — `evals/routing/{dataset.yaml,label.py,test_label.py,README.md}`. Sequence:
+**Project B underway** in `evals/routing/`. Done: MIT-294 (dataset schema + `label.py`), MIT-295 (30 labeled prompts: 20 clear / 7 adversarial / 3 NONE). In progress: MIT-296 (judge config). Sequence:
 
-1. **MIT-294** (in progress) — `evals/routing/dataset.yaml` schema + `label.py` incremental labeling tool. PR pending.
-2. MIT-295 — hand-label 30 routing prompts using the tool (20 clear / 7 adversarial / 3 NONE).
-3. MIT-296 (judge config) → MIT-297 (eval runner) → **MIT-438** (extended EvalResult schema, foundational) → **MIT-439** (touchfile diff selection) → MIT-298 (conflict detection) → MIT-299 (reports) → **MIT-440** (gate/periodic CI).
+1. ✅ **MIT-294** — `dataset.yaml` schema + `label.py` labeling tool (PR #57).
+2. ✅ **MIT-295** — 30 labeled routing prompts (PR #58).
+3. **MIT-296** (in progress) — `judge_config.yaml` (pinned gpt-5.5 via codex-cli, frozen prompt/schema, temp 0 + seed) + `judge_config.py` + `docs/judge.md`. PR pending.
+4. **MIT-297** — eval runner (first chunky impl — scope-check before starting) → **MIT-438** (extended EvalResult schema) → **MIT-439** (touchfile diff selection) → MIT-298 (conflict detection) → MIT-299 (reports) → **MIT-440** (gate/periodic CI).
 
-Side backlog (not Project B): MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all). The 5-PR review nits were fixed in PR #55, not deferred.
+Side backlog (not Project B): MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all).
 
 ## Open items needing my attention
 
-- MIT-294 PR (pending) — review + merge once opened.
-- Backlog: rest of Project B (MIT-295–302, MIT-438/439/440), MIT-374, MIT-345.
+- MIT-296 PR (pending) — review + merge once opened.
+- Backlog: rest of Project B (MIT-297–302, MIT-438/439/440), MIT-374, MIT-345.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
 
@@ -60,6 +61,7 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 ## Decisions log (recent)
 
+- 2026-06-05 — **MIT-294/295 merged; MIT-296 judge config built.** MIT-294 (dataset schema + `label.py`, PR #57) went through `/code-review` — fixed 3 findings before merge (comment-loss on write, hardcoded-category drift, rationale not enforced). MIT-295 (PR #58) labeled 30 prompts; sharpened 3 adversarial rows on review (024 profiling, 025 trap→swift-backend, 028→embedded-linux). MIT-296: judge is **Codex `gpt-5.5` via codex-cli 0.124.0**, not Claude — cross-family bias mitigation (don't grade Claude's routing with Claude). Config pinned + frozen (temp 0, seed 1729, versioned prompt/schema); exact dated snapshot recorded per-run by the runner since codex-cli doesn't expose it statically. Rationale in `docs/judge.md`.
 - 2026-06-05 — **Started Project B (Agent roster eval framework).** Created 3 issues folding the gstack eval mechanics into the project: MIT-438 (extended EvalResult schema — precision/recall/F1, expected/suggested IDs, FP/FN, judge metadata, persisted + auto-compare), MIT-439 (touchfile-driven diff selection), MIT-440 (gate/periodic tiers + CI), each cross-linked to the core issues (MIT-297/298/299) and assigned to me. Granularity chosen: 3 new issues over augmenting existing ones (user call). Began MIT-294 (routing dataset schema + interactive labeling tool) — built `evals/routing/{dataset.yaml,label.py,README.md,test_label.py}` via a general-purpose agent against a detailed spec. Note: the natural owner (agent-eval-engineer) is an HR-repo definition not spawnable in this session's subagent set, so used general-purpose. `linear_scope` fix (PR #56) was required first — #54 had broken it with invented project names, silently gutting the inbox.
 - 2026-06-05 — **Cleared the 5-PR open queue.** Reviewed all five in parallel (one general-purpose review agent each) — all APPROVE / APPROVE-WITH-NITS, no blocking content issues. Merge order **#49 → #53 → #51 → #50 → #52**: #49 (skill portability, scripts/skills) and #53 (/cso skill) are independent; #53 needed a rebase (branch was 52 commits behind main). The trio #50/#51/#52 overlap heavily (all edit `infra-reviewer`/`feedback-synthesizer`/`test-results-analyzer`/`legal-compliance-checker` + others; #50 & #52 regen the manifest) so they could NOT merge in parallel — serialized with a rebase between each. Only real conflict was `agent.manifest.yaml` on #52 (#50 vs #52 body_hash collision); resolved by regenerating the manifest from the merged `.md` tree rather than hand-merging the derived file. `.md` files auto-merged cleanly (frontmatter/body regions disjoint). Validator 0 hard-fail + manifest zero-drift + 10/10 staff test files green at each step and on final main. Base-branch ruleset required `--admin` to merge each PR (CI was green; enforce_admins=false).
 - 2026-06-05 — **Incident + CLAUDE.md Rule 2 amendment.** A review agent ran `git checkout` in the *main* working tree (not an isolated worktree), leaving it on a detached HEAD and silently reverting in-flight STATUS.md/CLAUDE.md edits twice. Added a caution to Rule 2: fan-out review/inspection agents must read diffs (`gh pr diff`) or use isolated worktrees, never switch branches in place. Same commit makes roster delegation the *default* (no need for the user to ask) and notes parallel fan-out.
