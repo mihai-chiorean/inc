@@ -75,12 +75,16 @@ def test_render_prompt_fills_and_preserves_json_braces() -> None:
 
 def test_version_stamp_shape() -> None:
     stamp = J.version_stamp(REAL, resolved_model="gpt-5.5", resolved_snapshot="gpt-5.5-2026-xx-xx",
-                            date="2026-06-05")
+                            date="2026-06-05", applied_overrides={"model": "gpt-5.5"})
     for k in ("config_version", "requested_model", "provider", "judge_prompt_version",
-              "temperature", "seed", "resolved_model", "resolved_snapshot", "date"):
+              "declared_determinism", "applied_overrides", "resolved_model",
+              "resolved_snapshot", "date"):
         expect(k in stamp, f"version_stamp missing {k}")
     expect(stamp["resolved_model"] == "gpt-5.5", "resolved_model not threaded through")
-    expect(stamp["temperature"] == 0, "stamp must carry the pinned temperature")
+    # declared determinism is what the frozen config pins...
+    expect(stamp["declared_determinism"]["temperature"] == 0, "must carry the pinned temperature")
+    # ...applied_overrides is what the call actually enforced (no temp/seed there).
+    expect("temperature" not in stamp["applied_overrides"], "temp/seed must not be claimed as applied")
 
 
 def main() -> int:

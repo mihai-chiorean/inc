@@ -99,6 +99,10 @@ class CodexJudge:
         self.reasoning = model.get("reasoning_effort", "high")
         self.timeout = timeout
         self.resolved_model = None
+        # What we can actually enforce on the call. Note: temperature/seed from
+        # the frozen config are NOT here — codex-cli's reasoning judge ignores
+        # them (recorded honestly in the version stamp).
+        self.applied = {"model": self.model, "model_reasoning_effort": self.reasoning}
 
     def judge(self, prompt: str, roster: str, row_id: str) -> dict:
         rendered = J.render_prompt(_CFG, prompt, roster)
@@ -166,13 +170,16 @@ def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
             resolved_model=getattr(judge, "resolved_model", None),
             resolved_snapshot=None,  # codex-cli does not expose a dated snapshot
             date=date or _dt.date.today().isoformat(),
+            applied_overrides=getattr(judge, "applied", None),
         ),
         "summary": {
             "n": n,
             "correct": correct,
             "accuracy": round(correct / n, 4) if n else 0.0,
             "errors": n - len(scored),
-            "invalid_agent_picks": sum(1 for r in results if not r.get("valid_agent")),
+            # invalid picks only among rows that actually produced a pick
+            "invalid_agent_picks": sum(1 for r in results
+                                       if "error" not in r and not r.get("valid_agent")),
         },
         "results": results,
     }
