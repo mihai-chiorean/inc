@@ -93,6 +93,31 @@ def test_limit() -> None:
     expect(res["summary"]["n"] == 2, f"limit=2 should score 2 rows, got {res['summary']['n']}")
 
 
+def test_limit_zero_means_zero() -> None:
+    # --limit 0 must run zero rows, not all of them (no accidental paid run).
+    res = R.run_eval(ds(), CFG, R.MockJudge(), AGENTS, SUMM, limit=0)
+    expect(res["summary"]["n"] == 0, f"limit=0 should score 0 rows, got {res['summary']['n']}")
+
+
+def test_malformed_verdict_becomes_row_error() -> None:
+    expect(R.validate_verdict({"selected_agent": "ai-engineer", "confidence": 0.9,
+                               "runner_up": None}) is None, "well-formed verdict should pass")
+    expect(R.validate_verdict({"selected_agent": "ai-engineer", "runner_up": None}) is not None,
+           "missing confidence should fail")
+    expect(R.validate_verdict({"selected_agent": "ai-engineer", "confidence": 1.5,
+                               "runner_up": None}) is not None, "out-of-range confidence should fail")
+    expect(R.validate_verdict({"selected_agent": "ai-engineer", "confidence": 0.5}) is not None,
+           "missing runner_up should fail")
+
+    class BadJudge:
+        resolved_model = "bad"
+        def judge(self, prompt, roster, row_id):
+            return {"selected_agent": "ai-engineer"}  # missing confidence + runner_up
+    res = R.run_eval(ds(), CFG, BadJudge(), AGENTS, SUMM)
+    expect(res["summary"]["errors"] == res["summary"]["n"], "all malformed verdicts must be row errors")
+    expect(res["summary"]["correct"] == 0, "malformed verdicts must not be scored correct")
+
+
 def main() -> int:
     tests = [
         test_parse_judge_output_from_codex_transcript,
@@ -102,6 +127,8 @@ def main() -> int:
         test_norm_none_case_insensitive,
         test_version_stamp_present,
         test_limit,
+        test_limit_zero_means_zero,
+        test_malformed_verdict_becomes_row_error,
     ]
     for fn in tests:
         try:

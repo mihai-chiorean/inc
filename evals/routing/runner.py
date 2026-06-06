@@ -133,6 +133,26 @@ def _norm(agent: str | None) -> str:
     return "NONE" if a.upper() == "NONE" else a
 
 
+def validate_verdict(verdict: dict) -> str | None:
+    """Check a judge response against the frozen output_schema. Returns an error
+    string, or None if valid. Malformed verdicts become row errors (not silently
+    scored)."""
+    if not isinstance(verdict, dict):
+        return "verdict is not an object"
+    sel = verdict.get("selected_agent")
+    if not isinstance(sel, str) or not sel.strip():
+        return "selected_agent missing or not a string"
+    conf = verdict.get("confidence")
+    if not isinstance(conf, (int, float)) or isinstance(conf, bool) or not (0 <= conf <= 1):
+        return f"confidence must be a number in [0,1] (got {conf!r})"
+    ru = verdict.get("runner_up", "__missing__")
+    if ru == "__missing__":
+        return "runner_up field is required (may be null)"
+    if ru is not None and not isinstance(ru, str):
+        return f"runner_up must be a string or null (got {ru!r})"
+    return None
+
+
 def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
              summaries: dict[str, str], *, limit: int | None = None,
              date: str | None = None) -> dict:
@@ -140,7 +160,7 @@ def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
     _CFG = cfg
     roster = build_roster(agents, summaries)
     rows = [e for e in dataset if L.is_labeled(e)]
-    if limit:
+    if limit is not None:  # explicit: --limit 0 means zero rows, not "all"
         rows = rows[:limit]
 
     results = []
@@ -149,6 +169,9 @@ def run_eval(dataset: list[dict], cfg: dict, judge, agents: dict[str, str],
                "category": e.get("category"), "adversarial_against": e.get("adversarial_against")}
         try:
             verdict = judge.judge(e["prompt"], roster, e["id"])
+            verr = validate_verdict(verdict)
+            if verr:
+                raise ValueError(f"malformed judge verdict: {verr}")
             sel = _norm(verdict.get("selected_agent"))
             rec["selected_agent"] = sel
             rec["confidence"] = verdict.get("confidence")
@@ -198,8 +221,10 @@ def cmd_run(args) -> int:
     agents = L.load_manifest_agents()
     summaries = load_agent_summaries()
     judge = CodexJudge(cfg, timeout=args.timeout)
-    print(f"running {min(args.limit or 10**9, sum(1 for e in dataset if L.is_labeled(e)))} "
-          f"rows through {cfg['model']['name']} (this makes live calls)...", file=sys.stderr)
+    labeled = sum(1 for e in dataset if L.is_labeled(e))
+    n_to_run = labeled if args.limit is None else min(args.limit, labeled)
+    print(f"running {n_to_run} rows through {cfg['model']['name']} "
+          f"(this makes live calls)...", file=sys.stderr)
     result = run_eval(dataset, cfg, judge, agents, summaries, limit=args.limit)
 
     out = args.out
