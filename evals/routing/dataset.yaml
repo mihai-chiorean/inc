@@ -51,10 +51,12 @@
 - id: route-005
   prompt: Our onboarding funnel drops 60% of users at the email-verification step — help me figure out
     why and what to test.
-  expected: growth-hacker
-  category: marketing
+  expected: analytics-reporter
+  category: studio-operations
   difficulty: medium
-  rationale: Funnel drop-off + conversion optimization + what-to-test is growth-hacker's core.
+  rationale: '''Figure out WHY users drop + what to test'' is behavioral-data analysis → analytics-reporter.
+    growth-hacker (funnel/conversion) is the close runner-up; the codex judge and a re-read both land
+    on analytics-reporter, so it''s relabeled from the original growth-hacker call.'
 - id: route-006
   prompt: Build a responsive React dashboard with a sortable, filterable data table and a dark-mode toggle.
   expected: frontend-developer
