@@ -270,7 +270,7 @@ is_org_agent() {
 #   all  → every agent .md in the category dirs (--include-all-agents)
 agent_count=0
 if [[ "$AGENTS_MODE" != "none" ]]; then
-    CATEGORIES=(bonus design engineering marketing product project-management studio-operations testing writing)
+    CATEGORIES=(bonus design engineering marketing product project-management sales studio-operations testing writing)
     for category in "${CATEGORIES[@]}"; do
         src="${SCRIPT_DIR}/${category}"
         [[ -d "${src}" ]] || continue

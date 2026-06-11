@@ -50,7 +50,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATEGORIES = [
-    "engineering", "product", "marketing", "testing", "writing",
+    "engineering", "product", "marketing", "sales", "testing", "writing",
     "design", "project-management", "studio-operations", "bonus",
 ]
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
