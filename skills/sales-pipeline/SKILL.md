@@ -1,5 +1,6 @@
 ---
 name: sales-pipeline
+disable-model-invocation: true
 description: 'Navigate a live B2B sales opportunity using MEDDPICC and McMahon''s six-stage process (The Qualified Sales Leader). Given a deal, diagnose which stage it is in via verifiable exit-criteria gates, score MEDDPICC (Metrics, Economic Buyer, Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion, Competition), surface red flags (coach mistaken for a Champion, no Economic-Buyer access, decision criteria moving against you, unquantified pain, a POV with no prerequisites, no urgency), prescribe the single next action that opens the next gate, and coach you while you do it. Use when the user asks what stage a lead/deal/opportunity is at, what to do next to move a deal forward, to qualify/MEDDPICC/forecast a deal, to plan a champion / economic-buyer / POV / negotiation move, or to review a pipeline. Built for a founder running first deals: coach mode is on by default — it works one skill at a time, Socratically, and tracks recurring mistakes across your deals (say "terse" for just the readout). Persists per-deal state to a file by default so the pattern-tracking works. Advisory only — it does not contact customers or send anything.'
 ---
 
