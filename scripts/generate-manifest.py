@@ -48,6 +48,7 @@ CATEGORIES = [
     "engineering",
     "product",
     "marketing",
+    "sales",
     "testing",
     "writing",
     "design",
