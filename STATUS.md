@@ -1,14 +1,14 @@
 ---
 status_version: 1
-current_objective: "Building Project B — Agent roster eval framework. MIT-294/295/296 merged. MIT-297 (eval runner) in progress — first live run scored 29/30 = 96.7% (codex gpt-5.5 judge). The spec-conformance initiative (MIT-410→437) is fully merged."
-active_branch: mit-297-eval-runner
+current_objective: "Project B — Agent roster eval framework. MIT-294/295/296/297 merged (runner live; after relabeling route-005 the eval is 30/30 = 100% on gpt-5.5, which confirms the day-1 set is too easy → MIT-301). Also shipped a sales-rep agent + /sales-pipeline skill (MIT-456, new `sales` category). On clean main, no active branch. Next: MIT-438."
+active_branch: main
 active_pr: null
-linear_issue: MIT-297
+linear_issue: null
 linear_team: MIT
 linear_project: "Agent roster eval framework"
 blocked_on_user: []
-next_command: "PR MIT-297 (runner + committed first EvalResult). Then MIT-438 (extended EvalResult schema — precision/recall/F1/FP-FN/persistence) → MIT-439 (touchfile selection) → MIT-298 (conflict detection) → MIT-299 (reports) → MIT-440 (gate/periodic CI). Day-1 96.7% > 95% ⇒ dataset slightly too easy; add harder adversarials (MIT-301)."
-last_verified_state: 2026-06-05T22:10:00Z
+next_command: "MIT-438 (extended EvalResult schema — precision/recall/F1/FP-FN/persistence + auto-compare) → MIT-439 (touchfile selection) → MIT-298 (conflict detection) → MIT-299 (reports) → MIT-440 (gate/periodic CI). Parallel: MIT-301 (harder adversarials — eval is at 100%, too easy). Housekeeping: delete obsolete branch mit-391 (superseded by MIT-415) + prune stale agent worktrees."
+last_verified_state: 2026-06-18T00:00:00Z
 linear_scope:
   # NOTE: these MUST be exact Linear project names (sitrep-linear filters on them).
   # Verify against `linear project list` before editing — invented strings get silently excluded.
@@ -36,21 +36,22 @@ Agent/skill spec-conformance + canonicalization initiative (MIT-410→437). Grou
 
 ## What's next
 
-**Project B underway** in `evals/routing/`. Done: MIT-294 (dataset schema + `label.py`), MIT-295 (30 labeled prompts: 20 clear / 7 adversarial / 3 NONE). In progress: MIT-296 (judge config). Sequence:
+**Project B core runner is done** (`evals/routing/`); the rich-metrics + CI layers are next.
 
-1. ✅ **MIT-294** — `dataset.yaml` schema + `label.py` labeling tool (PR #57).
-2. ✅ **MIT-295** — 30 labeled routing prompts (PR #58).
-3. ✅ **MIT-296** — `judge_config.yaml` (pinned gpt-5.5 via codex-cli, frozen prompt/schema, temp 0 + seed) + `judge_config.py` + `docs/judge.md` (PR #59).
-4. **MIT-297** (in progress) — `runner.py` (pluggable judge: MockJudge + CodexJudge via `codex exec`) + `test_runner.py` + first committed EvalResult `results/run-2026-06-05.json`. **29/30 = 96.7%**; all 7 adversarials passed; only miss = route-005 (codex: analytics-reporter, runner-up growth-hacker — the row already flagged debatable). PR pending.
-5. **MIT-438** (extended EvalResult schema) → **MIT-439** (touchfile diff selection) → MIT-298 (conflict detection) → MIT-299 (reports) → **MIT-440** (gate/periodic CI).
+1. ✅ **MIT-294** — `dataset.yaml` schema + `label.py` (PR #57).
+2. ✅ **MIT-295** — 30 labeled prompts: 20 clear / 7 adversarial / 3 NONE (PR #58); route-005 relabeled to `analytics-reporter` (PR #61).
+3. ✅ **MIT-296** — `judge_config.yaml` (pinned gpt-5.5 via codex-cli, frozen) + `judge_config.py` + `docs/judge.md` (PR #59).
+4. ✅ **MIT-297** — `runner.py` (MockJudge + CodexJudge via `codex exec`, isolated cwd, last-message capture) + tests + committed EvalResult (PR #60). After the relabel: **30/30 = 100%** → set confirms the day-1 set is too easy.
+5. **MIT-438** (extended EvalResult schema — precision/recall/F1, FP/FN, persistence + auto-compare) → **MIT-439** (touchfile diff selection) → MIT-298 (conflict detection) → MIT-299 (reports) → **MIT-440** (gate/periodic CI).
 
-Side backlog (not Project B): MIT-301 (add harder adversarials — 96.7% > 95% "too easy" line), MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all).
+Also shipped (outside Project B): **sales-rep agent + /sales-pipeline skill** (MIT-456, PR #62) — new `sales` category; MEDDPICC + 6-stage process from McMahon's *Qualified Sales Leader*; skill has default-on coach mode + private `~/.inc` deal persistence, gated with `disable-model-invocation`.
+
+Side backlog: MIT-301 (harder adversarials — eval is at 100%, too easy), MIT-374 (non-symlink skill-dir conflict detection), MIT-345 (/sitrep --all).
 
 ## Open items needing my attention
 
-- MIT-297 PR (pending) — review + merge once opened.
-- route-005 label: codex disagrees (analytics-reporter vs my growth-hacker) — decide whether to relabel (MIT-295 data) or leave as a known-hard row.
-- Backlog: rest of Project B (MIT-298–302, MIT-438/439/440), MIT-374, MIT-345.
+- **Branch housekeeping:** `mit-391-vision-frontmatter-fix` (local+remote) is obsolete — superseded by the MIT-415 vision-engineer rewrite, 63 commits behind; delete rather than merge. Stale local worktree branches (mit-412/413/414/415×3/431/433/434) sit at pre-rebase SHAs in locked `.claude/worktrees/` — their work is already on main; prune the worktrees.
+- Backlog: rest of Project B (MIT-298–302, MIT-438/439/440), MIT-374, MIT-345, MIT-301.
 
 _Live items in this section are normally populated by `/sitrep` from Linear/GitHub queries._
 
@@ -63,6 +64,9 @@ _Live items in this section are normally populated by `/sitrep` from Linear/GitH
 
 ## Decisions log (recent)
 
+- 2026-06-18 — **Branch audit.** Only genuinely-unmerged branch is `mit-391-vision-frontmatter-fix`, and it's obsolete: it collapses vision-engineer's multi-line `<example>` frontmatter, but MIT-415 already rewrote vision-engineer to clean canonical v3 (the fix is moot; the file's only flag now is the grandfathered `color`-key WARN). 63 commits behind; merging would conflict/revert. Decision: delete, don't merge. The other "no-merge" locals (mit-431/433/434 etc.) are stale worktree branches at pre-rebase SHAs — their work is on main; worktrees to be pruned.
+- 2026-06-11 — **Shipped sales-rep agent + /sales-pipeline skill (MIT-456, PR #62).** New `sales` category (added to CATEGORIES in validate-agents.py + generate-manifest.py + install.sh — sales is a distinct GTM function). Both grounded in McMahon's *Qualified Sales Leader* (MEDDPICC + 6-stage process), read in full via 5 parallel reader agents. Skill got a default-on **coach mode** (one-skill-at-a-time, Socratic, cross-deal pattern tracking) for a founder learning on first deals. 3 codex rounds caught + fixed: auto-invocation risk (→ `disable-model-invocation`), and deal-data leak (→ persist to private `~/.inc/sales/pipeline/`, not the repo). Coaching lives in the skill (interactive loop); the agent carries a lighter founder-coach register.
+- 2026-06-05 — **MIT-294–297 merged; eval now 100% after relabel.** MIT-294 went through /code-review (3 fixes pre-merge). MIT-297 runner went through 5 codex rounds (real bugs in 1–3: determinism overclaim, double-counted invalids, limit-0/-1 cost holes, echoed-JSON misparse; 4–5 isolation hardening). First live run 29/30 = 96.7%; sole miss route-005 was the row flagged debatable in MIT-295, so it was relabeled to analytics-reporter (PR #61) → re-run **30/30 = 100%**, confirming the day-1 set needs harder adversarials (MIT-301).
 - 2026-06-05 — **MIT-297 eval runner built; first live run 96.7%.** `runner.py` reads dataset → builds roster from manifest → renders the frozen judge prompt → calls codex (`codex exec -c model=gpt-5.5`) → parses the trailing JSON → deterministic `selected_agent == expected`. Pluggable judge (MockJudge for CI, CodexJudge live). Scope kept basic (accuracy + per-row); rich metrics/persistence deferred to MIT-438 as planned. First live 30-row run: **29/30 = 96.7%**, all 7 adversarials passed, mean judge confidence 0.958. Sole miss: route-005 (codex → analytics-reporter, runner-up growth-hacker, conf 0.78 — lowest-confidence pick, and the exact row flagged debatable during MIT-295). 96.7% > the 95% "too easy" line ⇒ filed mentally as: add harder adversarials (MIT-301). User chose the full live-run option (cost accepted) over wire-and-smoke.
 - 2026-06-05 — **MIT-294/295 merged; MIT-296 judge config built.** MIT-294 (dataset schema + `label.py`, PR #57) went through `/code-review` — fixed 3 findings before merge (comment-loss on write, hardcoded-category drift, rationale not enforced). MIT-295 (PR #58) labeled 30 prompts; sharpened 3 adversarial rows on review (024 profiling, 025 trap→swift-backend, 028→embedded-linux). MIT-296: judge is **Codex `gpt-5.5` via codex-cli 0.124.0**, not Claude — cross-family bias mitigation (don't grade Claude's routing with Claude). Config pinned + frozen (temp 0, seed 1729, versioned prompt/schema); exact dated snapshot recorded per-run by the runner since codex-cli doesn't expose it statically. Rationale in `docs/judge.md`.
 - 2026-06-05 — **Started Project B (Agent roster eval framework).** Created 3 issues folding the gstack eval mechanics into the project: MIT-438 (extended EvalResult schema — precision/recall/F1, expected/suggested IDs, FP/FN, judge metadata, persisted + auto-compare), MIT-439 (touchfile-driven diff selection), MIT-440 (gate/periodic tiers + CI), each cross-linked to the core issues (MIT-297/298/299) and assigned to me. Granularity chosen: 3 new issues over augmenting existing ones (user call). Began MIT-294 (routing dataset schema + interactive labeling tool) — built `evals/routing/{dataset.yaml,label.py,README.md,test_label.py}` via a general-purpose agent against a detailed spec. Note: the natural owner (agent-eval-engineer) is an HR-repo definition not spawnable in this session's subagent set, so used general-purpose. `linear_scope` fix (PR #56) was required first — #54 had broken it with invented project names, silently gutting the inbox.
