@@ -45,7 +45,7 @@ The math you always do before committing to a quant:
 ```
 weights_GiB         (from the GGUF file size — the source of truth)
 + kv_cache_GiB      (≈ 2 × n_layers × n_kv_heads × head_dim × ctx × parallel × bytes_per_elem)
-                     where bytes_per_elem is 0.5 for q4_0 KV, 1 for f16 KV, etc.
+                     where bytes_per_elem is 0.5 for q4_0 KV, 1 for q8_0 KV, 2 for f16 KV (the default), etc.
 + activation_headroom_GiB   (rule-of-thumb 10–20% of weights, more if prefill batch is large)
 + os_and_other_GiB
 ≤ total_VRAM_or_unified_RAM
