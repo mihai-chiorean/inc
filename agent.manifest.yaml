@@ -63,7 +63,7 @@ agents:
       cost optimization, semantic caching, and fairness or explainability concerns. Do not route video reasoning, multi-camera
       analytics, Jetson/TensorRT edge vision deployment, CUDA kernel work, or general production backend plumbing here.
     description_hash: sha256:2d2365a6c050e5df2d1458f1e77b3f5660af2f2d198281f89bcc73f50e24f333
-    body_hash: sha256:e02382ec9c51968b397832ce04282038e5fb79490c6fd36a0ad6bd30ca62eff1
+    body_hash: sha256:cf0dbd64a55ae6c2f8f1141ec3858b52ebb5a3a432e0884404c91fbf4c5e13c3
     tags:
     - ai
     - engineer
@@ -1927,17 +1927,21 @@ agents:
       "live feed or Tapo cloud clips?" — sourcing (production-dist vs rare-class density vs encoding skew); "cross-camera
       ReID handoff driveway↔street" — OSNet/TransReID/CLIP-ReID + spatio-temporal gate; "segment 6-hour recording into scenes"
       — change-point detection, hysteresis; "SAM 2 vs SAM 3.1 mask refiner" — SOTA selection, benchmark-a-sample-first; "codec
-      / GOP for 30-day archive" — archive encode (seek accuracy, chroma preservation). Anti-scope: live GStreamer / rtspsrc
-      / encoders route to `video-pipeline-engineer`; edge YOLO/TensorRT on Jetson routes to `vision-engineer`; CUDA kernels
-      route to `gpu-engineer`; general LLM/RAG routes to `ai-engineer`.'
-    description_summary: Use for offline or batch video analytics that require reasoning across frames or cameras, including
-      recorded-clip processing, scene and shot detection, video understanding models, spatio-temporal tracking, cross-camera
-      ReID, multi-camera fusion, and auto-labeling workflows. Specializes in promptable and open-vocabulary vision models,
-      input-data sourcing before labeling, frames-as-spacetime analysis, and batch decode/archive decisions such as NVDEC,
-      keyframe extraction, GOP, and codec tradeoffs. Do not use for live GStreamer/RTSP pipelines, edge YOLO/TensorRT deployment,
-      CUDA kernel work, or general LLM/RAG tasks.
-    description_hash: sha256:490d3b9aa94a6f14bf98289ccabd98b228fd578bba78e135885a296f88bd012d
-    body_hash: sha256:0933092c8aefd3a251c36a248f210ddf263e26c1dc0357efff3560a83f169537
+      / GOP for 30-day archive" — archive encode (seek accuracy, chroma preservation). Owns the ReID embedding *contract*
+      (dim/normalization/distance/versioning/thresholds) + gallery generation; the live edge extractor that produces those
+      embeddings is `vision-engineer`. Anti-scope: live GStreamer / rtspsrc / encoders route to `video-pipeline-engineer`;
+      edge YOLO/TensorRT + live ReID extractor runtime on Jetson route to `vision-engineer`; the retrieval index / vector-query
+      / serving layer routes to `ai-engineer` + `backend-architect`; CUDA kernels route to `gpu-engineer`; general LLM/RAG
+      routes to `ai-engineer`.'
+    description_summary: Use for video analytics reasoning ACROSS frames or cameras — offline/batch processing of recorded
+      clips with SOTA promptable/open-vocab models (SAM 2/3, Grounding DINO, YOLO-World, OWL-ViT), scene/shot detection, video
+      understanding, spatio-temporal + cross-camera ReID tracking, multi-camera fusion, auto-labeling, dataset sourcing, and
+      offline eval. Owns frames-as-spacetime + the ReID embedding CONTRACT (dim/normalization/distance/versioning/thresholds)
+      + gallery generation; the live extractor runtime is vision-engineer's. Runtime is BATCH, not per-frame live. Routes
+      live transport to video-pipeline-engineer, edge model/live-extractor runtime to vision-engineer, the retrieval index/query/serving
+      layer to ai-engineer + backend-architect, and kernels to gpu-engineer.
+    description_hash: sha256:f5f05947f69d5d48ccd62aaa68c968fdb96bae9d284a52ad5e8eccde459fc063
+    body_hash: sha256:9046a449f7ed02297a2669681197f09e98d5546dbe9c38a2ffb46013761fea30
     tags:
     - analytics
     - engineer
@@ -2000,16 +2004,19 @@ agents:
       mismatch or output-tensor decoding (transposed vs non-transposed); ONNX export (opset, dynamic axes); FP16/INT8 quantization;
       tensorrt-swift bindings (`Engine`, `ExecutionContext`); `nvinfer` *inference* keys (model-engine-file, num-detected-classes,
       output-blob-names). Anti-scope: GStreamer plumbing, rtspsrc, encoder/muxer chains, `nvinfer` *pipeline* keys route to
-      `video-pipeline-engineer`; cross-camera ReID / multi-camera fusion / batch open-vocab labeling route to `video-analytics-engineer`;
-      TensorRT internals / CUTLASS / kernels route to `gpu-engineer`.'
-    description_summary: Use for computer-vision model and frame-as-tensor work, especially detection models, preprocessing,
-      inference output decoding, NMS, coordinate remapping, TensorRT engine building, quantization, and per-camera tracking.
-      It specializes in debugging accuracy and latency across the preprocess -> inference -> postprocess -> tracking path
-      for edge vision deployments such as Jetson, including YOLO/SSD/DETR variants and TensorRT Swift bindings. Do not use
-      for GStreamer/RTSP/encoder pipeline plumbing, cross-camera ReID or multi-camera analytics, or low-level TensorRT kernel/CUTLASS
-      internals.
-    description_hash: sha256:b4cf4b88fcfd6ae15fee309eb36e869953a5d90c8b4bb46d59b21f2c2bb0880f
-    body_hash: sha256:8360e3c294aa6e52f446a649bf7c5a9f787ae6ed3209596a5fe1ea51768856a1
+      `video-pipeline-engineer`; cross-camera ReID / multi-camera fusion / batch open-vocab labeling route to `video-analytics-engineer`,
+      which also owns the ReID embedding *contract* (dim/normalization/distance/versioning) even when you implement the live
+      extractor; IMM/JPDA/MHT / multi-sensor fusion are radar territory, NOT smart-camera edge; TensorRT internals / CUTLASS
+      / kernels route to `gpu-engineer`.'
+    description_summary: 'Use for computer-vision MODELS and frame-as-tensor work on the edge: detection models (YOLO/SSD/DETR),
+      TensorRT engine building/optimization, frame preprocessing (letterbox/normalize/color), NMS and coordinate remapping,
+      per-camera tracking (SORT/DeepSORT/NvDCF/ByteTrack) including Kalman/EKF/UKF + gating/lifecycle tuning, ONNX export,
+      FP16/INT8 quant, and accuracy debugging of edge models on Jetson. Owns the per-camera model+frame pipeline and the LIVE
+      ReID extractor runtime/FPS — not the ReID embedding contract (that is video-analytics-engineer). Routes GStreamer/transport
+      to video-pipeline-engineer, cross-camera/offline analytics to video-analytics-engineer, IMM/JPDA/MHT + multi-sensor
+      fusion out (radar, not smart-camera edge), and TensorRT internals/kernels to gpu-engineer.'
+    description_hash: sha256:e41a6da1f5eab59aa94f7f05bd5f161792fbcf20203967cde7f2574f85fb9876
+    body_hash: sha256:966fb11d43228602a4f4fadf758dfd06aa92a94bb6ddc8a102f15859446062cf
     tags:
     - engineer
     - engineering

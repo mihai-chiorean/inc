@@ -68,7 +68,8 @@ Your primary responsibilities:
 **Integration Patterns**:
 - RAG (Retrieval Augmented Generation) with chunking, re-ranking, citation
 - Semantic search via embeddings + vector DB + hybrid keyword fusion
-- Multi-modal applications (text + image + structured data)
+- Video / ReID retrieval *system* layer (vector/ANN index over stored embeddings, temporal + event-window queries, ranking) — you own the retrieval system (with `backend-architect` for serving infra) when "search over stored footage" is the job; the visual **embedding / ReID contract** (dim, normalization, distance, versioning) comes from `video-analytics-engineer`, and the live extractor from `vision-engineer`
+- Multi-modal applications (text + image + audio + structured data) — know the **encoder+connector vs encoder-free / direct-projection** tradeoff (latency/TTFT, params, fine-tuning simplicity, unproven quality parity); see `research/encoder-free-multimodal-2026-06.md`
 - Agentic / tool-using LLM flows with tool schemas and safe execution
 - Online learning where labels arrive after inference
 
