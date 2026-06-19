@@ -1145,7 +1145,12 @@ agents:
       build as a runtime, never authors its kernels); OpenAI/Anthropic SDK, RAG, semantic caching, prompt engineering, task-level
       model selection, app-layer cost dashboards route to `ai-engineer`; general fleet reliability routes to `infrastructure-maintainer`;
       rollout from code-complete onward routes to `release-engineer`.'
-    description_summary: ''
+    description_summary: 'Use for the self-hosted LLM serving stack: llama.cpp/llama-server, vLLM, and SGLang runtimes, GGUF
+      quantization choice, KV-cache and continuous-batching tuning against a real VRAM/RAM budget, flash-attention config,
+      and prefill-vs-decode diagnosis. Operates the production llama-server/vLLM endpoint as a systemd-managed service (health
+      probes, restart/drain policy, monthly upstream rebases, experimental-quant fork management). Owns serving-layer config
+      and operation — not kernels, not app logic. Routes CUDA/TensorRT-LLM kernel authoring to gpu-engineer, SDK/RAG/prompt-engineering/cost
+      dashboards to ai-engineer, fleet reliability to infrastructure-maintainer, and rollout to release-engineer.'
     description_hash: sha256:60cfed8bc75e4f5eeb76f57fe0ac6db0537b8d20c96b09bd994b01c8843714ae
     body_hash: sha256:76cf5a833831ab4c97dbcb716b48bca17e70375520d7f74bcb8c081fa44ed9e5
     tags:
@@ -1421,7 +1426,12 @@ agents:
       to `market-validator`; competitor teardowns route to `competitive-intel`. This agent qualifies and closes specific deals
       — not marketing, not product. Input should include: the deal (account, stage, contacts with their power/authority),
       the pain and any metrics, and the specific question (qualify / advance / forecast / price).'
-    description_summary: ''
+    description_summary: 'Use to qualify and advance a specific live enterprise/founder-led deal: run discovery, score it
+      against MEDDPICC, build and test a Champion, build the as-is/to-be cost justification and anchor price, set strategy
+      across the 6-stage sales process, and forecast only defensible deals. Sells business value to the Economic Buyer, not
+      features to low-level users. Pairs with the /sales-pipeline skill (per-deal stage + next-action). Routes demand-gen/content
+      to growth-hacker/content-creator, roadmap/ship-kill to product-manager, product-research interviews to customer-interviewer,
+      market sizing to market-validator, competitor teardowns to competitive-intel.'
     description_hash: sha256:50714702c828866dbe45b6baa2ce33e1eaf33d3f34295e7b071d8ff3f7cac2f1
     body_hash: sha256:aa827feab777cb5164e6547bc26ae6b9e44c6ded3c0128f692a91f10f9e772dc
     tags:
