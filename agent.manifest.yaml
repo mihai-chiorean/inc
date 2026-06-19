@@ -1125,6 +1125,40 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  llm-inference-engineer:
+    file: engineering/llm-inference-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent for the self-hosted LLM serving stack: llama.cpp / llama-server, vLLM, SGLang as runtimes,
+      GGUF quantization choice (Q3_K_XL, Q4_K_M, UD-Q3, IQ4_XS), KV-cache tuning at the serving layer, continuous batching,
+      flash-attention config, prefill-vs-decode balance, systemd-managed inference services, monthly upstream rebases, fork
+      management for experimental quant paths. Owns the production llama-server / vLLM endpoint as an operated service. Fires
+      on: "pick a quant for this model on this box" — VRAM/RAM-budget math across UD-Q3 vs Q4_K_M vs Q5_K_M vs IQ-quants,
+      KV footprint, prefill headroom (e.g. MiniMax M2.5 UD-Q3_K_XL ~95 GiB + ~10 GiB KV on 122 GiB Spark; Q4_K_M doesn''t
+      fit); "decode bound at 6 tok/s but prefill is 4K tok/s" — bandwidth-bound diagnosis at the serving layer, `--parallel`,
+      `--kv-unified`, `--cache-type-k q4_0`, `--cache-type-v q4_0`, `--flash-attn on`, batch-vs-KV tradeoffs; "should we move
+      from llama.cpp to vLLM / SGLang" — runtime-choice tradeoff with named criteria; "llama-server died at 3am" — systemd
+      drop-in design, ExecStartPre health probes, restart policy, log routing, graceful drain; "monthly upstream rebase" —
+      cutover commit, eval-batch gate, rollback plan; "our TurboQuant fork is 3 weeks behind upstream" — fork side-rebase,
+      keep-vs-collapse decision. Anti-scope: TensorRT-LLM engine builds, plugin authoring, NVFP4/FP8 dispatch, CUDA/Triton/CUTLASS
+      kernels, SM121 register pressure, custom attention kernels all route to `gpu-engineer` (this agent consumes a TRT-LLM
+      build as a runtime, never authors its kernels); OpenAI/Anthropic SDK, RAG, semantic caching, prompt engineering, task-level
+      model selection, app-layer cost dashboards route to `ai-engineer`; general fleet reliability routes to `infrastructure-maintainer`;
+      rollout from code-complete onward routes to `release-engineer`.'
+    description_summary: ''
+    description_hash: sha256:60cfed8bc75e4f5eeb76f57fe0ac6db0537b8d20c96b09bd994b01c8843714ae
+    body_hash: sha256:40a62f637c32d04b9082ba6e181b8615d9dbee3046108663e61926661c83cda6
+    tags:
+    - engineer
+    - engineering
+    - inference
+    - llm
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-06-19'
+    aliases: []
   market-validator:
     file: product/market-validator.md
     category: product
