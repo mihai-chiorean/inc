@@ -1125,6 +1125,45 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  llm-inference-engineer:
+    file: engineering/llm-inference-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent for the self-hosted LLM serving stack: llama.cpp / llama-server, vLLM, SGLang as runtimes,
+      GGUF quantization choice (Q3_K_XL, Q4_K_M, UD-Q3, IQ4_XS), KV-cache tuning at the serving layer, continuous batching,
+      flash-attention config, prefill-vs-decode balance, systemd-managed inference services, monthly upstream rebases, fork
+      management for experimental quant paths. Owns the production llama-server / vLLM endpoint as an operated service. Fires
+      on: "pick a quant for this model on this box" — VRAM/RAM-budget math across UD-Q3 vs Q4_K_M vs Q5_K_M vs IQ-quants,
+      KV footprint, prefill headroom (e.g. MiniMax M2.5 UD-Q3_K_XL ~95 GiB + ~10 GiB KV on 122 GiB Spark; Q4_K_M doesn''t
+      fit); "decode bound at 6 tok/s but prefill is 4K tok/s" — bandwidth-bound diagnosis at the serving layer, `--parallel`,
+      `--kv-unified`, `--cache-type-k q4_0`, `--cache-type-v q4_0`, `--flash-attn on`, batch-vs-KV tradeoffs; "should we move
+      from llama.cpp to vLLM / SGLang" — runtime-choice tradeoff with named criteria; "llama-server died at 3am" — systemd
+      drop-in design, ExecStartPre health probes, restart policy, log routing, graceful drain; "monthly upstream rebase" —
+      cutover commit, eval-batch gate, rollback plan; "our TurboQuant fork is 3 weeks behind upstream" — fork side-rebase,
+      keep-vs-collapse decision. Anti-scope: TensorRT-LLM engine builds, plugin authoring, NVFP4/FP8 dispatch, CUDA/Triton/CUTLASS
+      kernels, SM121 register pressure, custom attention kernels all route to `gpu-engineer` (this agent consumes a TRT-LLM
+      build as a runtime, never authors its kernels); OpenAI/Anthropic SDK, RAG, semantic caching, prompt engineering, task-level
+      model selection, app-layer cost dashboards route to `ai-engineer`; general fleet reliability routes to `infrastructure-maintainer`;
+      rollout from code-complete onward routes to `release-engineer`.'
+    description_summary: 'Use for the self-hosted LLM serving stack: llama.cpp/llama-server, vLLM, and SGLang runtimes, GGUF
+      quantization choice, KV-cache and continuous-batching tuning against a real VRAM/RAM budget, flash-attention config,
+      and prefill-vs-decode diagnosis. Operates the production llama-server/vLLM endpoint as a systemd-managed service (health
+      probes, restart/drain policy, monthly upstream rebases, experimental-quant fork management). Owns serving-layer config
+      and operation — not kernels, not app logic. Routes CUDA/TensorRT-LLM kernel authoring to gpu-engineer, SDK/RAG/prompt-engineering/cost
+      dashboards to ai-engineer, fleet reliability to infrastructure-maintainer, and rollout to release-engineer.'
+    description_hash: sha256:60cfed8bc75e4f5eeb76f57fe0ac6db0537b8d20c96b09bd994b01c8843714ae
+    body_hash: sha256:76cf5a833831ab4c97dbcb716b48bca17e70375520d7f74bcb8c081fa44ed9e5
+    tags:
+    - engineer
+    - engineering
+    - inference
+    - llm
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-06-19'
+    aliases: []
   market-validator:
     file: product/market-validator.md
     category: product
@@ -1387,7 +1426,12 @@ agents:
       to `market-validator`; competitor teardowns route to `competitive-intel`. This agent qualifies and closes specific deals
       — not marketing, not product. Input should include: the deal (account, stage, contacts with their power/authority),
       the pain and any metrics, and the specific question (qualify / advance / forecast / price).'
-    description_summary: ''
+    description_summary: 'Use to qualify and advance a specific live enterprise/founder-led deal: run discovery, score it
+      against MEDDPICC, build and test a Champion, build the as-is/to-be cost justification and anchor price, set strategy
+      across the 6-stage sales process, and forecast only defensible deals. Sells business value to the Economic Buyer, not
+      features to low-level users. Pairs with the /sales-pipeline skill (per-deal stage + next-action). Routes demand-gen/content
+      to growth-hacker/content-creator, roadmap/ship-kill to product-manager, product-research interviews to customer-interviewer,
+      market sizing to market-validator, competitor teardowns to competitive-intel.'
     description_hash: sha256:50714702c828866dbe45b6baa2ce33e1eaf33d3f34295e7b071d8ff3f7cac2f1
     body_hash: sha256:aa827feab777cb5164e6547bc26ae6b9e44c6ded3c0128f692a91f10f9e772dc
     tags:
