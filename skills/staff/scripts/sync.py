@@ -578,6 +578,9 @@ def main() -> int:
                   if "NO-CHANGE" not in c.flags or "ALIAS-RENAMED" in c.flags]
     if not actionable:
         print(f"all {len(changes)} staffed agent(s) are up to date with HR HEAD ({short(hr_commit)})")
+        # Still refresh Codex artifacts for opted-in projects: a no-op sync must
+        # honour `emit_codex` (e.g. just enabled, or .codex/agents was deleted).
+        apply_mod._maybe_emit_codex(project_root, hr_repo)
         return 0
 
     print(f"{len(actionable)} agent(s) have changes vs HR HEAD ({short(hr_commit)}):\n")
