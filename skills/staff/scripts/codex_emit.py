@@ -122,6 +122,17 @@ def mirror_skill(skill_dir: Path, dest_root: Path) -> Path:
 
 # --- batch emitters -----------------------------------------------------------
 
+def _default_hr_repo() -> Path:
+    """HR repo for `--user` (org) emits. The inc repo is the one this script
+    lives in — `<inc>/skills/staff/scripts/codex_emit.py` — so default to that
+    (the installed `staff` symlink resolves back here too). Fall back to project/
+    env discovery only if the script isn't sitting in a recognisable HR repo."""
+    root = Path(__file__).resolve().parents[3]
+    if (root / "agent.manifest.yaml").is_file():
+        return root
+    return apply.resolve_hr_repo(Path.cwd(), None)
+
+
 def _org_agent_files(hr_repo: Path) -> list[Path]:
     """Agent .md files marked `scope: org` (same set install.sh installs user-wide)."""
     out: list[Path] = []
@@ -243,8 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     hr_override = Path(args.hr_repo).expanduser().resolve() if args.hr_repo else None
 
     if args.user:
-        hr = hr_override or apply.resolve_hr_repo(Path.cwd(), None)
-        return emit_user(hr, codex_home, args.skills)
+        return emit_user(hr_override or _default_hr_repo(), codex_home, args.skills)
     project_root = Path(args.project).expanduser().resolve()
     return emit_project(project_root, hr_override)
 

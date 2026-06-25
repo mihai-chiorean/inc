@@ -574,10 +574,11 @@ def main() -> int:
 
 def _maybe_emit_codex(project_root: Path, hr_repo: Path) -> None:
     """If the project opted in (emit_codex: true), regenerate Codex subagent
-    TOML alongside the Claude .md agents. Guarded — never fails apply/sync."""
-    if not load_project_config(project_root).get("emit_codex"):
-        return
+    TOML alongside the Claude .md agents. Fully guarded — config read included —
+    so it never fails apply/sync (e.g. malformed config under sync --hr-repo)."""
     try:
+        if not load_project_config(project_root).get("emit_codex"):
+            return
         import codex_emit
         print("codex: emitting subagents (.codex/agents/) …")
         codex_emit.emit_project(project_root, hr_repo)

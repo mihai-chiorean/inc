@@ -147,6 +147,33 @@ def test_emit_project_pinned_source_and_safe_prune(root: Path) -> None:
            "hand-made TOML (no header) survives prune")
 
 
+def test_user_emit_defaults_hr_to_inc_repo(root: Path) -> None:
+    # `staff codex --user` with no --hr-repo / env / project config must still
+    # work — it defaults to the inc repo this script lives in. (Regression: it
+    # used to raise from cwd-based HR discovery.)
+    import os
+    saved = os.environ.pop("STAFF_HR_REPO", None)
+    try:
+        rc = codex_emit.main(["--user", "--codex-home", str(root / "ch")])
+        expect(rc == 0, "main --user returns 0 without --hr-repo")
+        emitted = list((root / "ch" / "agents").glob("*.toml"))
+        expect(len(emitted) > 0, "org subagents emitted from inferred inc repo")
+    finally:
+        if saved is not None:
+            os.environ["STAFF_HR_REPO"] = saved
+
+
+def test_codex_hook_never_raises_on_bad_config(root: Path) -> None:
+    # apply._maybe_emit_codex must swallow a malformed project config rather than
+    # crash a successful apply/sync.
+    import apply
+    proj = root / "proj"
+    (proj / ".claude" / "staff").mkdir(parents=True)
+    (proj / ".claude" / "staff" / "config.yaml").write_text("emit_codex: true\n: : not yaml\n")
+    apply._maybe_emit_codex(proj, root)  # must not raise
+    expect(True, "_maybe_emit_codex swallowed malformed config")
+
+
 def main() -> int:
     tests = [
         test_basic_conversion,
@@ -155,6 +182,8 @@ def main() -> int:
         test_missing_fields_raise,
         test_emit_user_batch,
         test_emit_project_pinned_source_and_safe_prune,
+        test_user_emit_defaults_hr_to_inc_repo,
+        test_codex_hook_never_raises_on_bad_config,
     ]
     for fn in tests:
         with tempfile.TemporaryDirectory() as d:
