@@ -110,6 +110,43 @@ def test_emit_user_batch(root: Path) -> None:
     expect(data["model_reasoning_effort"] == "medium", "sonnet -> medium in batch path")
 
 
+def test_emit_project_pinned_source_and_safe_prune(root: Path) -> None:
+    # Project with two staffed agents, applied to .claude/agents/ (the pinned
+    # artifacts Codex must mirror — NOT HR HEAD).
+    proj = root / "proj"
+    (proj / ".claude" / "agents").mkdir(parents=True)
+    (proj / ".claude" / "staff").mkdir(parents=True)
+    (proj / ".claude" / "agents" / "alpha.md").write_text(
+        "---\nname: alpha\nmodel: opus\ndescription: alpha desc\n---\nPINNED-ALPHA-BODY\n")
+    (proj / ".claude" / "agents" / "beta.md").write_text(
+        "---\nname: beta\nmodel: haiku\ndescription: beta desc\n---\nBETA-BODY\n")
+    (proj / ".claude" / "staff" / "lock.yaml").write_text(
+        "schema_version: 1\nstaffed:\n"
+        "  alpha: {file: engineering/alpha.md}\n"
+        "  beta: {file: engineering/beta.md}\n")
+
+    # Pre-seed .codex/agents with a STALE generated file (unstaffed gamma) and a
+    # HAND-MADE file (no header) that pruning must never touch.
+    codex_agents = proj / ".codex" / "agents"
+    codex_agents.mkdir(parents=True)
+    (codex_agents / "gamma.toml").write_text(
+        "# Generated from inc agent 'gamma' by `staff codex` — do not edit.\n"
+        'name = "gamma"\n')
+    (codex_agents / "handmade.toml").write_text('name = "handmade"\n# mine\n')
+
+    rc = codex_emit.emit_project(proj)
+    expect(rc == 0, "emit_project returns 0")
+
+    alpha = tomllib.loads((codex_agents / "alpha.toml").read_text())
+    expect("PINNED-ALPHA-BODY" in alpha["developer_instructions"],
+           "emits from applied .claude/agents/<id>.md (pinned), not HR")
+    expect((codex_agents / "beta.toml").exists(), "second staffed agent emitted")
+    expect(not (codex_agents / "gamma.toml").exists(),
+           "stale inc-generated TOML pruned")
+    expect((codex_agents / "handmade.toml").exists(),
+           "hand-made TOML (no header) survives prune")
+
+
 def main() -> int:
     tests = [
         test_basic_conversion,
@@ -117,6 +154,7 @@ def main() -> int:
         test_nasty_body_escaping,
         test_missing_fields_raise,
         test_emit_user_batch,
+        test_emit_project_pinned_source_and_safe_prune,
     ]
     for fn in tests:
         with tempfile.TemporaryDirectory() as d:

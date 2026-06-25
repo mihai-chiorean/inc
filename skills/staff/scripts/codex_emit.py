@@ -141,57 +141,83 @@ def _org_agent_files(hr_repo: Path) -> list[Path]:
     return out
 
 
+def _is_generated(toml_path: Path) -> bool:
+    """True iff this .toml was emitted by us (carries the generated header).
+    Guards pruning so we never delete a hand-written subagent."""
+    try:
+        with open(toml_path, "r", encoding="utf-8") as f:
+            return f.readline().startswith("# Generated from inc agent")
+    except OSError:
+        return False
+
+
+def _prune_stale(out_dir: Path, expected: set[str]) -> int:
+    """Remove inc-generated *.toml in out_dir not in `expected` (unstaffed /
+    renamed agents). Only touches files we generated — hand-made ones survive."""
+    if not out_dir.is_dir():
+        return 0
+    removed = 0
+    for f in sorted(out_dir.glob("*.toml")):
+        if f.name not in expected and _is_generated(f):
+            f.unlink()
+            print(f"  prune  {f}")
+            removed += 1
+    return removed
+
+
 def emit_user(hr_repo: Path, codex_home: Path, do_skills: bool) -> int:
     agents_dir = codex_home / "agents"
+    expected: set[str] = set()
     count = 0
     for src in _org_agent_files(hr_repo):
         try:
             p = emit_agent(src, agents_dir)
+            expected.add(p.name)
             count += 1
             print(f"  agent  {p}")
         except ValueError as exc:
             print(f"  skip   {src.name}: {exc}", file=sys.stderr)
+    pruned = _prune_stale(agents_dir, expected)
     if do_skills:
         skills_root = codex_home / "skills"
         for skill_md in sorted((hr_repo / "skills").glob("*/SKILL.md")):
             dest = mirror_skill(skill_md.parent, skills_root)
             print(f"  skill  {dest}")
-    print(f"emitted {count} org subagents -> {agents_dir}")
+    print(f"emitted {count} org subagents ({pruned} pruned) -> {agents_dir}")
     return 0
 
 
 def emit_project(project_root: Path, hr_repo: Path | None = None) -> int:
-    """Emit every staffed agent from the project lockfile into .codex/agents/.
+    """Emit each staffed agent into .codex/agents/ from the *already-applied*
+    Claude artifact (.claude/agents/<id>.md), so the Codex projection is byte-
+    faithful to what the project accepted — pinned commit + overlays — never HR
+    HEAD. Then prune inc-generated TOML for agents no longer staffed.
 
-    Goes through apply.compute_agent so per-project overlays are stitched in —
-    the Codex TOML carries the same instructions Claude's `.claude/agents/<id>.md`
-    does, not the raw HR source."""
+    `hr_repo` is accepted for call-site compatibility but unused: the source of
+    truth here is the project's own generated Claude agents, not HR."""
     lock_path = project_root / apply.REPO_DEFAULTS["lock_path"]
     if not lock_path.exists():
         print(f"no staff lockfile at {lock_path} — run `staff apply` first", file=sys.stderr)
         return 2
     staffed = apply.load_lockfile(lock_path).get("staffed") or {}
-    if hr_repo is None:
-        hr_repo = apply.resolve_hr_repo(project_root, None)
-    manifest = apply.load_manifest(hr_repo)
-    agents = manifest.get("agents", manifest)
-    paths = apply.Paths.from_project(project_root, hr_repo)
-    hr_commit = apply.hr_head_sha(hr_repo)
+    agents_dir = project_root / apply.REPO_DEFAULTS["agents_dir"]
     out_dir = project_root / ".codex" / "agents"
+    expected: set[str] = set()
     count = 0
     for agent_id in sorted(staffed):
-        entry = agents.get(agent_id)
-        if not entry:
-            print(f"  skip   {agent_id}: not in manifest", file=sys.stderr)
+        md = agents_dir / f"{agent_id}.md"
+        if not md.is_file():
+            print(f"  skip   {agent_id}: not applied ({md} missing)", file=sys.stderr)
             continue
         try:
-            _out, merged, _lock = apply.compute_agent(paths, agent_id, hr_commit, entry)
-            p = emit_from_text(merged, out_dir)
+            p = emit_agent(md, out_dir)
+            expected.add(p.name)
             count += 1
             print(f"  agent  {p}")
         except ValueError as exc:
             print(f"  skip   {agent_id}: {exc}", file=sys.stderr)
-    print(f"emitted {count} subagents -> {out_dir}")
+    pruned = _prune_stale(out_dir, expected)
+    print(f"emitted {count} subagents ({pruned} pruned) -> {out_dir}")
     return 0
 
 
