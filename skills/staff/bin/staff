@@ -33,6 +33,7 @@ Subcommands:
   remove     Drop agents from the staffed set
   audit      Scan multiple projects; identify retirement candidates
   sync       Refresh staffed agents against HR HEAD (per-agent diff + accept)
+  codex      Emit Codex CLI subagent TOML (--user | --project PATH [--skills])
   help       Show this message
 
 Each subcommand accepts -h for its own flags.
@@ -56,6 +57,9 @@ shift
 case "${SUBCMD}" in
     suggest|apply|status|add|remove|audit|sync)
         exec python3 "${SCRIPT_DIR}/${SUBCMD}.py" "$@"
+        ;;
+    codex)
+        exec python3 "${SCRIPT_DIR}/codex_emit.py" "$@"
         ;;
     help|-h|--help)
         usage

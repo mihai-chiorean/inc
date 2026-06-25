@@ -578,6 +578,11 @@ def main() -> int:
                   if "NO-CHANGE" not in c.flags or "ALIAS-RENAMED" in c.flags]
     if not actionable:
         print(f"all {len(changes)} staffed agent(s) are up to date with HR HEAD ({short(hr_commit)})")
+        # Still refresh Codex artifacts for opted-in projects: a no-op sync must
+        # honour `emit_codex` (e.g. just enabled, or .codex/agents was deleted).
+        # But never under --dry-run — that contract is "nothing written".
+        if not args.dry_run:
+            apply_mod._maybe_emit_codex(project_root, hr_repo)
         return 0
 
     print(f"{len(actionable)} agent(s) have changes vs HR HEAD ({short(hr_commit)}):\n")
@@ -669,6 +674,7 @@ def main() -> int:
 
     print(f"\nsynced {len(accepted)} agent(s) to HR {short(hr_commit)} → {paths.agents_dir}")
     print(f"lock: {paths.lock_path}")
+    apply_mod._maybe_emit_codex(project_root, hr_repo)
     if declined:
         print(f"({declined} declined; rerun /staff sync to revisit)")
     return 1 if declined else 0

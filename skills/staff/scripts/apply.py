@@ -568,7 +568,22 @@ def main() -> int:
     write_lockfile(paths, hr_commit, staffed)
     print(f"applied {len(resolved)} agents at HR {hr_commit[:12]} → {paths.agents_dir}")
     print(f"lock: {paths.lock_path}")
+    _maybe_emit_codex(project_root, hr_repo)
     return 0
+
+
+def _maybe_emit_codex(project_root: Path, hr_repo: Path) -> None:
+    """If the project opted in (emit_codex: true), regenerate Codex subagent
+    TOML alongside the Claude .md agents. Fully guarded — config read included —
+    so it never fails apply/sync (e.g. malformed config under sync --hr-repo)."""
+    try:
+        if not load_project_config(project_root).get("emit_codex"):
+            return
+        import codex_emit
+        print("codex: emitting subagents (.codex/agents/) …")
+        codex_emit.emit_project(project_root, hr_repo)
+    except Exception as exc:  # noqa: BLE001 — codex emission is best-effort
+        print(f"codex: emit skipped ({exc})", file=sys.stderr)
 
 
 if __name__ == "__main__":
