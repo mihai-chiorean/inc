@@ -2,10 +2,12 @@
 # Install inc agents + skills into ~/.claude/{agents,skills}/
 #
 # Usage: ./install.sh [--link] [--dry-run] [--include-all-agents|--skills-only]
-#                     [--cleanup|--auto-cleanup|--no-cleanup]
+#                     [--cleanup|--auto-cleanup|--no-cleanup] [--codex]
 #
 #   --link               Symlink instead of copy (keeps repo as source of truth)
 #   --dry-run            Print what would happen without making any changes
+#   --codex              Also project the org set into $CODEX_HOME (~/.codex):
+#                        org agents -> Codex subagent TOML, skills mirrored.
 #
 #   Agent installation (mutually exclusive):
 #
@@ -58,6 +60,7 @@ MODE="copy"
 DRY_RUN=0
 AGENTS_MODE="org"     # org (default — agents tagged scope: org) | all | none
 CLEANUP_MODE="auto"   # auto (prompt if stale) | force-prompt | auto-yes | skip
+CODEX_INSTALL=0       # 1 (--codex) — also emit org subagents + skills into ~/.codex
 for arg in "$@"; do
     case "$arg" in
         --link)                MODE="link" ;;
@@ -67,6 +70,7 @@ for arg in "$@"; do
         --cleanup)             CLEANUP_MODE="force-prompt" ;;
         --auto-cleanup)        CLEANUP_MODE="auto-yes" ;;
         --no-cleanup)          CLEANUP_MODE="skip" ;;
+        --codex)               CODEX_INSTALL=1 ;;
         -h|--help)
             sed -n '/^# Usage/,/^set/p' "$0" | sed 's/^# //; /^set/d'
             exit 0 ;;
@@ -370,6 +374,23 @@ if [[ -x "$CLEANUP_SCRIPT" && "$AGENTS_MODE" != "all" ]]; then
         echo "${prefix}         Run: ./scripts/cleanup-prior-install.sh clean --yes" >&2
         echo "${prefix}              ./install.sh --link" >&2
         echo "${prefix}         Or re-run install.sh and answer 'y' to the cleanup prompt." >&2
+    fi
+fi
+
+# Codex CLI parity (opt-in): emit org-scope agents as Codex subagent TOML and
+# mirror skills into $CODEX_HOME. inc stays the source of truth; this is just
+# the Codex-format projection of the same org set install.sh put in ~/.claude.
+if (( CODEX_INSTALL )); then
+    echo
+    CODEX_HOME_DIR="${CODEX_HOME:-${HOME}/.codex}"
+    if (( DRY_RUN )); then
+        echo "${prefix}[dry-run] would emit org subagents + skills into ${CODEX_HOME_DIR}"
+    else
+        echo "${prefix}Codex: emitting org subagents + skills into ${CODEX_HOME_DIR} …"
+        python3 "${SCRIPT_DIR}/skills/staff/scripts/codex_emit.py" \
+            --user --skills --hr-repo "${SCRIPT_DIR}" || \
+            echo "${prefix}note: codex emit failed (is python3 available?)" >&2
+        echo "${prefix}Codex: restart \`codex\` to pick up new subagents/skills." >&2
     fi
 fi
 

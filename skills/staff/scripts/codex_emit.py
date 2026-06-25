@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""codex_emit — generate Codex CLI subagent TOML from inc agent .md files.
+
+`inc` is the single source of truth. Claude Code consumes the `.md` agents
+directly; Codex CLII (0.142+) needs them as TOML subagent definitions:
+
+    ~/.codex/agents/<name>.toml          (user / org scope)
+    <project>/.codex/agents/<name>.toml  (project scope)
+
+A Codex subagent file is flat TOML with three required keys — `name`,
+`description`, `developer_instructions` — plus optional tuning. We map an inc
+agent's markdown body into `developer_instructions` and its `model` tier into
+`model_reasoning_effort`. See skills/staff/docs/codex.md for the full mapping.
+
+This module is usable three ways:
+  1. CLI:   `python3 codex_emit.py --user`         (org agents -> ~/.codex/agents)
+            `python3 codex_emit.py --project PATH`  (staffed agents -> PATH/.codex/agents)
+  2. via `staff codex ...` (the dispatcher forwards here)
+  3. imported by apply.py / sync.py as a guarded post-step (emit_codex: true)
+
+v1 scope: subagent TOML only. Skills are mirrored verbatim (same SKILL.md
+spec) when --skills is passed. No companion routing skills yet — on Codex,
+subagents are explicit-spawn (`description` is selection guidance, not an
+auto-delegation trigger), which is the documented platform behaviour.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+# Reuse the strict frontmatter parser + durable writer from apply.py. apply.py
+# guards its main() behind __main__, so importing it only runs module-level
+# setup (already loaded when apply.py calls us back via the post-step hook).
+import apply  # noqa: E402  (same scripts/ dir is on sys.path)
+
+# inc model tier -> Codex reasoning effort. Codex inherits the user's configured
+# model (gpt-5.x); opus/sonnet/haiku are not Codex model ids, so we drop `model`
+# and translate the *intent* (how hard to think) instead.
+_EFFORT_BY_MODEL = {"opus": "high", "sonnet": "medium", "haiku": "low"}
+
+GENERATED_HEADER = (
+    "# Generated from inc agent {id!r} by `staff codex` — do not edit.\n"
+    "# Source of truth: the .md in the inc HR repo. Regenerate after changes.\n"
+)
+
+
+def _toml_basic(s: str) -> str:
+    """A single-line TOML basic string (quotes, backslashes, newlines escaped)."""
+    esc = (
+        s.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\t", "\\t")
+    )
+    return f'"{esc}"'
+
+
+def _toml_multiline(s: str) -> str:
+    """A multiline TOML basic string. Escaping every backslash and double-quote
+    is correct (TOML decodes them back to the originals) and bulletproof against
+    accidental triple-quote runs in markdown/code bodies."""
+    esc = s.replace("\\", "\\\\").replace('"', '\\"')
+    # The newline right after the opening delimiter is trimmed by TOML, so the
+    # body is preserved exactly.
+    return '"""\n' + esc + '"""'
+
+
+def agent_md_to_toml(text: str) -> tuple[str, str]:
+    """Convert one inc agent .md (frontmatter + body) -> (name, toml_string)."""
+    _fm_block, body, fm = apply.split_agent_file(text)
+    name = (fm.get("name") or "").strip()
+    if not name:
+        raise ValueError("agent frontmatter has no `name`")
+    description = (fm.get("description") or "").strip()
+    if not description:
+        raise ValueError(f"agent {name!r} has empty `description`")
+    instructions = body.strip()
+    if not instructions:
+        raise ValueError(f"agent {name!r} has empty body (developer_instructions)")
+
+    lines = [GENERATED_HEADER.format(id=name)]
+    lines.append(f"name = {_toml_basic(name)}")
+    lines.append(f"description = {_toml_basic(description)}")
+    effort = _EFFORT_BY_MODEL.get(str(fm.get("model", "")).strip().lower())
+    if effort:
+        lines.append(f"model_reasoning_effort = {_toml_basic(effort)}")
+    lines.append(f"developer_instructions = {_toml_multiline(instructions)}")
+    return name, "\n".join(lines) + "\n"
+
+
+def emit_agent(md_path: Path, out_dir: Path) -> Path:
+    """Read an inc agent .md, write <out_dir>/<name>.toml. Returns the path."""
+    name, toml = agent_md_to_toml(md_path.read_text(encoding="utf-8"))
+    out_path = out_dir / f"{name}.toml"
+    apply.atomic_write(out_path, toml)
+    return out_path
+
+
+def emit_from_text(text: str, out_dir: Path) -> Path:
+    """Emit from already-loaded merged .md text (used by the apply/sync hook)."""
+    name, toml = agent_md_to_toml(text)
+    out_path = out_dir / f"{name}.toml"
+    apply.atomic_write(out_path, toml)
+    return out_path
+
+
+# --- skill mirroring (verbatim — Codex honours the same SKILL.md spec) --------
+
+def mirror_skill(skill_dir: Path, dest_root: Path) -> Path:
+    """Copy an inc skill dir to <dest_root>/<name>/ (full subtree)."""
+    import shutil
+
+    dest = dest_root / skill_dir.name
+    if dest.exists():
+        shutil.rmtree(dest)
+    shutil.copytree(skill_dir, dest, ignore=shutil.ignore_patterns(
+        "__pycache__", "*.pyc", ".git", "tests"))
+    return dest
+
+
+# --- batch emitters -----------------------------------------------------------
+
+def _org_agent_files(hr_repo: Path) -> list[Path]:
+    """Agent .md files marked `scope: org` (same set install.sh installs user-wide)."""
+    out: list[Path] = []
+    manifest = apply.load_manifest(hr_repo)
+    for agent_id, entry in (manifest.get("agents") or manifest).items():
+        if not isinstance(entry, dict) or "file" not in entry:
+            continue
+        src = hr_repo / entry["file"]
+        if not src.is_file():
+            continue
+        try:
+            _b, _body, fm = apply.split_agent_file(src.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        if str(fm.get("scope", "")).strip().lower() == "org":
+            out.append(src)
+    return out
+
+
+def emit_user(hr_repo: Path, codex_home: Path, do_skills: bool) -> int:
+    agents_dir = codex_home / "agents"
+    count = 0
+    for src in _org_agent_files(hr_repo):
+        try:
+            p = emit_agent(src, agents_dir)
+            count += 1
+            print(f"  agent  {p}")
+        except ValueError as exc:
+            print(f"  skip   {src.name}: {exc}", file=sys.stderr)
+    if do_skills:
+        skills_root = codex_home / "skills"
+        for skill_md in sorted((hr_repo / "skills").glob("*/SKILL.md")):
+            dest = mirror_skill(skill_md.parent, skills_root)
+            print(f"  skill  {dest}")
+    print(f"emitted {count} org subagents -> {agents_dir}")
+    return 0
+
+
+def emit_project(project_root: Path, hr_repo: Path | None = None) -> int:
+    """Emit every staffed agent from the project lockfile into .codex/agents/.
+
+    Goes through apply.compute_agent so per-project overlays are stitched in —
+    the Codex TOML carries the same instructions Claude's `.claude/agents/<id>.md`
+    does, not the raw HR source."""
+    lock_path = project_root / apply.REPO_DEFAULTS["lock_path"]
+    if not lock_path.exists():
+        print(f"no staff lockfile at {lock_path} — run `staff apply` first", file=sys.stderr)
+        return 2
+    staffed = apply.load_lockfile(lock_path).get("staffed") or {}
+    if hr_repo is None:
+        hr_repo = apply.resolve_hr_repo(project_root, None)
+    manifest = apply.load_manifest(hr_repo)
+    agents = manifest.get("agents", manifest)
+    paths = apply.Paths.from_project(project_root, hr_repo)
+    hr_commit = apply.hr_head_sha(hr_repo)
+    out_dir = project_root / ".codex" / "agents"
+    count = 0
+    for agent_id in sorted(staffed):
+        entry = agents.get(agent_id)
+        if not entry:
+            print(f"  skip   {agent_id}: not in manifest", file=sys.stderr)
+            continue
+        try:
+            _out, merged, _lock = apply.compute_agent(paths, agent_id, hr_commit, entry)
+            p = emit_from_text(merged, out_dir)
+            count += 1
+            print(f"  agent  {p}")
+        except ValueError as exc:
+            print(f"  skip   {agent_id}: {exc}", file=sys.stderr)
+    print(f"emitted {count} subagents -> {out_dir}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(
+        prog="staff codex",
+        description="Generate Codex CLI subagent TOML from inc agents (v1: subagents only).",
+    )
+    g = ap.add_mutually_exclusive_group(required=True)
+    g.add_argument("--user", action="store_true",
+                   help="emit `scope: org` agents into $CODEX_HOME/agents (default ~/.codex)")
+    g.add_argument("--project", metavar="PATH",
+                   help="emit the project's staffed agents into PATH/.codex/agents")
+    ap.add_argument("--hr-repo", metavar="PATH", help="inc HR repo (else config/env)")
+    ap.add_argument("--skills", action="store_true",
+                    help="also mirror inc skills into $CODEX_HOME/skills (with --user)")
+    ap.add_argument("--codex-home", metavar="PATH",
+                    help="override $CODEX_HOME (default ~/.codex)")
+    args = ap.parse_args(argv)
+
+    codex_home = Path(args.codex_home or os.environ.get("CODEX_HOME") or
+                      Path.home() / ".codex").expanduser()
+    hr_override = Path(args.hr_repo).expanduser().resolve() if args.hr_repo else None
+
+    if args.user:
+        hr = hr_override or apply.resolve_hr_repo(Path.cwd(), None)
+        return emit_user(hr, codex_home, args.skills)
+    project_root = Path(args.project).expanduser().resolve()
+    return emit_project(project_root, hr_override)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

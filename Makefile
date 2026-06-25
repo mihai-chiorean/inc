@@ -10,7 +10,8 @@ TESTS := skills/staff/tests/test_suggest.py \
          skills/staff/tests/test_add_unit.py \
          skills/staff/tests/test_audit.py \
          skills/staff/tests/test_sync.py \
-         skills/staff/tests/test_llm.py
+         skills/staff/tests/test_llm.py \
+         skills/staff/tests/test_codex_emit.py
 COV_TARGETS := skills/staff/scripts
 COV_MIN := 80
 

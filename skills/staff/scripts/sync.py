@@ -669,6 +669,7 @@ def main() -> int:
 
     print(f"\nsynced {len(accepted)} agent(s) to HR {short(hr_commit)} → {paths.agents_dir}")
     print(f"lock: {paths.lock_path}")
+    apply_mod._maybe_emit_codex(project_root, hr_repo)
     if declined:
         print(f"({declined} declined; rerun /staff sync to revisit)")
     return 1 if declined else 0
