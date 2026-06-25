@@ -13,13 +13,14 @@
 #
 #   (default)            Install ONLY agents tagged `scope: org` in their
 #                        frontmatter — the small set that makes sense to load
-#                        in every Claude Code session. Currently 7 agents:
-#                        hiring-manager, blog-writer, social-amplifier,
-#                        product-manager, tpm, tech-lead, security-auditor.
+#                        in every Claude Code session. Currently 8 agents:
+#                        blog-writer, hiring-manager, product-manager,
+#                        sales-rep, security-auditor, social-amplifier,
+#                        tech-lead, tpm.
 #                        Project-shaped agents stay in this repo; consumer
 #                        projects pull a curated subset via /staff.
 #
-#   --include-all-agents Install all 55 agents to user scope. This is the
+#   --include-all-agents Install all 59 agents to user scope. This is the
 #                        old default (pre-MIT-375). NOT recommended: it
 #                        defeats /staff's per-project curation, because
 #                        all agents will be loaded in every session regardless
@@ -169,7 +170,7 @@ case "$AGENTS_MODE" in
         echo "${prefix}Project-shaped agents stay in this repo; use /staff in projects to stage them per-repo."
         ;;
     all)
-        echo "${prefix}Installing ALL 55 agents + skills to ${AGENTS_TARGET} and ${SKILLS_TARGET} (mode: ${MODE})"
+        echo "${prefix}Installing ALL 59 agents + skills to ${AGENTS_TARGET} and ${SKILLS_TARGET} (mode: ${MODE})"
         echo "${prefix}WARNING: --include-all-agents loads every agent in every session, defeating /staff curation." >&2
         ;;
 esac
@@ -360,9 +361,9 @@ fi
 
 # Post-install: if we're in org/none mode and there are still non-org agents
 # under ~/.claude/agents/ (e.g. user declined the cleanup prompt), surface
-# this loudly. Otherwise the installer just installed 7 new symlinks while
-# the OLD 48 stayed loaded — install reports success but the user-scope
-# router still sees all 55. Codex caught this on MIT-375 review.
+# this loudly. Otherwise the installer just installed 8 new symlinks while
+# the OLD 51 stayed loaded — install reports success but the user-scope
+# router still sees all 59. Codex caught this on MIT-375 review.
 if [[ -x "$CLEANUP_SCRIPT" && "$AGENTS_MODE" != "all" ]]; then
     post_rc=0
     "$CLEANUP_SCRIPT" --status 2>/dev/null || post_rc=$?
