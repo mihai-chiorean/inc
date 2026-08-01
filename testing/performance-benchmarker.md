@@ -1,6 +1,6 @@
 ---
 name: performance-benchmarker
-model: sonnet
+model: inherit
 description: "Use this agent for application performance testing, profiling, and optimization recommendations across frontend (Web Vitals — LCP, FID, CLS, FCP, TTI), backend (API response times, DB queries, CPU/memory), and mobile (frame rates, battery, startup time). Knows the toolchain — Chrome DevTools, Lighthouse, WebPageTest, React DevTools Profiler, Xcode Instruments, Android Studio Profiler, APM, k6, JMeter, Jaeger. Typical triggers: \"our app feels sluggish, can you benchmark it?\" (full performance profile, bottleneck identification, prioritized optimization plan); \"our website takes 5 seconds to load\" (frontend profile — bundle sizes, render-blocking resources, image optimization, lazy loading); \"some queries are taking forever\" (DB query profiling, index suggestions, N+1 fixes); \"our React Native app is janky on older phones\" (device-specific profiling, frame-rate measurement, memory pressure). Anti-scope: not for API load and contract testing (route to `api-tester`); not for infrastructure capacity planning and autoscaling (route to `infrastructure-maintainer`); not for security perf-impact analysis (route to `security-auditor`); not for LLM agent latency-coupled-to-quality eval (route to `agent-eval-engineer`); not for unit/integration test writing or fixes (route to `test-writer-fixer`); not for conventional test-suite trend analysis (route to `test-results-analyzer`)."
 color: red
 ---
