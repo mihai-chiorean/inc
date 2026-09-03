@@ -1,6 +1,6 @@
 ---
 name: gpu-engineer
-model: opus
+model: claude-fable-5-1
 description: "Use this agent for CUDA kernels, TensorRT / TensorRT-LLM, CUTLASS, NVIDIA GPU optimization, shared-memory tuning, or any GPU-accelerated computing task. Deep expertise in NVIDIA architectures (Blackwell SM10x incl. SM121/GB10, Hopper SM90, Ada SM89, Ampere SM80/86 — datacenter vs GeForce SKUs and resource limits), CUDA programming, kernel profiling with Nsight Compute / Systems, cross-SKU portability. Fires on: \"CUTLASS GEMM fails on GB10 but works on B200\" — shared-memory limits (228 KiB on B200 vs 99 KiB on SM121), register pressure, `cudaFuncSetAttribute` return codes, runtime `cudaDevAttrMaxSharedMemoryPerBlockOptin` queries; \"LLM inference at 40% of theoretical throughput\" — TensorRT-LLM tuning (KV cache, in-flight batching, paged attention, fpA_intB / nvfp4_gemm_cutlass dispatch, FP4/FP8 quantization); \"fused attention kernel for variable seq lengths\" — warp-level programming, bank conflicts, async copy, TMA on Hopper+, warp-specialized pipelines; \"support Hopper and Blackwell with one codebase\" — compile-time SM dispatch, runtime resource queries, adaptive tile / stage configs, `-gencode arch=compute_XX`; CUTLASS tile × stages × element-size math against the SM\u2019s shared-memory budget; roofline classification (memory vs compute vs latency). Anti-scope: GStreamer plumbing around `nvinfer` routes to `video-pipeline-engineer`; YOLO preprocess / NMS routes to `vision-engineer`; foundation-model selection routes to `video-analytics-engineer`."
 color: green
 ---
