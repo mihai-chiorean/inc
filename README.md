@@ -78,6 +78,7 @@ contains-studio-agents/
 │   └── whimsy-injector.md
 ├── engineering/
 │   ├── ai-engineer.md
+│   ├── apple-platform-engineer.md
 │   ├── backend-architect.md
 │   ├── devops-automator.md
 │   ├── frontend-developer.md
@@ -121,10 +122,11 @@ contains-studio-agents/
 
 ### Engineering Department (`engineering/`)
 - **ai-engineer** - Integrate AI/ML features that actually ship
+- **apple-platform-engineer** - Build and ship native Swift apps for iOS and macOS
 - **backend-architect** - Design scalable APIs and server systems
 - **devops-automator** - Deploy continuously without breaking things
 - **frontend-developer** - Build blazing-fast user interfaces
-- **mobile-app-builder** - Create native iOS/Android experiences
+- **mobile-app-builder** - Android, React Native and Flutter apps, and features spanning iOS and Android
 - **rapid-prototyper** - Build MVPs in days, not weeks
 - **test-writer-fixer** - Write tests that catch real bugs
 

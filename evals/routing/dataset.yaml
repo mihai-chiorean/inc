@@ -226,3 +226,21 @@
   category: meta
   difficulty: easy
   rationale: General-knowledge recommendation unrelated to any specialist domain.
+- id: route-031
+  prompt: In our SwiftUI iPhone app, a streamed reply shows up twice after the WebSocket reconnects — fix
+    the transcript merge and add a regression test.
+  expected: apple-platform-engineer
+  category: engineering
+  difficulty: medium
+  rationale: Swift-only Apple client (SwiftUI, client-side merge of WebSocket events, XCTest) — apple-platform-engineer.
+    'iPhone app' lures mobile-app-builder, but there is no Android or cross-platform dimension.
+  adversarial_against: mobile-app-builder
+- id: route-032
+  prompt: Our macOS Swift app gets 401s from the Hummingbird API after the token refresh — the Keychain
+    read seems to return the old token. Can you fix it?
+  expected: apple-platform-engineer
+  category: engineering
+  difficulty: hard
+  rationale: The stale Keychain token points to investigating the Mac client's storage and refresh path
+    (Keychain, auth header injection) first. 'Hummingbird' and 'Swift' lure swift-backend, which owns server-side Swift only.
+  adversarial_against: swift-backend
