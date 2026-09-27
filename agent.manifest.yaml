@@ -183,6 +183,64 @@ agents:
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
+  apple-platform-engineer:
+    file: engineering/apple-platform-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent for hands-on work on native Swift apps for iOS, iPadOS and macOS (SwiftUI, UIKit or AppKit
+      apps, not React Native, Flutter or Expo hosts), from the Xcode project to a build running on the owner''s device. Auto-loads
+      Swift skills (swift, swift-concurrency). Fires on: "our SwiftUI client duplicates the last streamed message after reconnect"
+      (client-side transcript merge and reconciliation across REST history, WebSocket and SSE, idempotent message ids, @MainActor
+      state vs actor-owned stores); "add the Activity screen to the iOS app" (SwiftUI screens, navigation, sheets, lists,
+      AppKit windows and menu bar, accessibility); URLSession, URLSessionWebSocketTask and SSE clients with reconnect, backoff
+      and cancellation; Codable wire models pinned by JSON fixture contract tests; on-device persistence and outboxes (SwiftData,
+      SQLite/GRDB, files); Swift 6 strict concurrency (actors, Sendable, structured tasks, AsyncStream); XCTest, Swift Testing
+      and XCUITest harnesses (fixture scenes, launch hooks, schemes, xcresult diagnosis) and the regression tests for its
+      own features; Xcode/XcodeGen projects, schemes, xcconfig and xcodebuild CLI; signing, provisioning, entitlements, App
+      Sandbox, TestFlight; install and launch on a device via `xcrun devicectl`; APNs registration and notification handling;
+      Password AutoFill, ASAuthorization and passkeys; third-party auth SDKs such as Clerk. Anti-scope: server-side Swift
+      (Hummingbird, Vapor, swift-nio, postgres-nio servers) routes to `swift-backend`; Swift native modules, Xcode config,
+      signing or TestFlight for a React Native, Flutter or Expo app route to `mobile-app-builder`; Android and cross-platform
+      strategy route there too; web UIs route to `frontend-developer`; server API and wire-contract design route to `backend-architect`;
+      running or repairing an existing suite outside a feature change routes to `test-writer-fixer`; App Store listing and
+      ASO route to `app-store-optimizer`.'
+    description_summary: Hands-on implementation of native Swift apps for iOS, iPadOS and macOS (SwiftUI, UIKit, AppKit),
+      from the Xcode project through to a build running on a device. Covers SwiftUI screens and navigation, URLSession/WebSocket/SSE
+      clients with reconnect and client-side transcript reconciliation, Codable wire models with fixture contract tests, on-device
+      persistence (SwiftData, GRDB), Swift 6 strict concurrency, XCTest/Swift Testing/XCUITest harnesses for its own features,
+      Xcode/XcodeGen and xcodebuild, signing, entitlements, TestFlight, devicectl installs, APNs, passkeys/ASAuthorization
+      and third-party auth SDKs such as Clerk. Does not handle server-side Swift (swift-backend); React Native, Flutter or
+      Expo apps, including their native modules and signing, or Android and cross-platform work (mobile-app-builder); web
+      UIs (frontend-developer); server API or wire-contract design (backend-architect); running or repairing an existing test
+      suite outside a feature change (test-writer-fixer); or App Store listings and ASO (app-store-optimizer).
+    description_hash: sha256:38d5dadd5940ee640c208ab6e914d103a4870524980f8e67b559303dd187ed58
+    body_hash: sha256:0bbfdfcfae780566045eb850748beb7c1c3153b999637d0f84d55f1697074005
+    tags:
+    - apple
+    - engineer
+    - engineering
+    - ios
+    - macos
+    - platform
+    - swift
+    project_hints:
+      files:
+      - '*.xcodeproj'
+      - '*/*.xcodeproj'
+      - '**/*.xcodeproj'
+      - '**/*.xcworkspace'
+      - ios/project.yml
+      - macos/project.yml
+      regex:
+      - (?i)\bswiftui\b
+      - (?i)\bappkit\b
+      - (?i)\bxcodebuild\b
+      - (?i)\bxcodegen\b
+      - (?i)\bdevicectl\b
+      - (?i)\b(?:ios|ipados|macos)\s+(?:app|client)\b
+    conflicts: []
+    introduced: '2026-09-27'
+    aliases: []
   backend-architect:
     file: engineering/backend-architect.md
     category: engineering
@@ -702,17 +760,19 @@ agents:
       Vitals — FCP, LCP, CLS, INP); state-management decisions (local vs global, Redux Toolkit vs Zustand vs Jotai vs Context,
       server-state with TanStack Query / SWR); Next.js / Remix / Nuxt SSR vs SSG choices; accessibility audits (WCAG, ARIA,
       keyboard, screen reader); design-system + Tailwind / CSS-in-JS / CSS Modules tradeoffs; form-heavy UIs (React Hook Form
-      + Yup/Zod); animation (Framer Motion, GSAP, CSS); WebSocket / SSE real-time; PWA + offline. Anti-scope: native mobile
-      (iOS Swift/SwiftUI, Android Kotlin, React Native bridges) routes to `mobile-app-builder`; backend API/auth design routes
-      to `backend-architect`; distinctive bespoke aesthetics use the `frontend-design` skill in addition; device-side WebRTC
-      routes to `video-pipeline-engineer` (browser-side WebRTC viewer stays here).'
-    description_summary: Use for browser-based UI work such as building React, Vue, Angular, or Svelte components, implementing
-      responsive layouts, managing client state, and improving frontend performance. It specializes in accessible, performant
-      web apps, including framework and bundler choices, SSR/SSG decisions, design-system tradeoffs, forms, animation, realtime
-      browser features, PWAs, and Core Web Vitals optimization. Do not use for native mobile or React Native bridge work,
-      backend API or authentication architecture, device-side WebRTC, or bespoke visual direction without also involving a
-      frontend design specialist.
-    description_hash: sha256:8c070f500be2dddc85c7de45615aaaaea51ef2cd8cb9edc4ffdc4fe6c2e1d357
+      + Yup/Zod); animation (Framer Motion, GSAP, CSS); WebSocket / SSE real-time; PWA + offline. Anti-scope: native Apple
+      apps (Swift/SwiftUI, iOS or macOS) route to `apple-platform-engineer`; Android Kotlin and React Native bridges route
+      to `mobile-app-builder`; backend API/auth design routes to `backend-architect`; distinctive bespoke aesthetics use the
+      `frontend-design` skill in addition; device-side WebRTC routes to `video-pipeline-engineer` (browser-side WebRTC viewer
+      stays here).'
+    description_summary: 'Handles web frontend work: building UIs and components in React, Vue, Angular, or Svelte, and choosing
+      frameworks and bundlers. Covers responsive and mobile-first layout, performance work (re-render audits, list virtualization,
+      code splitting, Core Web Vitals), state management (Redux Toolkit, Zustand, Jotai, Context, TanStack Query/SWR), and
+      SSR vs SSG choices in Next.js, Remix, or Nuxt. Also covers accessibility audits (WCAG, ARIA), design systems and styling
+      tradeoffs, form-heavy UIs, animation, WebSocket/SSE real-time features, PWAs and offline support, and browser-side WebRTC
+      viewers. Out of scope: native Swift/SwiftUI apps for iOS or macOS, Android Kotlin and React Native bridges, backend
+      API and auth design, and device-side WebRTC. Bespoke visual aesthetics also need the frontend-design skill.'
+    description_hash: sha256:68c6be37fb268dc0c9638d58d9c31d80f605b43e9498975aff672bc0fa1f1e12
     body_hash: sha256:e5a3cce405058cbabab56bc8ebbcb2101fe54b72cbaaba5dc7f76cf9b6bcfc83
     tags:
     - developer
@@ -1201,25 +1261,31 @@ agents:
     file: engineering/mobile-app-builder.md
     category: engineering
     scope: project
-    description: 'Use this agent for native iOS or Android apps, React Native / Flutter features, or mobile performance work.
-      Specializes in smooth, native-feeling mobile experiences across Swift/SwiftUI, Kotlin/Jetpack Compose, and cross-platform
-      stacks. Fires on: "TikTok-style video feed" — performant scrolling feeds (FlatList / LazyColumn virtualization, image
-      caching, memory management at 60 fps, gestures); "push notifications and biometric auth" — native platform integration
-      (FCM / APNs payload handling, Face ID / Touch ID / fingerprint, deep linking, app shortcuts, in-app purchases, camera
-      + sensors); "need this feature on both iOS and Android" — cross-platform strategy (RN vs Flutter vs native split, platform-specific
-      UI behind shared interface, native module bridges, Expo when constraints fit); app lifecycle (background tasks, state
-      restoration, foreground/background transitions, audio session); UI conformance (iOS HIG, Material 3, dark mode, dynamic
-      type, RTL, keyboard, safe areas, haptics); performance (startup < 2s, frame-time budgets, leak profiling with Instruments
-      / Android Profiler, native vs JS animation); release engineering (TestFlight / Play Console, staged rollouts, crash
-      reporting Crashlytics / Sentry, app-size, asset variants). Anti-scope: server-side Swift routes to `swift-backend`;
-      web/responsive UIs route to `frontend-developer`; backend API design routes to `backend-architect`; cross-language gRPC
-      contract issues route to `grpc-contracts`.'
-    description_summary: Use for native iOS or Android work, React Native or Flutter features, and mobile performance tasks
-      where platform behavior and native-feeling UX matter. Specializes in Swift/SwiftUI, Kotlin/Jetpack Compose, cross-platform
-      architecture, mobile lifecycle, device integrations, UI conformance, profiling, and release engineering. Do not use
-      for server-side Swift, web or responsive UI work, backend API design, or cross-language gRPC contract issues.
-    description_hash: sha256:55936feee82c98afd2ec1685621d178cfaa9661fd5b4dbb35fdd42d1384a1113
-    body_hash: sha256:6b5979fc5a41b89facbca8ca6580d97b958c25eb3fd88e176d095e2d3c942f91
+    description: 'Use this agent for Android apps, React Native / Flutter / Expo features, cross-platform mobile strategy,
+      or mobile work that spans iOS and Android. Specializes in smooth, native-feeling mobile experiences across Kotlin/Jetpack
+      Compose and cross-platform stacks, with iOS knowledge for the Apple half of a two-platform feature. Fires on: "TikTok-style
+      video feed" — performant scrolling feeds (FlatList / LazyColumn virtualization, image caching, memory management at
+      60 fps, gestures); "push notifications and biometric auth" — native platform integration (FCM / APNs payload handling,
+      Face ID / Touch ID / fingerprint, deep linking, app shortcuts, in-app purchases, camera + sensors); "need this feature
+      on both iOS and Android" — cross-platform strategy (RN vs Flutter vs native split, platform-specific UI behind shared
+      interface, native module bridges, Expo when constraints fit); app lifecycle (background tasks, state restoration, foreground/background
+      transitions, audio session); UI conformance (iOS HIG, Material 3, dark mode, dynamic type, RTL, keyboard, safe areas,
+      haptics); performance (startup < 2s, frame-time budgets, leak profiling with Instruments / Android Profiler, native
+      vs JS animation); release engineering (TestFlight / Play Console, staged rollouts, crash reporting Crashlytics / Sentry,
+      app-size, asset variants). Owns React Native, Flutter and Expo apps including their Swift native modules, Xcode projects,
+      signing and TestFlight builds. Anti-scope: native Swift apps (SwiftUI/UIKit/AppKit for iOS or macOS, including their
+      xcodebuild, signing, device install, APNs and AutoFill work) route to `apple-platform-engineer`; server-side Swift routes
+      to `swift-backend`; web/responsive UIs route to `frontend-developer`; backend API design routes to `backend-architect`;
+      cross-language gRPC contract issues route to `grpc-contracts`.'
+    description_summary: Handles Android apps (Kotlin/Jetpack Compose), React Native, Flutter and Expo apps, and mobile features
+      that have to ship on both iOS and Android. This includes the Swift native modules, Xcode projects, signing and TestFlight
+      builds of those cross-platform apps. It covers performant feeds and gestures, native integrations (FCM/APNs payloads,
+      biometrics, deep links, in-app purchases, camera and sensors), app lifecycle, HIG/Material 3 conformance, startup and
+      frame-time performance, and release engineering through TestFlight, Play Console, staged rollouts and crash reporting.
+      Not for native Swift apps (SwiftUI/UIKit/AppKit, including their builds, signing, APNs and AutoFill), server-side Swift,
+      web or responsive UIs, backend API design, or cross-language gRPC contract issues.
+    description_hash: sha256:811a5dd3982e838e6c611d51a24323903d63da6f11ce15da471ad6181bc2baf9
+    body_hash: sha256:a966ab999e074812b952f0f6d090e295bde9c36ba5f36ee1953f8d5c3a72d8d7
     tags:
     - app
     - builder
@@ -1229,11 +1295,12 @@ agents:
       files:
       - ios/Podfile
       - android/build.gradle
-      - ios/*.xcodeproj
+      - pubspec.yaml
       regex:
       - (?i)\breact-?native\b
       - (?i)\bexpo\b
-      - (?i)\bswiftui\b
+      - (?i)\bflutter\b
+      - (?i)\bjetpack compose\b
     conflicts: []
     introduced: '2026-03-19'
     aliases: []
@@ -1554,17 +1621,18 @@ agents:
       queries — never string interpolation, prepared statements, transactions, safe migrations); Swift 6 strict concurrency
       (TaskGroup, async let, actor isolation, Sendable, AsyncSequence, cancellation); Hummingbird 2 routers + middleware +
       RequestContext / ChildRequestContext + TLS; Envoy + Cloud Run (gRPC-Web transcoding, ALB X-Client-Cert-* header extraction,
-      CORS); swift-certificates (X509) + SwiftASN1 for CSR / chain / SAN URI; swift-crypto for keys. Anti-scope: Go-side gRPC
-      routes to `go-engineer`; proto contract divergence routes to `grpc-contracts`; migrations route to `db-migration`; mTLS
-      audit routes to `security-auditor`; Cloud Run / Terraform review routes to `infra-reviewer`.'
-    description_summary: Use for Swift server-side backend work, especially gRPC services, Hummingbird 2 apps, SwiftNIO networking,
-      Swift 6 concurrency, postgres-nio data access, and Swift on Server services in Wendy cloud systems. It specializes in
-      generated proto stub providers, auth/logging/metrics interceptors, unary and streaming RPC lifecycle, TLS and certificate
-      parsing with swift-certificates/SwiftASN1, Cloud Run and Envoy gRPC integration, and safe Postgres usage with pooling,
-      prepared statements, transactions, and parameterized queries. Do not route Go-side gRPC work, proto contract divergence,
-      database migrations, mTLS audits, or Cloud Run/Terraform review here; those belong to the dedicated Go, contract, migration,
-      security, or infrastructure agents.
-    description_hash: sha256:e89c48ac7dcb18b6b648b7096e72a505ee0825e6b2903e3a314ea63d21ed01d5
+      CORS); swift-certificates (X509) + SwiftASN1 for CSR / chain / SAN URI; swift-crypto for keys. Anti-scope: native Apple
+      client apps (iOS/macOS SwiftUI, client-side networking and concurrency) route to `apple-platform-engineer`; Go-side
+      gRPC routes to `go-engineer`; proto contract divergence routes to `grpc-contracts`; migrations route to `db-migration`;
+      mTLS audit routes to `security-auditor`; Cloud Run / Terraform review routes to `infra-reviewer`.'
+    description_summary: 'Handles server-side Swift backend work in the Wendy cloud services: gRPC services built on GRPCCore/NIO
+      HTTP/2 (providers, interceptors, unary and streaming RPCs, keepalive and shutdown), Hummingbird 2 routers and middleware,
+      postgres-nio queries and pooling, and Swift 6 strict concurrency. Also covers Envoy/Cloud Run integration (gRPC-Web
+      transcoding, reading ALB X-Client-Cert-* headers, CORS) and X.509/CSR/SAN handling with swift-certificates, SwiftASN1,
+      and swift-crypto. Does not handle native iOS/macOS client apps (apple-platform-engineer), Go-side gRPC (go-engineer),
+      proto contract divergence (grpc-contracts), migrations (db-migration), mTLS security audits (security-auditor), or Cloud
+      Run/Terraform review (infra-reviewer).'
+    description_hash: sha256:2f1c2fbc98c0f85360c539caf477ca2eead3f02d75c70bdfd1f98d948a41bf5c
     body_hash: sha256:0fce0483ca582a844f6d4e9dc03a60f3ba82fb44f60f2214c04a7e4eb3293ec1
     tags:
     - backend

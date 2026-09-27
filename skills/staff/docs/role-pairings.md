@@ -76,7 +76,8 @@ In a single-engineer setup, both roles run as agents; the human is the orchestra
 | `db-migration` | Migration sequencing, schema changes |
 | `grpc-contracts` | Proto contracts, cross-language consistency |
 | `vision-engineer` | OpenCV, GStreamer, vision pipelines |
-| `mobile-app-builder` | Native iOS/Android / React Native |
+| `apple-platform-engineer` | Native Swift apps for iOS / macOS (SwiftUI, xcodebuild, signing, device install) |
+| `mobile-app-builder` | Android / React Native / Flutter, cross-platform mobile |
 | `test-writer-fixer` | Test design, coverage, integration tests |
 
 ### Boundary contract
