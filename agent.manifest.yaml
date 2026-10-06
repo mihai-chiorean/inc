@@ -1475,6 +1475,41 @@ agents:
     introduced: '2026-05-08'
     aliases:
     - project-shipper
+  runner-platform-engineer:
+    file: engineering/runner-platform-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent for the SUPPLY side of CI: the system that serves GitHub Actions jobs to machines you own.
+      Owns GitHub App identity for runner administration, `workflow_job` webhook semantics, JIT/ephemeral runner minting,
+      the `actions-runner` contract inside a container, `runs-on` labels as a scheduling primitive, and execution usage accounting.
+      The RunsOn / Namespace / Buildjet / actions-runner-controller lane. Fires on: "a cancelled job left a phantom runner
+      registered in the org" — JIT lifecycle leaks (generate-jitconfig TTL, orphan reaping, the assign→claim race, reconciliation
+      sweeps); "we got the same workflow_job.queued twice" — webhook delivery semantics (at-least-once, redelivery, no ordering
+      guarantee, X-GitHub-Delivery dedupe, HMAC-before-parse); "the runner starts but the job never attaches" — actions-runner
+      contract in a container (Runner.Listener/Worker tree, --ephemeral, node20 arm64 externals, _work layout, job hooks,
+      killing the worker not the listener); "nobody has a device for this label set" — subset label matching and the unsupported-cell
+      decision (cancel with a check-run annotation vs leave queued until GitHub''s timeout makes it look like your outage);
+      "GitHub says the job took 11 minutes, our agent says 9" — usage accounting (in_progress→completed span, both timestamp
+      sources, run_attempt identity, one record per matrix leg) producing an auditable record the billing side prices; GitHub
+      App auth mechanics (app JWT → installation token, org `administration`/`actions` permissions, re-consent as a migration
+      event, key rotation); why a self-hosted runner must be ephemeral by construction, not by policy. Anti-scope: AUTHORING
+      pipelines that consume runners routes to `devops-automator`; what a hostile job does once running on the device routes
+      to `tenant-isolation-engineer`; Go idiom routes to `go-engineer`; schema design and billing-provider integration route
+      to `backend-architect`; pricing policy to `product-manager`; feature shape to `tech-lead`.'
+    description_summary: ''
+    description_hash: sha256:2eebfd14674c135eaafd29ce10eae79cd7f467df815b04d9f48cde23e9b453a2
+    body_hash: sha256:056f0278263c8b4e5764af31338c7206cd63662607fa085203426bb83633514c
+    tags:
+    - engineer
+    - engineering
+    - platform
+    - runner
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-09-21'
+    aliases: []
   sales-rep:
     file: sales/sales-rep.md
     category: sales
