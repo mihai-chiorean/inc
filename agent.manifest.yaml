@@ -56,13 +56,17 @@ agents:
       batching, smaller-model fallback, semantic cache); inference-latency targets (< 200 ms) and serving infra (TorchServe,
       TF Serving, ONNX); bias/fairness/explainability concerns. Anti-scope: video-reasoning over multiple frames or multi-camera
       setups routes to `video-analytics-engineer`; edge YOLO/TensorRT deployment on Jetson routes to `vision-engineer`; CUDA-kernel-level
-      work routes to `gpu-engineer`; production backend plumbing (auth, gRPC, database) routes to `backend-architect` or `swift-backend`/`go-engineer`.'
-    description_summary: Use for implementing AI and ML features such as LLM integrations, chatbots, RAG, semantic search,
-      recommendation systems, computer-vision search/OCR, and LLM-powered automation. Specializes in model/provider integration,
-      embeddings and vector stores, prompt and context handling, streaming responses, inference latency, serving infrastructure,
-      cost optimization, semantic caching, and fairness or explainability concerns. Do not route video reasoning, multi-camera
-      analytics, Jetson/TensorRT edge vision deployment, CUDA kernel work, or general production backend plumbing here.
-    description_hash: sha256:2d2365a6c050e5df2d1458f1e77b3f5660af2f2d198281f89bcc73f50e24f333
+      work routes to `gpu-engineer`; the spoken/acoustic side of a voice assistant (wake word, VAD/end-of-turn, streaming
+      STT, TTS, echo cancellation, barge-in, Pipecat turn-taking) routes to `voice-pipeline-engineer`; production backend
+      plumbing (auth, gRPC, database) routes to `backend-architect` or `swift-backend`/`go-engineer`.'
+    description_summary: Use for implementing AI/ML features, LLM integrations and automation, recommendation systems, RAG,
+      semantic search, and image classification, visual search, or OCR. Specialises in recommendation strategies and cold
+      starts, prompt and context management, streaming responses, embeddings, inference serving, cost and latency optimisation,
+      and bias, fairness, and explainability. Route multi-frame or multi-camera video reasoning to video-analytics-engineer,
+      Jetson YOLO/TensorRT deployment to vision-engineer, and CUDA kernel work to gpu-engineer. Spoken and acoustic voice-assistant
+      pipelines belong to voice-pipeline-engineer; production backend plumbing such as authentication, gRPC, and databases
+      belongs to backend-architect, swift-backend, or go-engineer.
+    description_hash: sha256:60caab781c72ee087f51d9ef9442c531fe4508c3528fb25a47ef575eafef83ff
     body_hash: sha256:cf0dbd64a55ae6c2f8f1141ec3858b52ebb5a3a432e0884404c91fbf4c5e13c3
     tags:
     - ai
@@ -2107,14 +2111,15 @@ agents:
       (live-source, batched-push-timeout, attach-sys-ts, queue max-size-time); "go2rtc detector starts before relay has a
       source" — producer/consumer ordering (on-demand vs eager, startup retry). Anti-scope: model-side (NMS, NvDCF tuning)
       routes to `vision-engineer`; foundation-model + batch labeling routes to `video-analytics-engineer`; TensorRT / kernels
-      route to `gpu-engineer`; missing plugins route to `embedded-linux`; container lifecycle routes to `embedded-device`.'
-    description_summary: Use for video pipeline plumbing involving GStreamer, RTSP/RTP/RTCP/SDP, go2rtc or mediamtx relays,
-      ffmpeg/libav, DeepStream element chains, encoder/muxer paths, HLS/LL-HLS/fMP4, device-side WebRTC, queue/tee topology,
-      caps negotiation, and timestamp propagation. It specializes in moving frames from camera to inference and from inference
-      to disk or relay, including diagnosing PTS/DTS loss, RTSP session dropouts, NVMM pool churn, mux timing under frame
-      drops, and relay startup ordering. Do not use for model behavior or tracking/NMS tuning, foundation-model labeling workflows,
-      TensorRT or kernel work, missing plugin/package issues, or container lifecycle problems.
-    description_hash: sha256:39a265c593baca30b91c1cb73428ddb6ee88e557510fc8b944b226a74137d387
+      route to `gpu-engineer`; missing plugins route to `embedded-linux`; container lifecycle routes to `embedded-device`;
+      conversational voice semantics on decoded PCM (wake, VAD/end-of-turn, STT, TTS, AEC, barge-in) route to `voice-pipeline-engineer`.'
+    description_summary: Use for device-side video plumbing from camera to inference and from inference to disk or relay,
+      including GStreamer, RTSP/RTP/RTCP/SDP, go2rtc/mediamtx, ffmpeg/libav, DeepStream elements, encoder/muxer chains, HLS/LL-HLS/fMP4,
+      and WebRTC transport. Specializes in timestamp propagation across NVMM and system memory, caps negotiation, tee/queue
+      topology, leaky queues, RTSP session failures, decoder sharing, batching under frame drops, and relay startup ordering.
+      Excludes model-side processing and tracker tuning, foundation models and batch labeling, TensorRT and kernels, missing
+      plugins, container lifecycle, and conversational voice processing on decoded PCM.
+    description_hash: sha256:6365f27cadf1cfa59240b59039c48c2bc2eadd5e80d794a51b30bd83c3401ce7
     body_hash: sha256:76e75d4f9860ce5707f92747c5ce4b7e99f2ed2287080b1883f0757ef4c2687a
     tags:
     - engineer
@@ -2201,6 +2206,47 @@ agents:
       regex: []
     conflicts: []
     introduced: '2026-03-19'
+    aliases: []
+  voice-pipeline-engineer:
+    file: engineering/voice-pipeline-engineer.md
+    category: engineering
+    scope: project
+    description: 'Use this agent for the acoustic and conversational path of a local real-time voice assistant, microphone
+      to speaker: wake word (openWakeWord, sherpa-onnx KWS, custom household models), VAD and end-of-turn (Silero, Smart Turn),
+      streaming STT (whisper.cpp, language coverage), addressee and follow-up-without-wake policy, echo cancellation and barge-in
+      (hardware AEC, PipeWire), TTS and speech output (Piper, Pocket TTS), Pipecat turn-taking with an agent/tool loop behind
+      it, and acoustic calibration with labelled household audio. Fires on: "the wake word works for me but not for my kid";
+      "it cuts me off after the wake word" / "it waits forever after I stop"; "it transcribed Romanian as confident English"
+      / "it heard a sentence in an empty room"; "it answers conversations not meant for it"; "it keeps talking when I interrupt"
+      / "it hears its own voice"; "partial tool-call JSON reached TTS before the turn was cancelled"; "it mispronounces names
+      and numbers"; "wake to first audio is 5 s"; "audio buffers grow while muted"; "which Pipecat piece replaces our custom
+      turn code". Anti-scope: TensorRT/CUDA engines route to `gpu-engineer`; the LLM serving runtime to `llm-inference-engineer`;
+      prompts, tool schemas, LLM choice and fine-tuning to `ai-engineer` (speech-model selection stays here); RTP/WebRTC/RTSP
+      negotiation, codecs and camera backchannels to `video-pipeline-engineer`; cameras and DeepStream to `vision-engineer`;
+      OS image, drivers and PipeWire packaging to `embedded-linux`; WendyOS containers to `embedded-device`; general app profiling
+      to `performance-benchmarker`; general suite authoring to `test-writer-fixer`; LLM-agent quality evals to `agent-eval-engineer`.
+      Input should include: the exact symptom, timestamped probe/journal lines, active thresholds and model files, the device
+      and runtime, and whether audible testing is allowed.'
+    description_summary: Use for the microphone-to-speaker path of local real-time voice assistants, including missed wake
+      words, premature or delayed turn endings, transcription errors, unintended responses, failed interruption, pronunciation
+      problems, latency, and audio-buffer growth. Specialises in wake-word detection, VAD, end-of-turn detection, streaming
+      STT, speech-model selection, addressee and follow-up policies, echo cancellation, barge-in, TTS, Pipecat turn-taking
+      with agent/tool loops, and calibration using labelled household audio. Excludes GPU engines, LLM serving runtimes, prompts,
+      tool schemas, LLM selection and fine-tuning, media transport negotiation and codecs, camera backchannels, vision pipelines,
+      OS images and drivers, PipeWire packaging, WendyOS containers, general application profiling, general test-suite authoring,
+      and LLM-agent quality evaluations.
+    description_hash: sha256:04bda57b74b43502e9667223b773929f5eb5f5cdf6ed1d424762017844e1ccce
+    body_hash: sha256:5d225342d032fc4b9716e49bdb0250ed9ebf86b8d962f2a457af9148dc69aa97
+    tags:
+    - engineer
+    - engineering
+    - pipeline
+    - voice
+    project_hints:
+      files: []
+      regex: []
+    conflicts: []
+    introduced: '2026-10-06'
     aliases: []
   whimsy-injector:
     file: design/whimsy-injector.md
