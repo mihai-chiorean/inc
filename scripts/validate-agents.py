@@ -114,7 +114,11 @@ MODEL_ALIAS_RE = re.compile(r"(sonnet|opus|haiku|fable)(\[1m\])?", re.ASCII)
 # Both ID conventions: family-first (claude-opus-5-5, claude-sonnet-4-5-20250929)
 # and version-first (claude-3-5-sonnet-20241022). Needs at least one digit.
 MODEL_ID_RE = re.compile(
-    r"claude-(?=[a-z0-9-]*[0-9])[a-z0-9]+(-[a-z0-9]+)+(\[1m\])?", re.ASCII
+    r"claude-("
+    r"[a-z]+(-[0-9]+)+"                     # family-first, numeric segments
+    r"|[0-9]+(-[0-9]+)*-[a-z]+(-[0-9]+|-latest)?"  # version-first
+    r")(\[1m\])?",
+    re.ASCII,
 )
 EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 PERMISSION_MODES = {

@@ -476,7 +476,7 @@ class TestAgentValues2026_10(unittest.TestCase):
 
     def test_unknown_model_hard_fails(self) -> None:
         for fm in ("model: gpt-5\n", 'model: "sonnet\\n"\n', "model: claude-opus\n",
-                   "model: [opus]\n"):
+                   "model: [opus]\n", "model: claude-123-456\n", "model: claude-opus-5x-5\n"):
             code, r = _agent_result(fm)
             self.assertEqual(code, 1, f"{fm!r} must HARD-fail")
             self.assertTrue(any("model" in e for e in r["hard_errors"]),
