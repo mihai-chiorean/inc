@@ -336,7 +336,7 @@ agents:
       and observer-making-sense modes, then iterating with Codex CLI feedback rounds. Do not use for platform-native social
       posts; finished blog posts should be routed to social-amplifier for LinkedIn or X adaptation.
     description_hash: sha256:6eb0de4eaef8bff54a03fa882a3e08e8fa7b0cf466bf172877f02aef2aff5e94
-    body_hash: sha256:6a63df48ce33ff2d9dea6a1939cff1f6726ff31a3482234ef83d250a9feb186c
+    body_hash: sha256:df8b6ba2e882d10de4162190570c4b7488270768026a4c73c58835e8dcab9a0d
     tags:
     - blog
     - writer
@@ -1602,7 +1602,7 @@ agents:
       in Mihai’s voice, including different hooks, openings, and thread decisions rather than simple reformatting. It only
       drafts content for publication and does not post; long-form blog writing is out of scope and should go to `blog-writer`.
     description_hash: sha256:661a53e3e6ef7409900620686155e6563e466d64fdb716fcccefd340cd9f327b
-    body_hash: sha256:f057356d6a618912fd410979ccbb1d9856c359e625b1455a66dc5ce8fd5fd989
+    body_hash: sha256:46be821d98ed2522d98624bbc7a2500d8a4e0f41cdb2709158e3ac197da701fc
     tags:
     - amplifier
     - social
