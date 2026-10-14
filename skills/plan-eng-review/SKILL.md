@@ -6,8 +6,9 @@ description: |
   Use when the user says "audit this design doc", "is decisions/<file> ready", "review this plan", "/plan-eng-review", or when `/work-breakdown` recommends the eng-review gate (M+ classification with design-doc completed).
 
   Adapted from gstack's plan-eng-review.md (1634 lines) — stripped of its session-bootstrap plumbing, telemetry binary, outside-voice subagent, and gstack-specific filesystem layout. Kept: the audit logic, Confidence Calibration, Stale Diagram Audit, failure-modes registry. Mechanical checks delegated to `plan-eng-review-audit` wrapper.
-version: 0
 allowed-tools: Bash, Read, Edit, Glob, Grep, AskUserQuestion
+metadata:
+  version: "0"
 ---
 
 # /plan-eng-review — audit a design doc

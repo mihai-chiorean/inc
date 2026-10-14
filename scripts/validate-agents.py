@@ -9,17 +9,37 @@ agent-spec-currency-2026-06.md): agent tool restriction is now `tools` /
 `skills` became official agent fields, and permissionMode/maxTurns/
 mcpServers/memory/background/isolation/initialPrompt were added.
 
+Re-aligned 2026-10-14 to Claude Code v2.1.300 (the 2026-10 agent-guidelines
+review): agents gained `autoCompactWindow`, `omitClaudeMd` and
+`experimental`; skills gained `metadata`, `license`, `compatibility` and
+`background`; `version` / `deprecation-notice` on skills are not recognised
+by Claude Code (they belong under `metadata:`); frontmatter VALUES are now
+checked, because Claude Code ignores an unknown value the same way it
+ignores an unknown key.
+
 Checks performed:
   - HARD: frontmatter parses with strict YAML (yaml.safe_load).
-  - HARD: required keys present (`name`, `description`).
+  - HARD: required keys present (`description`; `name` is optional).
   - HARD (agents): skill-only keys (`allowed-tools`, `when_to_use`, ...) —
     silently ignored by the loader, so the author's intended restriction or
     behavior never takes effect (this shipped MIT-433's restrictions inert).
-  - HARD (skills only): combined len(description) + len(when_to_use) ≤ 1536
+  - HARD (agents): field values — `model` (alias or claude-* ID), `effort`,
+    `permissionMode`, `memory`, `isolation`, `background`, `omitClaudeMd`,
+    `maxTurns`, `autoCompactWindow`, `experimental.cacheTtl`, `name` shape.
+  - HARD (skills): combined len(description) + len(when_to_use) ≤ 1536
     chars. This is Anthropic's documented router truncation cap.
-  - WARN (agents): description ≤ 2000 chars. No documented spec cap, but the
-    spirit is "tight"; 2000 is generous to allow MIT-415 gradual migration.
+  - HARD (skills): `name` is lowercase-hyphen ≤64 chars and matches its
+    directory; `metadata` is a mapping.
+  - WARN (agents): description ≤ 2000 chars. No documented per-agent cap.
+  - WARN (roster): combined agent descriptions over Claude Code's
+    15,000-token startup-warning budget (chars/4 estimate).
+  - WARN (agents): full model ID pins a version; `effort: max`;
+    `permissionMode: bypassPermissions`.
+  - WARN (agents): body or `tools:` names a tool subagents never receive
+    (`AskUserQuestion`, `EnterPlanMode`, ...).
   - WARN (agents): `color` outside the official 8-value enum (UI ignores it).
+  - WARN (skills): `version` / `deprecation-notice` at top level (move under
+    `metadata:`); SKILL.md body over 500 lines.
   - WARN: description contains XML tags (tracked separately under MIT-393).
   - WARN: non-spec frontmatter keys (grandfathered files; new files HARD).
 
@@ -76,11 +96,62 @@ BASELINE_PATH = Path(__file__).resolve().parent / "validate-agents-baseline.json
 #     isolation, initialPrompt.
 #   - `user-invocable`, `disable-model-invocation`, `context`, `agent`,
 #     `paths` are skills-only; no longer accepted on agents.
+# 2026-10-14 (v2.1.300): + `autoCompactWindow` (2.1.296), `omitClaudeMd`
+# (2.1.271), `experimental` (2.1.248, holds `cacheTtl`). 19 fields total.
 AGENT_SPEC_KEYS = {
     "name", "description", "tools", "disallowedTools", "model",
-    "permissionMode", "maxTurns", "skills", "mcpServers", "hooks",
-    "memory", "background", "effort", "isolation", "color", "initialPrompt",
+    "permissionMode", "maxTurns", "autoCompactWindow", "skills", "mcpServers",
+    "hooks", "memory", "background", "omitClaudeMd", "effort", "isolation",
+    "color", "initialPrompt", "experimental",
 }
+
+# Value enums for agent fields (sub-agents.md + model-config.md, 2026-10).
+# An off-enum value is silently ignored by Claude Code, exactly like an
+# unknown key, so these HARD-fail.
+MODEL_ALIASES = {"sonnet", "opus", "haiku", "fable", "inherit"}
+# Used with fullmatch (no trailing-newline loophole) and ASCII-only classes.
+MODEL_ALIAS_RE = re.compile(r"(sonnet|opus|haiku|fable)(\[1m\])?", re.ASCII)
+# Both ID conventions: family-first (claude-opus-5-5, claude-sonnet-4-5-20250929)
+# and version-first (claude-3-5-sonnet-20241022). Needs at least one digit.
+MODEL_ID_RE = re.compile(
+    r"claude-("
+    r"[a-z]+(-[0-9]+)+"                     # family-first, numeric segments
+    r"|[0-9]+(-[0-9]+)*-[a-z]+(-[0-9]+|-latest)?"  # version-first
+    r")(\[1m\])?",
+    re.ASCII,
+)
+EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
+PERMISSION_MODES = {
+    "default", "manual", "acceptEdits", "auto", "dontAsk",
+    "bypassPermissions", "plan",
+}
+MEMORY_SCOPES = {"user", "project", "local"}
+ISOLATION_MODES = {"worktree"}
+AUTO_COMPACT_WINDOW_RANGE = (100_000, 1_000_000)
+EXPERIMENTAL_CACHE_TTL = {"5m", "1h"}
+AGENT_NAME_MAX_CHARS = 256
+
+# Tools Claude Code removes from every subagent, "even when listed in the
+# `tools` field" (sub-agents.md → Available tools). An agent body that tells
+# the model to use one of these describes a step that can never run (this is
+# how blog-writer/social-amplifier's clarify phase broke). `Workflow` is
+# matched only in tool-shaped mentions because "Workflow" is a common heading.
+SUBAGENT_UNAVAILABLE_TOOLS = (
+    "AskUserQuestion", "EnterPlanMode", "ExitPlanMode", "ScheduleWakeup",
+    "EndConversation", "WaitForMcpServers", "Workflow",
+)
+_UNAVAILABLE_BARE_RE = re.compile(
+    r"\b(AskUserQuestion|EnterPlanMode|ExitPlanMode|ScheduleWakeup|"
+    r"EndConversation|WaitForMcpServers)\b"
+)
+_UNAVAILABLE_WORKFLOW_RE = re.compile(r"`Workflow`|\bWorkflow tool\b")
+
+# Claude Code shows a startup warning when the subagents' combined
+# descriptions pass 15,000 tokens (sub-agents.md). The budget is per
+# session; /staff loads a per-project subset, so the all-agents total is the
+# worst case. We estimate tokens as chars/4 and say so in the message.
+DESCRIPTION_TOKEN_BUDGET = 15_000
+CHARS_PER_TOKEN_ESTIMATE = 4
 
 # Official display-color enum for agents (sub-agents.md `color` row).
 # Off-enum values are silently ignored by the UI — WARN so authors notice.
@@ -104,11 +175,24 @@ SKILL_SPEC_KEYS = {
     "disable-model-invocation", "user-invocable",
     "allowed-tools", "disallowed-tools",
     "model", "effort", "context", "agent", "hooks", "paths", "shell",
-    # Distribution metadata per Anthropic's Jan 2026 skills guide and
-    # the org-wide deployment feature shipped Dec 2025. Optional fields;
-    # accept without warning. Added via MIT-437.
-    "version", "deprecation-notice",
+    # 2026-10 (skills.md + agentskills.io spec): `background` (forked skills
+    # run in the background), `metadata` (free-form map), `license`,
+    # `compatibility` (≤500 chars).
+    "background", "metadata", "license", "compatibility",
 }
+
+# MIT-437 accepted these at top level. Claude Code's skills table does not
+# list them, so the loader ignores them; the open Agent Skills spec puts
+# them under `metadata:`. WARN (not HARD) with a move-it message.
+SKILL_MOVE_TO_METADATA_KEYS = {"version", "deprecation-notice"}
+
+# skills.md: keep SKILL.md under 500 lines; split detail into references/.
+SKILL_BODY_MAX_LINES = 500
+SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+SKILL_NAME_MAX_CHARS = 64
+# Open-standard (agentskills.io) caps, checked only under --check-portability.
+SKILL_PORTABLE_DESCRIPTION_MAX_CHARS = 1024
+SKILL_COMPATIBILITY_MAX_CHARS = 500
 
 # inc-repo extension. `scope:` on agents is consumed by install.sh's
 # is_org_agent awk helper to decide which agents install at user scope
@@ -214,6 +298,153 @@ def _parse_frontmatter(path: Path) -> tuple[dict | None, list[str], list[str]]:
     return parsed, hard, warn
 
 
+def _frontmatter_body(path: Path) -> str:
+    """The markdown body after the frontmatter block (empty if none)."""
+    text = path.read_text(encoding="utf-8")
+    m = FRONTMATTER_RE.match(text)
+    return text[m.end():] if m else text
+
+
+def _is_int(value: object) -> bool:
+    """True for real ints (YAML booleans are ints in Python; exclude them)."""
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _tool_names(tools: object) -> list[str]:
+    """Normalise a `tools:` value (comma/space string or YAML list) to names."""
+    if isinstance(tools, str):
+        return [t for t in re.split(r"[,\s]+", tools) if t]
+    if isinstance(tools, list):
+        return [str(t).strip() for t in tools if str(t).strip()]
+    return []
+
+
+def _one_of(value: object, allowed: set[str]) -> bool:
+    """Enum membership that can't raise: lists/dicts (unhashable) and
+    non-strings are simply not members."""
+    return isinstance(value, str) and value in allowed
+
+
+def _check_agent_values(parsed: dict, body: str,
+                        fallback_name: str = "") -> tuple[list[str], list[str]]:
+    """Value-level checks for agent frontmatter (2026-10 spec). Claude Code
+    ignores an off-enum value the same way it ignores an unknown key, so bad
+    values HARD-fail; risky-but-valid values WARN. `fallback_name` is the
+    filename stem, which becomes the agent's name when `name` is omitted."""
+    hard: list[str] = []
+    warn: list[str] = []
+
+    name = parsed.get("name")
+    if not (isinstance(name, str) and name.strip()):
+        name = fallback_name
+    if name:
+        if len(name) > AGENT_NAME_MAX_CHARS:
+            hard.append(f"name is {len(name)} chars (max {AGENT_NAME_MAX_CHARS})")
+        if ":" in name:
+            hard.append("name contains ':' (reserved for plugin namespacing)")
+        if name.startswith("-"):
+            hard.append("name must not start with '-'")
+
+    if "model" in parsed:
+        model = parsed["model"]
+        if not isinstance(model, str) or not model.strip():
+            hard.append(f"model {model!r} is not a string")
+        elif model == "inherit" or MODEL_ALIAS_RE.fullmatch(model):
+            pass
+        elif MODEL_ID_RE.fullmatch(model):
+            warn.append(
+                f"model '{model}' is a full model ID and pins a version; "
+                "prefer an alias (sonnet|opus|haiku|fable|inherit) unless the "
+                "pin is intentional"
+            )
+        else:
+            hard.append(
+                f"model '{model}' is neither an alias {sorted(MODEL_ALIASES)} "
+                "nor a claude-* model ID; Claude Code ignores it"
+            )
+
+    if "effort" in parsed:
+        effort = parsed["effort"]
+        if not _one_of(effort, EFFORT_LEVELS):
+            hard.append(f"effort {effort!r} is not one of {sorted(EFFORT_LEVELS)}")
+        elif effort == "max":
+            warn.append(
+                "effort: max is prone to overthinking (model-config docs); "
+                "test before adopting it as an agent default"
+            )
+
+    if "permissionMode" in parsed:
+        mode = parsed["permissionMode"]
+        if not _one_of(mode, PERMISSION_MODES):
+            hard.append(
+                f"permissionMode {mode!r} is not one of {sorted(PERMISSION_MODES)}"
+            )
+        elif mode == "bypassPermissions":
+            warn.append("permissionMode: bypassPermissions skips every permission prompt")
+
+    if "memory" in parsed and not _one_of(parsed["memory"], MEMORY_SCOPES):
+        hard.append(f"memory {parsed['memory']!r} is not one of {sorted(MEMORY_SCOPES)}")
+
+    if "isolation" in parsed and not _one_of(parsed["isolation"], ISOLATION_MODES):
+        hard.append(
+            f"isolation {parsed['isolation']!r} is not one of {sorted(ISOLATION_MODES)}"
+        )
+
+    for key in ("background", "omitClaudeMd"):
+        if key in parsed and not isinstance(parsed[key], bool):
+            hard.append(f"{key} must be a boolean, got {parsed[key]!r}")
+
+    if "maxTurns" in parsed:
+        turns = parsed["maxTurns"]
+        if not _is_int(turns) or turns < 1:
+            hard.append(f"maxTurns must be a positive integer, got {turns!r}")
+
+    if "autoCompactWindow" in parsed:
+        acw = parsed["autoCompactWindow"]
+        lo, hi = AUTO_COMPACT_WINDOW_RANGE
+        if not _is_int(acw) or not lo <= acw <= hi:
+            hard.append(
+                f"autoCompactWindow must be an integer in [{lo:,}, {hi:,}], got {acw!r}"
+            )
+
+    if "experimental" in parsed:
+        exp = parsed["experimental"]
+        if not isinstance(exp, dict):
+            hard.append(f"experimental must be a mapping, got {type(exp).__name__}")
+        else:
+            if "cacheTtl" in exp and not _one_of(exp["cacheTtl"], EXPERIMENTAL_CACHE_TTL):
+                hard.append(
+                    f"experimental.cacheTtl {exp['cacheTtl']!r} is not one of "
+                    f"{sorted(EXPERIMENTAL_CACHE_TTL)}"
+                )
+            unknown_exp = sorted(str(k) for k in exp if k != "cacheTtl")
+            if unknown_exp:
+                warn.append(
+                    f"experimental keys {unknown_exp!r} are not documented "
+                    "(only cacheTtl); Claude Code may ignore them"
+                )
+
+    # Tools subagents never receive (sub-agents.md → Available tools).
+    listed = [t for t in _tool_names(parsed.get("tools"))
+              if t in SUBAGENT_UNAVAILABLE_TOOLS]
+    if listed:
+        warn.append(
+            f"tools lists {listed!r}, which subagents never receive (removed "
+            "even when listed); return questions/results to the caller instead"
+        )
+    mentioned = sorted(set(_UNAVAILABLE_BARE_RE.findall(body)))
+    if _UNAVAILABLE_WORKFLOW_RE.search(body):
+        mentioned.append("Workflow")
+    if mentioned:
+        warn.append(
+            f"body mentions {mentioned!r}, which subagents never receive; "
+            "return questions to the caller instead (the caller resumes the "
+            "agent with SendMessage)"
+        )
+
+    return hard, warn
+
+
 def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
     """Check a single agent file. Returns hard_errors and warnings.
 
@@ -253,6 +484,12 @@ def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
             "SKILL.md."
         )
 
+    value_hard, value_warn = _check_agent_values(
+        parsed, _frontmatter_body(path), fallback_name=path.stem
+    )
+    hard.extend(value_hard)
+    warn.extend(value_warn)
+
     # Off-enum colors are silently ignored by the UI.
     if "color" in parsed and parsed.get("color") not in AGENT_COLOR_ENUM:
         warn.append(
@@ -288,6 +525,51 @@ def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
             )
 
     return {"kind": "agent", "file": rel, "hard_errors": hard, "warnings": warn}
+
+
+def _agent_description_chars(path: Path) -> tuple[int, bool]:
+    """(description length, is org-scope) for one agent; (0, False) if the
+    frontmatter doesn't parse (that file already HARD-fails elsewhere)."""
+    parsed, _hard, _warn = _parse_frontmatter(path)
+    if not parsed:
+        return 0, False
+    desc = parsed.get("description")
+    # install.sh's is_org_agent matches `scope: org` case-insensitively.
+    is_org = str(parsed.get("scope", "")).strip().lower() == "org"
+    return (len(desc) if isinstance(desc, str) else 0), is_org
+
+
+def roster_description_budget(agent_files: list[Path]) -> list[str]:
+    """Roster-level WARNs for Claude Code's 15,000-token combined-description
+    budget. Two views: org-scope agents (installed at user level, so loaded
+    in every session) and the whole roster (the worst case; /staff loads a
+    per-project subset). Tokens are a chars/4 estimate."""
+    total_chars = 0
+    org_chars = 0
+    org_count = 0
+    for p in agent_files:
+        chars, is_org = _agent_description_chars(p)
+        total_chars += chars
+        if is_org:
+            org_chars += chars
+            org_count += 1
+    warnings: list[str] = []
+    for label, count, chars in (
+        ("org-scope agents (loaded in every session)", org_count, org_chars),
+        ("all agents (worst case; /staff loads a per-project subset)",
+         len(agent_files), total_chars),
+    ):
+        est = chars // CHARS_PER_TOKEN_ESTIMATE
+        if est > DESCRIPTION_TOKEN_BUDGET:
+            warnings.append(
+                f"{label}: {count} descriptions total {chars:,} chars, about "
+                f"{est:,} tokens (chars/{CHARS_PER_TOKEN_ESTIMATE} estimate), "
+                f"over Claude Code's {DESCRIPTION_TOKEN_BUDGET:,}-token "
+                "combined-description budget. Claude Code still loads every "
+                "agent but shows a startup warning and delegation gets less "
+                "reliable; trim descriptions or load fewer agents together."
+            )
+    return warnings
 
 
 def _check_portability(text: str) -> list[str]:
@@ -371,9 +653,54 @@ def validate_skill(path: Path, baseline: dict[str, set[str]],
         if XML_TAG_RE.search(effective_desc):
             warn.append("description contains XML tags (Anthropic spec: none); see MIT-415")
 
+    # Name shape: lowercase-hyphen, ≤64, and equal to the directory name
+    # (skills.md + agentskills.io). Name defaults to the directory, so check
+    # the effective name.
+    dir_name = path.parent.name
+    effective_name = name if isinstance(name, str) and name.strip() else dir_name
+    if len(effective_name) > SKILL_NAME_MAX_CHARS or not SKILL_NAME_RE.match(effective_name):
+        hard.append(
+            f"skill name '{effective_name}' must be lowercase letters, digits "
+            f"and single hyphens, ≤{SKILL_NAME_MAX_CHARS} chars"
+        )
+    if effective_name != dir_name:
+        hard.append(f"skill name '{effective_name}' does not match its directory '{dir_name}'")
+
+    if "metadata" in parsed and not isinstance(parsed["metadata"], dict):
+        hard.append(
+            f"metadata must be a mapping, got {type(parsed['metadata']).__name__}"
+        )
+    if "background" in parsed and not isinstance(parsed["background"], bool):
+        hard.append(f"background must be a boolean, got {parsed['background']!r}")
+    compat = parsed.get("compatibility")
+    if "compatibility" in parsed and not isinstance(compat, str):
+        hard.append(f"compatibility must be a string, got {type(compat).__name__}")
+    elif isinstance(compat, str) and len(compat) > SKILL_COMPATIBILITY_MAX_CHARS:
+        warn.append(
+            f"compatibility is {len(compat)} chars (spec max "
+            f"{SKILL_COMPATIBILITY_MAX_CHARS})"
+        )
+
+    move_keys = sorted(k for k in parsed.keys() if k in SKILL_MOVE_TO_METADATA_KEYS)
+    if move_keys:
+        warn.append(
+            f"{move_keys!r} at top level are not recognised by Claude Code "
+            "(ignored by the loader); move them under `metadata:`"
+        )
+
+    body_lines = len(_frontmatter_body(path).splitlines())
+    if body_lines > SKILL_BODY_MAX_LINES:
+        warn.append(
+            f"SKILL.md body is {body_lines} lines (skills.md guidance: under "
+            f"{SKILL_BODY_MAX_LINES}); move detail into references/*.md"
+        )
+
     # Non-spec keys on skills: same grandfather model as agents. Listed
     # files WARN; new files HARD.
-    unknown = sorted(k for k in parsed.keys() if k not in SKILL_SPEC_KEYS)
+    unknown = sorted(
+        k for k in parsed.keys()
+        if k not in SKILL_SPEC_KEYS and k not in SKILL_MOVE_TO_METADATA_KEYS
+    )
     if unknown:
         grandfathered_keys = baseline.get(rel, set())
         new_debt = [k for k in unknown if k not in grandfathered_keys]
@@ -394,6 +721,12 @@ def validate_skill(path: Path, baseline: dict[str, set[str]],
         text = path.read_text(encoding="utf-8")
         for finding in _check_portability(text):
             warn.append(f"portability: {finding}")
+        if effective_desc and len(effective_desc) > SKILL_PORTABLE_DESCRIPTION_MAX_CHARS:
+            warn.append(
+                f"portability: description is {len(effective_desc)} chars; the "
+                f"open Agent Skills spec caps it at {SKILL_PORTABLE_DESCRIPTION_MAX_CHARS} "
+                "(Claude Code allows 1,536 with when_to_use)"
+            )
 
     return {"kind": "skill", "file": rel, "hard_errors": hard, "warnings": warn}
 
@@ -417,7 +750,8 @@ def _count_grandfathered(results: list[dict]) -> int:
     )
 
 
-def emit_text(results: list[dict], quiet: bool) -> None:
+def emit_text(results: list[dict], quiet: bool,
+              roster_warnings: list[str] | None = None) -> None:
     if not quiet:
         agents = [r for r in results if r["kind"] == "agent"]
         skills = [r for r in results if r["kind"] == "skill"]
@@ -453,6 +787,11 @@ def emit_text(results: list[dict], quiet: bool) -> None:
         f"Skills: {s_clean} clean, {s_warn} warn, {s_hard} hard-fail."
     )
 
+    if roster_warnings and not quiet:
+        print("\nRoster:")
+        for w in roster_warnings:
+            print(f"  ⚠ {w}")
+
     grandfathered = _count_grandfathered(results)
     if grandfathered:
         print(
@@ -472,13 +811,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__.splitlines()[0],
         epilog=(
-            "Validates against Anthropic's published agent + skill spec "
-            "(see research/agent-skill-spec-ground-truth-MIT-410.md). "
-            "Skills HARD-fail if combined description + when_to_use > "
+            "Validates against Anthropic's published agent + skill spec as of "
+            "Claude Code v2.1.300 (see research/agent-spec-currency-2026-06.md "
+            "and the 2026-10 agent-guidelines review). Skills HARD-fail if "
+            "combined description + when_to_use > "
             f"{SKILL_DESCRIPTION_MAX_CHARS} chars (router cap). Agents WARN "
             f"if description > {AGENT_DESCRIPTION_MAX_CHARS} chars (inc "
-            "guideline). Non-spec frontmatter keys WARN today; agent "
-            "non-spec keys will be tightened to HARD after MIT-412."
+            "guideline); the roster WARNs over the "
+            f"{DESCRIPTION_TOKEN_BUDGET:,}-token combined-description budget. "
+            "Non-spec frontmatter keys and off-enum values HARD-fail unless "
+            "the file is grandfathered in validate-agents-baseline.json."
         ),
     )
     parser.add_argument("--json", action="store_true", help="emit JSON instead of text")
@@ -509,6 +851,7 @@ def main() -> int:
         for p in skill_files
     )
     hard_count = sum(1 for r in results if r["hard_errors"])
+    roster_warnings = roster_description_budget(agent_files)
 
     if args.json:
         a_clean, a_warn, a_hard = _summarise(results, "agent")
@@ -519,10 +862,11 @@ def main() -> int:
             "warnings": sum(len(r["warnings"]) for r in results),
             "agents": {"clean": a_clean, "warn": a_warn, "hard": a_hard},
             "skills": {"clean": s_clean, "warn": s_warn, "hard": s_hard},
+            "roster_warnings": roster_warnings,
             "results": results,
         }, indent=2))
     else:
-        emit_text(results, args.quiet)
+        emit_text(results, args.quiet, roster_warnings)
 
     return 1 if hard_count else 0
 

@@ -56,12 +56,21 @@ Key fields:
 - **`argument-hint`** (optional) — autocomplete hint for arg-taking skills, e.g., `[slug]` or `[duration] [command]`.
 - **`disable-model-invocation: true`** (recommended for side-effect skills) — prevents Claude from auto-firing the skill. Use on anything that writes state, creates tickets, or has irreversible effects (`/staff apply`, `/work-breakdown`, `/design-doc`, etc.).
 - **`allowed-tools` / `disallowed-tools`** — restrict the skill's tool access.
-- **`version`** (optional) — semantic version of the skill, used in distribution metadata.
-- **`deprecation-notice`** (optional) — set when retiring a skill; surfaces to users at invocation time.
+- **`background`** (optional) — run a forked skill in the background.
+- **`license`**, **`compatibility`** (optional, open Agent Skills spec) — license name; environment requirements (≤500 chars).
+- **`metadata`** (optional) — free-form map for anything Claude Code doesn't read itself: `version`, `deprecation-notice`, `references`, and so on. For example:
+  ```yaml
+  metadata:
+    version: "0"
+    references:
+      - postgres-patterns.md
+  ```
+
+Top-level `version:` / `deprecation-notice:` (accepted under MIT-437) are **not** in Claude Code's skills table and are silently ignored; the validator WARNs and asks you to move them under `metadata:`. The loader doesn't read `references:` either: link reference files from the SKILL.md body ("See references/x.md") so Claude actually opens them.
 
 ## Distribution (advanced)
 
-Anthropic shipped org-wide skill deployment in Dec 2025 (admins push skills across workspaces with centralized updates). We don't currently use this — single-user repo — but the metadata fields above (`version`, `deprecation-notice`) future-proof if we ever do.
+Anthropic shipped org-wide skill deployment in Dec 2025 (admins push skills across workspaces with centralized updates). We don't currently use this — single-user repo — but `metadata.version` / `metadata.deprecation-notice` future-proof if we ever do.
 
 For one-off sharing, package a skill folder as a zip via `make zip-skill SKILL=<name>` (see top-level `Makefile`). Recipient unzips into their `~/.claude/skills/` and the skill is available.
 

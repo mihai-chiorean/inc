@@ -1,30 +1,5 @@
 {
-  "_comment": "Grandfather baseline for scripts/validate-agents.py per MIT-413. Files listed here currently carry non-spec frontmatter keys that Claude Code's loader silently ignores. Validator WARNs on these files; any other file with the same non-spec keys HARD-fails so new debt can't slip in. 2026-06-19: color+skills became official agent fields (sub-agents.md), emptying the agents list. When both lists are empty, flip the default in the validator and delete this file.",
+  "_comment": "Grandfather baseline for scripts/validate-agents.py per MIT-413. Files listed here carry non-spec frontmatter keys that Claude Code's loader silently ignores; the validator WARNs on them, and any other file with non-spec keys HARD-fails so new debt can't slip in. 2026-06-19: color+skills became official agent fields, emptying the agents list. 2026-10-14: the four skills' `references:` moved under the official `metadata:` map, emptying the skills list. Both lists are now empty, so every non-spec key HARD-fails; this file can be deleted (the validator treats a missing file as an empty baseline).",
   "grandfathered_agents": [],
-  "grandfathered_skills": [
-    {
-      "file": "skills/postgres/SKILL.md",
-      "non_spec_keys": [
-        "references"
-      ]
-    },
-    {
-      "file": "skills/valkey/SKILL.md",
-      "non_spec_keys": [
-        "references"
-      ]
-    },
-    {
-      "file": "skills/wendy/SKILL.md",
-      "non_spec_keys": [
-        "references"
-      ]
-    },
-    {
-      "file": "skills/wendy-contributing/SKILL.md",
-      "non_spec_keys": [
-        "references"
-      ]
-    }
-  ]
+  "grandfathered_skills": []
 }
