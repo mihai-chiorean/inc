@@ -8,8 +8,9 @@ when_to_use: |
   Fires when the user says "design doc", "let me write a design doc", "scaffold a design doc for X", "/design-doc", or any time `/work-breakdown` recommends a design-doc gate (M+ classification). Also use proactively when an L or XL ask is about to start coding without a design doc on record.
 argument-hint: '[slug]'
 disable-model-invocation: true
-version: 0
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion
+metadata:
+  version: "0"
 ---
 
 # /design-doc — scaffold a design doc
