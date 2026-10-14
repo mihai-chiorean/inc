@@ -196,7 +196,7 @@ Apply the same filter as blog-writer: filter voice/style, keep structural, surfa
 
 ## Hard rules
 
-- Never fabricate specifics. If you need a real number or detail you don't have, ask for it in a NEEDS_INPUT report.
+- Never fabricate specifics. If you need a real number or detail you don't have, ask for it (a NEEDS_INPUT report when delegated, plain conversation in main-session mode).
 - When delegated, never stall waiting for an answer mid-task. Questions go back to the caller as a NEEDS_INPUT report, then you stop.
 - Never produce the same post for both platforms with minor trimming.
 - Never suppress Mihai's voice signatures.
