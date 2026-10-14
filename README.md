@@ -193,18 +193,18 @@ Some agents trigger automatically in specific contexts:
 
 ### Agent Structure
 Each agent includes:
-- **name**: Unique identifier
-- **description**: When to use the agent with examples
-- **color**: Visual identification
-- **tools**: Specific tools the agent can access
-- **System prompt**: Detailed expertise and instructions
+- **name**: Unique identifier (lowercase-hyphen)
+- **description**: When to route to the agent: prose triggers ("Fires on: …") plus an explicit anti-scope. No XML examples.
+- **model** / **effort**: An alias (`sonnet`, `opus`, `haiku`, `fable`, `inherit`). Set `effort` only on review, audit and architecture roles.
+- **color**: Visual identification (one of the 8 official colors)
+- **tools**: Optional least-privilege allowlist
+- **System prompt**: Role, first steps, responsibilities, output format
 
 ### Adding New Agents
 1. Create a new `.md` file in the appropriate department folder
-2. Follow the existing format with YAML frontmatter
-3. Include 3-4 detailed usage examples
-4. Write comprehensive system prompt (500+ words)
-5. Test the agent with real tasks
+2. Start from the [Agent File Structure Template](#-agent-file-structure-template) below
+3. Run `python3 scripts/validate-agents.py` and `python3 scripts/generate-manifest.py` (CLAUDE.md Rule 8)
+4. Test the agent with real tasks, including a delegated run (subagents can't ask the user questions)
 
 ## 📊 Agent Performance
 
@@ -228,52 +228,19 @@ Track agent effectiveness through:
 Use this checklist when creating or modifying agents for your specific needs:
 
 #### 📋 Required Components
-- [ ] **YAML Frontmatter**
-  - [ ] `name`: Unique agent identifier (kebab-case)
-  - [ ] `description`: When to use + 3-4 detailed examples with context/commentary
-  - [ ] `color`: Visual identification (e.g., blue, green, purple, indigo)
-  - [ ] `tools`: Specific tools the agent can access (Write, Read, MultiEdit, Bash, etc.)
-
-#### 📝 System Prompt Requirements (500+ words)
-- [ ] **Agent Identity**: Clear role definition and expertise area
-- [ ] **Core Responsibilities**: 5-8 specific primary duties
-- [ ] **Domain Expertise**: Technical skills and knowledge areas
-- [ ] **Studio Integration**: How agent fits into 6-day sprint workflow
-- [ ] **Best Practices**: Specific methodologies and approaches
-- [ ] **Constraints**: What the agent should/shouldn't do
-- [ ] **Success Metrics**: How to measure agent effectiveness
-
-#### 🎯 Required Examples by Agent Type
-
-**Engineering Agents** need examples for:
-- [ ] Feature implementation requests
-- [ ] Bug fixing scenarios
-- [ ] Code refactoring tasks
-- [ ] Architecture decisions
-
-**Design Agents** need examples for:
-- [ ] New UI component creation
-- [ ] Design system work
-- [ ] User experience problems
-- [ ] Visual identity tasks
-
-**Marketing Agents** need examples for:
-- [ ] Campaign creation requests
-- [ ] Platform-specific content needs
-- [ ] Growth opportunity identification
-- [ ] Brand positioning tasks
-
-**Product Agents** need examples for:
-- [ ] Feature prioritization decisions
-- [ ] User feedback analysis
-- [ ] Market research requests
-- [ ] Strategic planning needs
-
-**Operations Agents** need examples for:
-- [ ] Process optimization
-- [ ] Tool evaluation
-- [ ] Resource management
-- [ ] Performance analysis
+- [ ] **YAML Frontmatter** (strict YAML; `scripts/validate-agents.py` checks keys *and* values)
+  - [ ] `name`: lowercase-hyphen, ≤256 chars, no `:`
+  - [ ] `description`: job + "Fires on:" triggers with quoted user phrasings + "Anti-scope:" routing to named peers + what input to pass. Keep it under ~1,800 chars, with no XML `<example>` blocks.
+  - [ ] `model`: an alias, not a full model ID, unless the pin is deliberate. Add `effort` only for review, audit or architecture roles. Never default to `max`.
+  - [ ] `color`: one of red, blue, green, yellow, purple, orange, pink, cyan
+  - [ ] `tools`: least privilege for read-only roles; omit to inherit
+- [ ] **System prompt**
+  - [ ] **Role**: one sentence on what the agent owns, one on what it doesn't
+  - [ ] **When invoked**: the first concrete steps (read the diff, the issue, the named files)
+  - [ ] **Questions**: when under-specified, return up to 3 questions as the report and stop. Subagents can't ask the user; the caller resumes them with SendMessage.
+  - [ ] **Primary responsibilities**: imperative, and only what Claude wouldn't do by default
+  - [ ] **Output format**: the exact shape the caller gets back
+  - [ ] **Obstacles encountered**: skipped steps and unverified claims, stated explicitly (CLAUDE.md Rule 6)
 
 #### ✅ Testing & Validation Checklist
 - [ ] **Trigger Testing**: Agent activates correctly for intended use cases
@@ -286,24 +253,41 @@ Use this checklist when creating or modifying agents for your specific needs:
 
 #### 🔧 Agent File Structure Template
 
+v3.1 (2026-10). Optional fields are commented out; uncomment only the ones the role needs.
+
 ```markdown
 ---
-name: your-agent-name
-description: Use this agent when [scenario]. This agent specializes in [expertise]. Examples:\n\n<example>\nContext: [situation]\nuser: "[user request]"\nassistant: "[response approach]"\n<commentary>\n[why this example matters]\n</commentary>\n</example>\n\n[3 more examples...]
-color: agent-color
-tools: Tool1, Tool2, Tool3
+name: your-agent-name            # lowercase-hyphen, ≤256, no ":"
+description: "Use this agent to <job> … Fires on: <trigger> ('<quoted user phrasing>' — <what it does>); <trigger>; … Anti-scope: <thing> routes to `<peer>`; … Input to this agent should include: <what the caller must pass>."
+#            ≤1,800 chars, no XML, prose triggers; add "use proactively" only if it should auto-fire
+model: sonnet                    # sonnet | opus | haiku | fable | inherit — alias, not full ID, unless pinning on purpose
+# effort: high                   # only for review/audit/architecture roles; never max by default
+color: blue                      # red|blue|green|yellow|purple|orange|pink|cyan
+# tools: Read, Grep, Glob, Bash  # least privilege for read-only roles; omit to inherit
+# omitClaudeMd: true             # only for roles that need no repo/user conventions
+# isolation: worktree            # only if the agent owns a branch from main end-to-end
+# memory: project                # only if learnings compound across sessions
+# scope: org                     # inc extension (install.sh); omit for project-scope
 ---
 
-You are a [role] who [primary function]. Your expertise spans [domains]. You understand that in 6-day sprints, [sprint constraint], so you [approach].
+You are a <role> who <owns X>. <One sentence on what you do NOT do.>
 
-Your primary responsibilities:
-1. [Responsibility 1]
-2. [Responsibility 2]
-...
+## When invoked
+1. <first concrete step, e.g. read the diff / the Linear issue / the named files>
+2. <…>
+If the request is under-specified, return up to 3 clarifying questions as your report and stop —
+you cannot ask the user directly (subagents never get AskUserQuestion); the caller will resume you.
 
-[Detailed system prompt content...]
+## Primary responsibilities
+1. **<Area>.** <imperative bullets; only what Claude wouldn't do by default>
 
-Your goal is to [ultimate objective]. You [key behavior traits]. Remember: [key philosophy for 6-day sprints].
+## <Reference sections — engineering only: Key libraries / Patterns / Common pitfalls>
+
+## Output format
+<the exact shape the caller gets back: headings, severity scheme, file:line refs, verdict line>
+
+## Obstacles encountered
+<report setup failures, skipped steps, and unverified claims explicitly (CLAUDE.md Rule 6)>
 ```
 
 #### 📂 Department-Specific Guidelines
