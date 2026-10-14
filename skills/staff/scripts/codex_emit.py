@@ -40,6 +40,23 @@ import apply  # noqa: E402  (same scripts/ dir is on sys.path)
 # and translate the *intent* (how hard to think) instead.
 _EFFORT_BY_MODEL = {"opus": "high", "sonnet": "medium", "haiku": "low"}
 
+# An explicit `effort:` in the agent frontmatter wins over the model-tier
+# guess (e.g. tech-lead is `model: inherit` + `effort: high`, which the tier
+# map alone would drop). Claude's `max` has no Codex equivalent; the closest
+# Codex level is `xhigh`.
+_EFFORT_FROM_FRONTMATTER = {
+    "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "xhigh",
+}
+
+
+def _codex_effort(fm: dict) -> str | None:
+    """Codex reasoning effort for an agent: explicit `effort:` first, then
+    the model-tier mapping. None when neither yields a known value."""
+    explicit = _EFFORT_FROM_FRONTMATTER.get(str(fm.get("effort", "")).strip().lower())
+    if explicit:
+        return explicit
+    return _EFFORT_BY_MODEL.get(str(fm.get("model", "")).strip().lower())
+
 GENERATED_HEADER = (
     "# Generated from inc agent {id!r} by `staff codex` — do not edit.\n"
     "# Source of truth: the .md in the inc HR repo. Regenerate after changes.\n"
@@ -83,7 +100,7 @@ def agent_md_to_toml(text: str) -> tuple[str, str]:
     lines = [GENERATED_HEADER.format(id=name)]
     lines.append(f"name = {_toml_basic(name)}")
     lines.append(f"description = {_toml_basic(description)}")
-    effort = _EFFORT_BY_MODEL.get(str(fm.get("model", "")).strip().lower())
+    effort = _codex_effort(fm)
     if effort:
         lines.append(f"model_reasoning_effort = {_toml_basic(effort)}")
     lines.append(f"developer_instructions = {_toml_multiline(instructions)}")
