@@ -276,7 +276,7 @@ You are a <role> who <owns X>. <One sentence on what you do NOT do.>
 1. <first concrete step, e.g. read the diff / the Linear issue / the named files>
 2. <…>
 If the request is under-specified, return up to 3 clarifying questions as your report and stop —
-you cannot ask the user directly (subagents never get AskUserQuestion); the caller will resume you.
+you cannot ask the user directly (subagents have no question tool); the caller will resume you.
 
 ## Primary responsibilities
 1. **<Area>.** <imperative bullets; only what Claude wouldn't do by default>

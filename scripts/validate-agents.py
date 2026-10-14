@@ -109,8 +109,13 @@ AGENT_SPEC_KEYS = {
 # An off-enum value is silently ignored by Claude Code, exactly like an
 # unknown key, so these HARD-fail.
 MODEL_ALIASES = {"sonnet", "opus", "haiku", "fable", "inherit"}
-MODEL_ALIAS_RE = re.compile(r"^(sonnet|opus|haiku|fable)(\[1m\])?$")
-MODEL_ID_RE = re.compile(r"^claude-[a-z]+-\d+(-\d+)*(\[1m\])?$")
+# Used with fullmatch (no trailing-newline loophole) and ASCII-only classes.
+MODEL_ALIAS_RE = re.compile(r"(sonnet|opus|haiku|fable)(\[1m\])?", re.ASCII)
+# Both ID conventions: family-first (claude-opus-5-5, claude-sonnet-4-5-20250929)
+# and version-first (claude-3-5-sonnet-20241022). Needs at least one digit.
+MODEL_ID_RE = re.compile(
+    r"claude-(?=[a-z0-9-]*[0-9])[a-z0-9]+(-[a-z0-9]+)+(\[1m\])?", re.ASCII
+)
 EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 PERMISSION_MODES = {
     "default", "manual", "acceptEdits", "auto", "dontAsk",
@@ -310,15 +315,25 @@ def _tool_names(tools: object) -> list[str]:
     return []
 
 
-def _check_agent_values(parsed: dict, body: str) -> tuple[list[str], list[str]]:
+def _one_of(value: object, allowed: set[str]) -> bool:
+    """Enum membership that can't raise: lists/dicts (unhashable) and
+    non-strings are simply not members."""
+    return isinstance(value, str) and value in allowed
+
+
+def _check_agent_values(parsed: dict, body: str,
+                        fallback_name: str = "") -> tuple[list[str], list[str]]:
     """Value-level checks for agent frontmatter (2026-10 spec). Claude Code
     ignores an off-enum value the same way it ignores an unknown key, so bad
-    values HARD-fail; risky-but-valid values WARN."""
+    values HARD-fail; risky-but-valid values WARN. `fallback_name` is the
+    filename stem, which becomes the agent's name when `name` is omitted."""
     hard: list[str] = []
     warn: list[str] = []
 
-    if "name" in parsed and isinstance(parsed["name"], str):
-        name = parsed["name"]
+    name = parsed.get("name")
+    if not (isinstance(name, str) and name.strip()):
+        name = fallback_name
+    if name:
         if len(name) > AGENT_NAME_MAX_CHARS:
             hard.append(f"name is {len(name)} chars (max {AGENT_NAME_MAX_CHARS})")
         if ":" in name:
@@ -330,9 +345,9 @@ def _check_agent_values(parsed: dict, body: str) -> tuple[list[str], list[str]]:
         model = parsed["model"]
         if not isinstance(model, str) or not model.strip():
             hard.append(f"model {model!r} is not a string")
-        elif model == "inherit" or MODEL_ALIAS_RE.match(model):
+        elif model == "inherit" or MODEL_ALIAS_RE.fullmatch(model):
             pass
-        elif MODEL_ID_RE.match(model):
+        elif MODEL_ID_RE.fullmatch(model):
             warn.append(
                 f"model '{model}' is a full model ID and pins a version; "
                 "prefer an alias (sonnet|opus|haiku|fable|inherit) unless the "
@@ -346,7 +361,7 @@ def _check_agent_values(parsed: dict, body: str) -> tuple[list[str], list[str]]:
 
     if "effort" in parsed:
         effort = parsed["effort"]
-        if effort not in EFFORT_LEVELS:
+        if not _one_of(effort, EFFORT_LEVELS):
             hard.append(f"effort {effort!r} is not one of {sorted(EFFORT_LEVELS)}")
         elif effort == "max":
             warn.append(
@@ -356,17 +371,17 @@ def _check_agent_values(parsed: dict, body: str) -> tuple[list[str], list[str]]:
 
     if "permissionMode" in parsed:
         mode = parsed["permissionMode"]
-        if mode not in PERMISSION_MODES:
+        if not _one_of(mode, PERMISSION_MODES):
             hard.append(
                 f"permissionMode {mode!r} is not one of {sorted(PERMISSION_MODES)}"
             )
         elif mode == "bypassPermissions":
             warn.append("permissionMode: bypassPermissions skips every permission prompt")
 
-    if "memory" in parsed and parsed["memory"] not in MEMORY_SCOPES:
+    if "memory" in parsed and not _one_of(parsed["memory"], MEMORY_SCOPES):
         hard.append(f"memory {parsed['memory']!r} is not one of {sorted(MEMORY_SCOPES)}")
 
-    if "isolation" in parsed and parsed["isolation"] not in ISOLATION_MODES:
+    if "isolation" in parsed and not _one_of(parsed["isolation"], ISOLATION_MODES):
         hard.append(
             f"isolation {parsed['isolation']!r} is not one of {sorted(ISOLATION_MODES)}"
         )
@@ -393,12 +408,12 @@ def _check_agent_values(parsed: dict, body: str) -> tuple[list[str], list[str]]:
         if not isinstance(exp, dict):
             hard.append(f"experimental must be a mapping, got {type(exp).__name__}")
         else:
-            if "cacheTtl" in exp and exp["cacheTtl"] not in EXPERIMENTAL_CACHE_TTL:
+            if "cacheTtl" in exp and not _one_of(exp["cacheTtl"], EXPERIMENTAL_CACHE_TTL):
                 hard.append(
                     f"experimental.cacheTtl {exp['cacheTtl']!r} is not one of "
                     f"{sorted(EXPERIMENTAL_CACHE_TTL)}"
                 )
-            unknown_exp = sorted(k for k in exp if k != "cacheTtl")
+            unknown_exp = sorted(str(k) for k in exp if k != "cacheTtl")
             if unknown_exp:
                 warn.append(
                     f"experimental keys {unknown_exp!r} are not documented "
@@ -465,7 +480,9 @@ def validate_agent(path: Path, baseline: dict[str, set[str]]) -> dict:
             "SKILL.md."
         )
 
-    value_hard, value_warn = _check_agent_values(parsed, _frontmatter_body(path))
+    value_hard, value_warn = _check_agent_values(
+        parsed, _frontmatter_body(path), fallback_name=path.stem
+    )
     hard.extend(value_hard)
     warn.extend(value_warn)
 
@@ -513,7 +530,9 @@ def _agent_description_chars(path: Path) -> tuple[int, bool]:
     if not parsed:
         return 0, False
     desc = parsed.get("description")
-    return (len(desc) if isinstance(desc, str) else 0), parsed.get("scope") == "org"
+    # install.sh's is_org_agent matches `scope: org` case-insensitively.
+    is_org = str(parsed.get("scope", "")).strip().lower() == "org"
+    return (len(desc) if isinstance(desc, str) else 0), is_org
 
 
 def roster_description_budget(agent_files: list[Path]) -> list[str]:
@@ -649,6 +668,14 @@ def validate_skill(path: Path, baseline: dict[str, set[str]],
         )
     if "background" in parsed and not isinstance(parsed["background"], bool):
         hard.append(f"background must be a boolean, got {parsed['background']!r}")
+    compat = parsed.get("compatibility")
+    if "compatibility" in parsed and not isinstance(compat, str):
+        hard.append(f"compatibility must be a string, got {type(compat).__name__}")
+    elif isinstance(compat, str) and len(compat) > SKILL_COMPATIBILITY_MAX_CHARS:
+        warn.append(
+            f"compatibility is {len(compat)} chars (spec max "
+            f"{SKILL_COMPATIBILITY_MAX_CHARS})"
+        )
 
     move_keys = sorted(k for k in parsed.keys() if k in SKILL_MOVE_TO_METADATA_KEYS)
     if move_keys:
@@ -695,12 +722,6 @@ def validate_skill(path: Path, baseline: dict[str, set[str]],
                 f"portability: description is {len(effective_desc)} chars; the "
                 f"open Agent Skills spec caps it at {SKILL_PORTABLE_DESCRIPTION_MAX_CHARS} "
                 "(Claude Code allows 1,536 with when_to_use)"
-            )
-        compat = parsed.get("compatibility")
-        if isinstance(compat, str) and len(compat) > SKILL_COMPATIBILITY_MAX_CHARS:
-            warn.append(
-                f"portability: compatibility is {len(compat)} chars "
-                f"(spec max {SKILL_COMPATIBILITY_MAX_CHARS})"
             )
 
     return {"kind": "skill", "file": rel, "hard_errors": hard, "warnings": warn}

@@ -334,19 +334,30 @@ class TestSkillValidation(unittest.TestCase):
             self.assertTrue(any("520 lines" in w for w in r["warnings"]), r["warnings"])
             self.assertEqual(_find(payload, "skills/small/SKILL.md")["warnings"], [])
 
-    def test_skill_portability_caps_only_with_flag(self) -> None:
-        """Open-standard 1,024-char description cap and 500-char
-        compatibility cap WARN only under --check-portability."""
+    def test_skill_portability_description_cap_only_with_flag(self) -> None:
+        """The open-standard 1,024-char description cap WARNs only under
+        --check-portability (Claude Code itself allows 1,536)."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             write_skill(root, "wide",
-                        f"---\nname: wide\ndescription: {'d' * 1100}\n"
-                        f"compatibility: {'c' * 600}\n---\n\nBody.\n")
+                        f"---\nname: wide\ndescription: {'d' * 1100}\n---\n\nBody.\n")
             _code, payload = run_validator(root)
             self.assertEqual(_find(payload, "skills/wide/SKILL.md")["warnings"], [])
             _code, payload = run_validator(root, "--check-portability")
             warns = _find(payload, "skills/wide/SKILL.md")["warnings"]
             self.assertTrue(any("1100 chars" in w and "1024" in w for w in warns), warns)
+
+    def test_skill_compatibility_cap_always_checked(self) -> None:
+        """compatibility ≤500 chars is part of the field's spec -> WARN in
+        every run, not just under --check-portability."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "compat",
+                        f"---\nname: compat\ndescription: D.\n"
+                        f"compatibility: {'c' * 600}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            warns = _find(payload, "skills/compat/SKILL.md")["warnings"]
             self.assertTrue(any("compatibility is 600 chars" in w for w in warns), warns)
 
     def test_agent_name_optional_per_spec(self) -> None:
@@ -456,14 +467,44 @@ class TestAgentValues2026_10(unittest.TestCase):
             self.assertEqual((code, r["hard_errors"], r["warnings"]), (0, [], []), model)
 
     def test_full_model_id_warns(self) -> None:
-        code, r = _agent_result("model: claude-fable-5-1\n")
-        self.assertEqual(code, 0, "a pinned ID is valid -> WARN, not HARD")
-        self.assertTrue(any("pins a version" in w for w in r["warnings"]), r["warnings"])
+        for model in ("claude-fable-5-1", "claude-sonnet-4-5-20250929",
+                      "claude-3-5-sonnet-20241022", "claude-opus-5-5[1m]"):
+            code, r = _agent_result(f"model: {model}\n")
+            self.assertEqual(code, 0, f"{model}: a pinned ID is valid -> WARN, not HARD")
+            self.assertTrue(any("pins a version" in w for w in r["warnings"]),
+                            f"{model}: {r['warnings']}")
 
     def test_unknown_model_hard_fails(self) -> None:
-        code, r = _agent_result("model: gpt-5\n")
-        self.assertEqual(code, 1)
-        self.assertTrue(any("model 'gpt-5'" in e for e in r["hard_errors"]), r["hard_errors"])
+        for fm in ("model: gpt-5\n", 'model: "sonnet\\n"\n', "model: claude-opus\n",
+                   "model: [opus]\n"):
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 1, f"{fm!r} must HARD-fail")
+            self.assertTrue(any("model" in e for e in r["hard_errors"]),
+                            f"{fm!r}: {r['hard_errors']}")
+
+    def test_non_scalar_enum_values_hard_fail_without_crashing(self) -> None:
+        """Unhashable values used to raise TypeError in set membership."""
+        for fm in ("effort: [high]\n", "permissionMode: {}\n", "memory: [project]\n",
+                   "isolation: {a: b}\n", "experimental:\n  cacheTtl: [1h]\n  1: x\n"):
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 1, f"{fm!r} must HARD-fail, not crash")
+
+    def test_filename_is_checked_when_name_omitted(self) -> None:
+        """Without `name`, the filename stem becomes the agent name."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "-bad", "---\ndescription: D.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "engineering/-bad.md")
+            self.assertTrue(any("'-'" in e for e in r["hard_errors"]), r["hard_errors"])
+
+    def test_prohibition_wording_without_tool_name_is_quiet(self) -> None:
+        """The README template's wording must not trip the unavailable-tool
+        warning when an agent copies it."""
+        _code, r = _agent_result(
+            "", "you cannot ask the user directly (subagents have no question tool)\n")
+        self.assertEqual(r["warnings"], [])
 
     def test_bad_enum_values_hard_fail(self) -> None:
         cases = {
@@ -545,6 +586,22 @@ class TestRosterDescriptionBudget(unittest.TestCase):
                             "---\n\nBody.\n")
             _code, payload = run_validator(root)
             self.assertTrue(any("org-scope" in w for w in payload["roster_warnings"]))
+
+    def test_org_scope_matches_case_insensitively_in_mixed_roster(self) -> None:
+        """install.sh treats `scope: Org` as org; the budget must too. Mixed
+        roster: 4 big org agents plus small project agents."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for i in range(4):
+                write_agent(root, "engineering", f"o{i}",
+                            f"---\nname: o{i}\nscope: Org\ndescription: {'x' * 16000}\n"
+                            "---\n\nBody.\n")
+            write_agent(root, "engineering", "p", "---\nname: p\nscope: project\n"
+                        "description: Small.\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            org = [w for w in payload["roster_warnings"] if "org-scope" in w]
+            self.assertEqual(len(org), 1, payload["roster_warnings"])
+            self.assertIn("4 descriptions", org[0])
 
     def test_under_budget_roster_is_quiet(self) -> None:
         with tempfile.TemporaryDirectory() as td:
