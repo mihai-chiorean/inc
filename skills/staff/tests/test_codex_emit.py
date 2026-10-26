@@ -53,6 +53,16 @@ def test_model_to_effort(_root: Path) -> None:
     expect("model" not in data, "raw model field never emitted (cross-vendor)")
 
 
+def test_explicit_effort_wins(_root: Path) -> None:
+    def effort_of(model: str, effort: str) -> str | None:
+        md = f"---\nname: a\nmodel: {model}\neffort: {effort}\ndescription: d\n---\nb\n"
+        return tomllib.loads(codex_emit.agent_md_to_toml(md)[1]).get("model_reasoning_effort")
+    expect(effort_of("inherit", "high") == "high", "inherit + effort: high -> high (tier map alone drops it)")
+    expect(effort_of("haiku", "medium") == "medium", "explicit effort overrides model tier")
+    expect(effort_of("opus", "max") == "xhigh", "Claude max -> Codex xhigh")
+    expect(effort_of("sonnet", "bogus") == "medium", "unknown effort value falls back to model tier")
+
+
 def test_nasty_body_escaping(_root: Path) -> None:
     body = (
         'Regex: \\d+\\.\\w  and a path C:\\temp\\x\n'
@@ -178,6 +188,7 @@ def main() -> int:
     tests = [
         test_basic_conversion,
         test_model_to_effort,
+        test_explicit_effort_wins,
         test_nasty_body_escaping,
         test_missing_fields_raise,
         test_emit_user_batch,
