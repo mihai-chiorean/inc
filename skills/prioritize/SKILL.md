@@ -6,8 +6,9 @@ description: |
   Last of the gstack-borrow week-skills. `/retro` and `/triage` were explicitly dropped (indulgent or overlapping); `/prioritize` is the single Week-4 deliverable.
 when_to_use: |
   Fires when the user says "what should I work on next", "/prioritize", "rank the inbox", "what's most important", or any version of "I have too many things, help me pick." Also fires at sprint-equivalent transitions (e.g. an initiative wraps and you need to choose the next thread).
-version: 0
 allowed-tools: Bash, Read, Edit, AskUserQuestion
+metadata:
+  version: "0"
 ---
 
 # /prioritize — rank work, surface the top 3

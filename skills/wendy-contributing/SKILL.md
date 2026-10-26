@@ -1,10 +1,11 @@
 ---
 name: wendy-contributing
 description: 'Expert guidance on contributing to WendyOS: Yocto builds, agent internals, E2E testing, and system architecture. Use when developers mention: (1) building WendyOS images, (2) meta-wendyos layers or bitbake, (3) wendy-agent development or internals, (4) containerd or nerdctl on WendyOS, (5) E2E tests for wendy-agent, (6) Yocto recipes or bbappend files, (7) mDNS/Avahi service configuration, (8) device identity or UUID generation.'
-references:
-  - yocto-meta-layers.md
-  - system-internals.md
-  - raspberry-pi.md
+metadata:
+  references:
+    - yocto-meta-layers.md
+    - system-internals.md
+    - raspberry-pi.md
 ---
 
 # WendyOS Contributing

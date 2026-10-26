@@ -24,7 +24,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 VALIDATOR = REPO_ROOT / "scripts/validate-agents.py"
 
 
-def run_validator(root: Path) -> tuple[int, dict]:
+def run_validator(root: Path, *extra_args: str) -> tuple[int, dict]:
     """Run the validator with REPO_ROOT pointed at `root`. The validator
     resolves REPO_ROOT from __file__, so we copy it into the temp tree."""
     # Mirror the repo layout the validator expects: scripts/ + category dirs
@@ -33,7 +33,7 @@ def run_validator(root: Path) -> tuple[int, dict]:
     tmp_validator.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(VALIDATOR, tmp_validator)
     result = subprocess.run(
-        [sys.executable, str(tmp_validator), "--json"],
+        [sys.executable, str(tmp_validator), "--json", *extra_args],
         capture_output=True, text=True, check=False,
     )
     payload = json.loads(result.stdout) if result.stdout.strip() else {}
@@ -261,9 +261,11 @@ class TestSkillValidation(unittest.TestCase):
             self.assertTrue(any("'references'" in w and "grandfathered" in w
                                 for w in r["warnings"]))
 
-    def test_skill_with_version_is_clean_after_mit_437(self) -> None:
-        """MIT-437 added `version` and `deprecation-notice` to skill spec —
-        these should now validate clean as Anthropic distribution metadata."""
+    def test_skill_top_level_version_warns_move_to_metadata(self) -> None:
+        """2026-10: Claude Code's skills table has no `version` /
+        `deprecation-notice` (MIT-437 accepted them at top level). They are
+        ignored by the loader -> WARN asking to move them under `metadata:`,
+        not HARD (they were legal here until now)."""
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             write_skill(root, "vskill",
@@ -273,7 +275,90 @@ class TestSkillValidation(unittest.TestCase):
             self.assertEqual(code, 0)
             r = _find(payload, "skills/vskill/SKILL.md")
             self.assertEqual(r["hard_errors"], [])
+            self.assertTrue(any("metadata" in w and "'version'" in w
+                                and "'deprecation-notice'" in w
+                                for w in r["warnings"]),
+                            f"expected move-to-metadata warn, got {r['warnings']}")
+
+    def test_skill_new_official_fields_are_clean(self) -> None:
+        """metadata (holding version/references), license, compatibility and
+        background are official skill fields (2026-10)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "meta",
+                        "---\nname: meta\ndescription: Meta.\nlicense: MIT\n"
+                        "compatibility: Needs python3 and gh.\nbackground: true\n"
+                        "metadata:\n  version: \"0\"\n  references:\n    - a.md\n"
+                        "---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            r = _find(payload, "skills/meta/SKILL.md")
+            self.assertEqual(r["hard_errors"], [])
             self.assertEqual(r["warnings"], [])
+
+    def test_skill_metadata_must_be_mapping(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "meta",
+                        "---\nname: meta\ndescription: Meta.\nmetadata: v1\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "skills/meta/SKILL.md")
+            self.assertTrue(any("metadata must be a mapping" in e for e in r["hard_errors"]))
+
+    def test_skill_name_must_match_directory_and_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "right-dir",
+                        "---\nname: other-name\ndescription: D.\n---\n\nBody.\n")
+            write_skill(root, "Bad_Dir",
+                        "---\nname: Bad_Dir\ndescription: D.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "skills/right-dir/SKILL.md")
+            self.assertTrue(any("does not match its directory" in e for e in r["hard_errors"]),
+                            r["hard_errors"])
+            r = _find(payload, "skills/Bad_Dir/SKILL.md")
+            self.assertTrue(any("lowercase letters" in e for e in r["hard_errors"]),
+                            r["hard_errors"])
+
+    def test_skill_body_over_500_lines_warns(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            body = "\n".join(f"line {i}" for i in range(520))
+            write_skill(root, "big", f"---\nname: big\ndescription: Big.\n---\n{body}\n")
+            write_skill(root, "small", "---\nname: small\ndescription: Small.\n---\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0, "line count is WARN only")
+            r = _find(payload, "skills/big/SKILL.md")
+            self.assertTrue(any("520 lines" in w for w in r["warnings"]), r["warnings"])
+            self.assertEqual(_find(payload, "skills/small/SKILL.md")["warnings"], [])
+
+    def test_skill_portability_description_cap_only_with_flag(self) -> None:
+        """The open-standard 1,024-char description cap WARNs only under
+        --check-portability (Claude Code itself allows 1,536)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "wide",
+                        f"---\nname: wide\ndescription: {'d' * 1100}\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            self.assertEqual(_find(payload, "skills/wide/SKILL.md")["warnings"], [])
+            _code, payload = run_validator(root, "--check-portability")
+            warns = _find(payload, "skills/wide/SKILL.md")["warnings"]
+            self.assertTrue(any("1100 chars" in w and "1024" in w for w in warns), warns)
+
+    def test_skill_compatibility_cap_always_checked(self) -> None:
+        """compatibility ≤500 chars is part of the field's spec -> WARN in
+        every run, not just under --check-portability."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_skill(root, "compat",
+                        f"---\nname: compat\ndescription: D.\n"
+                        f"compatibility: {'c' * 600}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0)
+            warns = _find(payload, "skills/compat/SKILL.md")["warnings"]
+            self.assertTrue(any("compatibility is 600 chars" in w for w in warns), warns)
 
     def test_agent_name_optional_per_spec(self) -> None:
         """Per Anthropic spec, `name` is optional for agents — must not HARD-fail."""
@@ -350,6 +435,180 @@ class TestSkillValidation(unittest.TestCase):
             self.assertTrue(any("skill-only" in e and "when_to_use" in e
                                 for e in r["hard_errors"]),
                             f"expected skill-only HARD, got {r['hard_errors']}")
+
+
+def _agent_result(fm_lines: str, body: str = "Body.\n") -> tuple[int, dict]:
+    """Validate a single agent `engineering/alpha.md` with the given extra
+    frontmatter lines; returns (exit code, that file's result entry)."""
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        write_agent(root, "engineering", "alpha",
+                    f"---\nname: alpha\ndescription: Alpha.\n{fm_lines}---\n\n{body}")
+        code, payload = run_validator(root)
+        return code, _find(payload, "engineering/alpha.md")
+
+
+class TestAgentValues2026_10(unittest.TestCase):
+    """2026-10 spec: three new fields and value-level checks."""
+
+    def test_new_fields_and_valid_values_are_clean(self) -> None:
+        code, r = _agent_result(
+            "model: opus\neffort: high\npermissionMode: auto\nmemory: project\n"
+            "isolation: worktree\nbackground: false\nomitClaudeMd: true\n"
+            "maxTurns: 20\nautoCompactWindow: 200000\n"
+            "experimental:\n  cacheTtl: 1h\n")
+        self.assertEqual(code, 0)
+        self.assertEqual(r["hard_errors"], [])
+        self.assertEqual(r["warnings"], [])
+
+    def test_model_aliases_clean(self) -> None:
+        for model in ("sonnet", "opus", "haiku", "fable", "inherit", "opus[1m]"):
+            code, r = _agent_result(f"model: {model}\n")
+            self.assertEqual((code, r["hard_errors"], r["warnings"]), (0, [], []), model)
+
+    def test_full_model_id_warns(self) -> None:
+        for model in ("claude-fable-5-1", "claude-sonnet-4-5-20250929",
+                      "claude-3-5-sonnet-20241022", "claude-opus-5-5[1m]"):
+            code, r = _agent_result(f"model: {model}\n")
+            self.assertEqual(code, 0, f"{model}: a pinned ID is valid -> WARN, not HARD")
+            self.assertTrue(any("pins a version" in w for w in r["warnings"]),
+                            f"{model}: {r['warnings']}")
+
+    def test_unknown_model_hard_fails(self) -> None:
+        for fm in ("model: gpt-5\n", 'model: "sonnet\\n"\n', "model: claude-opus\n",
+                   "model: [opus]\n", "model: claude-123-456\n", "model: claude-opus-5x-5\n"):
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 1, f"{fm!r} must HARD-fail")
+            self.assertTrue(any("model" in e for e in r["hard_errors"]),
+                            f"{fm!r}: {r['hard_errors']}")
+
+    def test_non_scalar_enum_values_hard_fail_without_crashing(self) -> None:
+        """Unhashable values used to raise TypeError in set membership."""
+        for fm in ("effort: [high]\n", "permissionMode: {}\n", "memory: [project]\n",
+                   "isolation: {a: b}\n", "experimental:\n  cacheTtl: [1h]\n  1: x\n"):
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 1, f"{fm!r} must HARD-fail, not crash")
+
+    def test_filename_is_checked_when_name_omitted(self) -> None:
+        """Without `name`, the filename stem becomes the agent name."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "-bad", "---\ndescription: D.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "engineering/-bad.md")
+            self.assertTrue(any("'-'" in e for e in r["hard_errors"]), r["hard_errors"])
+
+    def test_prohibition_wording_without_tool_name_is_quiet(self) -> None:
+        """The README template's wording must not trip the unavailable-tool
+        warning when an agent copies it."""
+        _code, r = _agent_result(
+            "", "you cannot ask the user directly (subagents have no question tool)\n")
+        self.assertEqual(r["warnings"], [])
+
+    def test_bad_enum_values_hard_fail(self) -> None:
+        cases = {
+            "effort: hgh\n": "effort",
+            "permissionMode: yolo\n": "permissionMode",
+            "memory: global\n": "memory",
+            "isolation: container\n": "isolation",
+            "omitClaudeMd: maybe\n": "omitClaudeMd",
+            "background: sometimes\n": "background",
+            "maxTurns: 0\n": "maxTurns",
+            "autoCompactWindow: 50000\n": "autoCompactWindow",
+            "autoCompactWindow: true\n": "autoCompactWindow",
+            "experimental:\n  cacheTtl: 2h\n": "cacheTtl",
+            "experimental: on\n": "experimental",
+        }
+        for fm, key in cases.items():
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 1, f"{fm!r} must HARD-fail")
+            self.assertTrue(any(key in e for e in r["hard_errors"]),
+                            f"{fm!r}: expected HARD naming {key}, got {r['hard_errors']}")
+
+    def test_risky_values_warn(self) -> None:
+        for fm, needle in (("effort: max\n", "effort: max"),
+                           ("permissionMode: bypassPermissions\n", "bypassPermissions"),
+                           ("experimental:\n  cacheTtl: 5m\n  turbo: true\n", "turbo")):
+            code, r = _agent_result(fm)
+            self.assertEqual(code, 0, fm)
+            self.assertTrue(any(needle in w for w in r["warnings"]), f"{fm!r}: {r['warnings']}")
+
+    def test_name_shape_hard_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "alpha",
+                        "---\nname: plug:alpha\ndescription: Alpha.\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 1)
+            r = _find(payload, "engineering/alpha.md")
+            self.assertTrue(any("':'" in e for e in r["hard_errors"]), r["hard_errors"])
+
+    def test_body_mentioning_unavailable_tool_warns(self) -> None:
+        code, r = _agent_result("", "## Phase 1\nUse `AskUserQuestion` iteratively.\n")
+        self.assertEqual(code, 0)
+        self.assertTrue(any("AskUserQuestion" in w and "never receive" in w
+                            for w in r["warnings"]), r["warnings"])
+
+    def test_tools_listing_unavailable_tool_warns(self) -> None:
+        code, r = _agent_result("tools: Read, ExitPlanMode\n")
+        self.assertEqual(code, 0)
+        self.assertTrue(any("tools lists ['ExitPlanMode']" in w for w in r["warnings"]),
+                        r["warnings"])
+
+    def test_workflow_heading_does_not_warn_but_tool_mention_does(self) -> None:
+        _code, r = _agent_result("", "## Workflow\n1. Read the diff.\n")
+        self.assertEqual(r["warnings"], [], "a '## Workflow' heading is not the tool")
+        _code, r = _agent_result("", "Run the `Workflow` tool to fan out.\n")
+        self.assertTrue(any("'Workflow'" in w for w in r["warnings"]), r["warnings"])
+
+
+class TestRosterDescriptionBudget(unittest.TestCase):
+    def test_over_budget_roster_warns_without_failing(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for i in range(4):  # 4 x 16,000 chars = 64,000 chars ≈ 16,000 tokens
+                write_agent(root, "engineering", f"a{i}",
+                            f"---\nname: a{i}\ndescription: {'x' * 16000}\n---\n\nBody.\n")
+            code, payload = run_validator(root)
+            self.assertEqual(code, 0, "budget is a WARN")
+            rw = payload["roster_warnings"]
+            self.assertTrue(any("all agents" in w and "64,000 chars" in w and "16,000 tokens" in w
+                                for w in rw), rw)
+            self.assertFalse(any("org-scope" in w for w in rw), "no org agents -> no org warn")
+
+    def test_org_scope_subset_checked_separately(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for i in range(4):
+                write_agent(root, "engineering", f"a{i}",
+                            f"---\nname: a{i}\nscope: org\ndescription: {'x' * 16000}\n"
+                            "---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            self.assertTrue(any("org-scope" in w for w in payload["roster_warnings"]))
+
+    def test_org_scope_matches_case_insensitively_in_mixed_roster(self) -> None:
+        """install.sh treats `scope: Org` as org; the budget must too. Mixed
+        roster: 4 big org agents plus small project agents."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for i in range(4):
+                write_agent(root, "engineering", f"o{i}",
+                            f"---\nname: o{i}\nscope: Org\ndescription: {'x' * 16000}\n"
+                            "---\n\nBody.\n")
+            write_agent(root, "engineering", "p", "---\nname: p\nscope: project\n"
+                        "description: Small.\n---\n\nBody.\n")
+            _code, payload = run_validator(root)
+            org = [w for w in payload["roster_warnings"] if "org-scope" in w]
+            self.assertEqual(len(org), 1, payload["roster_warnings"])
+            self.assertIn("4 descriptions", org[0])
+
+    def test_under_budget_roster_is_quiet(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_agent(root, "engineering", "a", "---\nname: a\ndescription: Small.\n---\n\nB.\n")
+            _code, payload = run_validator(root)
+            self.assertEqual(payload["roster_warnings"], [])
 
 
 class TestSummaryShape(unittest.TestCase):

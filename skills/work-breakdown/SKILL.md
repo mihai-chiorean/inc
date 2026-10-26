@@ -8,8 +8,9 @@ when_to_use: |
   Fires when the user says "let's build X" / "we should X" and X is non-trivial (more than a one-line fix), "how do we break this down", "this is going to be big", or any time the ask visibly spans multiple files, areas, or repos. When in doubt, fire — classifying as S still produces a useful single issue.
 argument-hint: '[one-line idea description]'
 disable-model-invocation: true
-version: 0
 allowed-tools: Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion
+metadata:
+  version: "0"
 ---
 
 # /work-breakdown — classify and break down
